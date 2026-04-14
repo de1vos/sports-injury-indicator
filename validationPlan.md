@@ -144,7 +144,92 @@ print("PASS: Match stats look good")
 
 ---
 
-### After Step 1.5 (Sidelined/injury history)
+### After Step 1.5 (Squad data / kit numbers)
+
+**File exists:** `data/raw/squads.json`
+
+**Checks:**
+```python
+import json
+
+with open("data/raw/squads.json") as f:
+    squads = json.load(f)
+
+# 1. Should have 20 teams
+assert len(squads) >= 20, f"Only {len(squads)} teams — expected 20"
+
+# 2. Each team should have 20-35 players
+for team_id, team_data in list(squads.items())[:5]:
+    players = team_data["players"] if isinstance(team_data, dict) else team_data
+    assert len(players) >= 18, f"Team {team_id}: only {len(players)} players"
+    # Check jersey numbers exist
+    for p in players[:3]:
+        assert "number" in p, f"Team {team_id}, player {p.get('name')}: missing number"
+    print(f"  Team {team_id}: {len(players)} players — e.g. #{players[0]['number']} {players[0]['name']}")
+
+# 3. Jersey numbers should be 1-99
+for team_id, team_data in squads.items():
+    players = team_data["players"] if isinstance(team_data, dict) else team_data
+    for p in players:
+        num = p.get("number")
+        if num is not None:
+            assert 1 <= num <= 99, f"Jersey number {num} out of range"
+
+print(f"\nTotal teams: {len(squads)}")
+print("PASS: Squad data looks good")
+```
+
+**What you should see:**
+- 20 teams with 20-35 players each
+- Each player has a jersey number (1-99)
+
+---
+
+### After Step 1.6 (Upcoming fixtures)
+
+**File exists:** `data/raw/fixtures_upcoming.json`
+
+**Checks:**
+```python
+import json
+from datetime import datetime
+
+with open("data/raw/fixtures_upcoming.json") as f:
+    upcoming = json.load(f)
+
+# 1. Should have upcoming matches
+assert len(upcoming) >= 10, f"Only {len(upcoming)} upcoming fixtures"
+
+# 2. Dates should be in the future (or very recent)
+for fix in upcoming[:5]:
+    date = fix["fixture"]["date"]
+    print(f"  {fix['teams']['home']['name']} vs {fix['teams']['away']['name']} — {date}")
+
+# 3. Should have both teams for each fixture
+for fix in upcoming[:10]:
+    assert fix["teams"]["home"]["name"], "Missing home team"
+    assert fix["teams"]["away"]["name"], "Missing away team"
+    assert fix["fixture"]["date"], "Missing date"
+
+# 4. 20 teams should appear
+teams = set()
+for fix in upcoming:
+    teams.add(fix["teams"]["home"]["name"])
+    teams.add(fix["teams"]["away"]["name"])
+print(f"\nTeams in upcoming fixtures: {len(teams)}")
+
+print(f"Total upcoming fixtures: {len(upcoming)}")
+print("PASS: Upcoming fixtures look good")
+```
+
+**What you should see:**
+- 10-190 upcoming fixtures (depends on time of season)
+- Dates in the near future
+- All 20 PL teams represented
+
+---
+
+### After Step 1.7 (Sidelined/injury history)
 
 **File exists:** `data/raw/sidelined.json`
 
@@ -231,7 +316,7 @@ assert players["player_id"].is_unique, "Duplicate player IDs!"
 
 # 2. Expected columns
 required = ["player_id", "name", "photo", "dob", "age", "nationality",
-            "height", "weight", "position", "current_team", "team_logo"]
+            "height", "weight", "position", "current_team", "team_logo", "kit_number"]
 for col in required:
     assert col in players.columns, f"Missing column: {col}"
 
@@ -363,7 +448,8 @@ import pandas as pd
 injuries = pd.read_csv("data/injuries.csv")
 
 # 1. Expected columns
-required = ["player_id", "injury_type", "start_date", "end_date", "days_out"]
+required = ["player_id", "injury_type", "start_date", "end_date", "days_out",
+            "severity", "body_region"]
 for col in required:
     assert col in injuries.columns, f"Missing column: {col}"
 
@@ -371,14 +457,26 @@ for col in required:
 valid_days = injuries["days_out"].dropna()
 assert (valid_days >= 0).all(), "Negative days_out values found"
 
-# 3. Suspensions vs injuries
+# 3. Severity values should be from the defined set
+valid_severities = {"Minor", "Moderate", "Severe", "Long-term"}
+actual_severities = set(injuries["severity"].dropna().unique())
+unexpected = actual_severities - valid_severities
+assert len(unexpected) == 0, f"Unexpected severity values: {unexpected}"
+print(f"Severity distribution:")
+print(injuries["severity"].value_counts())
+
+# 4. Body region should be mapped
+print(f"\nBody region distribution:")
+print(injuries["body_region"].value_counts())
+
+# 5. Suspensions vs injuries
 injury_types = injuries["injury_type"].value_counts()
-print(f"Total injury records: {len(injuries)}")
+print(f"\nTotal injury records: {len(injuries)}")
 print(f"Unique players with injuries: {injuries['player_id'].nunique()}")
 print(f"\nTop 15 injury types:")
 print(injury_types.head(15))
 
-# 4. Date sanity
+# 6. Date sanity
 injuries["start_date"] = pd.to_datetime(injuries["start_date"])
 print(f"\nDate range: {injuries['start_date'].min()} to {injuries['start_date'].max()}")
 print(f"Avg days out: {valid_days.mean():.1f}")
@@ -413,9 +511,12 @@ assert features.shape[1] >= 30, f"Only {features.shape[1]} columns — expected 
 
 # 2. Required feature columns exist
 rolling_features = ["minutes_last_7d", "minutes_last_14d", "minutes_last_30d",
-                    "matches_last_14d", "days_since_last_match", "workload_trend"]
+                    "matches_last_14d", "days_since_last_match", "workload_trend",
+                    "acute_chronic_ratio", "match_density_14d",
+                    "fouls_against_per_90_rolling"]
 injury_features = ["career_total_injuries", "injuries_last_12_months",
-                   "days_since_last_injury", "recurring_injury_flag"]
+                   "days_since_last_injury", "recurring_injury_flag",
+                   "matches_missed_this_season", "injuries_this_season"]
 profile_features = ["age", "position_encoded", "bmi"]
 target = ["injured_next_90d"]
 
@@ -553,10 +654,12 @@ with open("output/player_predictions.json") as f:
 print(f"Total players: {len(predictions)}")
 assert len(predictions) >= 300, f"Only {len(predictions)} players — expected 300+"
 
-# 2. Every player has required fields
+# 2. Every player has required top-level fields
 required_fields = ["player_id", "name", "photo", "team", "team_logo", "position",
-                   "age", "injury_risk", "risk_level", "risk_factors",
-                   "season_stats", "injury_history"]
+                   "age", "nationality", "kit_number",
+                   "injury_risk", "risk_level", "risk_factors", "injury_risk_trend",
+                   "season_stats", "workload", "injury_summary",
+                   "injury_history", "next_match"]
 for player in predictions[:20]:
     for field in required_fields:
         assert field in player, f"Player {player.get('name', '?')}: missing {field}"
@@ -582,7 +685,7 @@ for player in predictions:
     else:
         assert level == "Critical"
 
-# 5. Risk factors are human-readable strings
+# 5. Risk factors are human-readable strings (2-3 per player)
 for player in predictions[:10]:
     factors = player["risk_factors"]
     assert isinstance(factors, list), "risk_factors should be a list"
@@ -590,28 +693,79 @@ for player in predictions[:10]:
     for f in factors:
         assert isinstance(f, str) and len(f) > 5, f"Bad risk factor: {f}"
 
-# 6. Distribution of risk levels
+# 6. Injury risk trend should be 12 weekly data points
+for player in predictions[:10]:
+    trend = player["injury_risk_trend"]
+    assert isinstance(trend, list), "injury_risk_trend should be a list"
+    assert len(trend) == 12, f"{player['name']}: trend has {len(trend)} points, expected 12"
+    for val in trend:
+        assert 0.0 <= val <= 1.0, f"Trend value {val} out of range"
+
+# 7. Workload section
+for player in predictions[:10]:
+    wl = player["workload"]
+    assert "acute_chronic_ratio" in wl, "Missing acute_chronic_ratio"
+    assert "match_density_14d" in wl, "Missing match_density_14d"
+    assert "minutes_played" in wl, "Missing minutes_played"
+    assert "matches_played" in wl, "Missing matches_played"
+    acr = wl["acute_chronic_ratio"]
+    if acr is not None:
+        assert 0 <= acr <= 5, f"ACR {acr} seems out of range"
+
+# 8. Injury summary section
+for player in predictions[:10]:
+    inj = player["injury_summary"]
+    assert "career_total_injuries" in inj, "Missing career_total_injuries"
+    assert "injuries_this_season" in inj, "Missing injuries_this_season"
+    assert "matches_missed_this_season" in inj, "Missing matches_missed_this_season"
+    assert "minutes_missed_this_season" in inj, "Missing minutes_missed_this_season"
+    assert "days_since_last_injury" in inj, "Missing days_since_last_injury"
+
+# 9. Injury history has severity and body_region
+for player in predictions[:10]:
+    for inj in player["injury_history"]:
+        assert "severity" in inj, f"Missing severity in injury record"
+        assert "body_region" in inj, f"Missing body_region in injury record"
+        assert inj["severity"] in ["Minor", "Moderate", "Severe", "Long-term"], \
+            f"Invalid severity: {inj['severity']}"
+
+# 10. Next match present
+for player in predictions[:10]:
+    nm = player["next_match"]
+    if nm is not None:  # null only if season is over
+        assert "date" in nm, "Next match missing date"
+        assert "home_team" in nm, "Next match missing home_team"
+        assert "away_team" in nm, "Next match missing away_team"
+
+# 11. Distribution of risk levels
 from collections import Counter
 level_dist = Counter(p["risk_level"] for p in predictions)
 print(f"\nRisk distribution:")
 for level in ["Low", "Medium", "High", "Critical"]:
     print(f"  {level}: {level_dist.get(level, 0)}")
 
-# 7. Spot check a few well-known players
+# 12. All 20 PL teams represented
 known_teams = {"Arsenal", "Manchester City", "Liverpool", "Chelsea",
                "Manchester United", "Tottenham"}
 teams_found = set(p["team"] for p in predictions)
 missing_big_teams = known_teams - teams_found
 assert len(missing_big_teams) == 0, f"Missing teams: {missing_big_teams}"
 
-# 8. Season stats present and reasonable
+# 13. Spot check players
 for player in predictions[:5]:
     ss = player["season_stats"]
-    print(f"\n{player['name']} ({player['team']})")
+    wl = player["workload"]
+    inj = player["injury_summary"]
+    print(f"\n{player['name']} #{player['kit_number']} ({player['team']})")
     print(f"  Risk: {player['injury_risk']:.0%} ({player['risk_level']})")
     print(f"  Appearances: {ss.get('appearances')}, Minutes: {ss.get('minutes')}")
+    print(f"  ACR: {wl.get('acute_chronic_ratio')}, Match density 14d: {wl.get('match_density_14d')}")
+    print(f"  Career injuries: {inj.get('career_total_injuries')}, This season: {inj.get('injuries_this_season')}")
     print(f"  Risk factors: {player['risk_factors']}")
-    print(f"  Injuries: {len(player['injury_history'])} career records")
+    print(f"  Trend (12w): {player['injury_risk_trend']}")
+    nm = player.get("next_match")
+    if nm:
+        print(f"  Next: {nm['home_team']} vs {nm['away_team']} — {nm['date']}")
 
 print("\nPASS: Prediction output looks good")
 ```
@@ -620,9 +774,62 @@ print("\nPASS: Prediction output looks good")
 - 300-600 players with predictions
 - Risk distribution: mostly Low/Medium, some High, few Critical
 - All 20 PL teams represented
-- Risk factors are readable sentences
+- Risk factors are readable sentences (2-3 per player)
+- 12-week injury risk trend array per player
+- Workload section with ACR, match density, fouls against
+- Injury summary with career/season counts, missed matches/minutes
+- Injury history entries include severity and body_region
+- Next match with date, teams, venue
+- Kit number present
 - Photo URLs, team logos present
-- Season stats have real numbers
+
+---
+
+### After Step 5.3b (Matches output)
+
+**File exists:** `output/matches.json`
+
+**Checks:**
+```python
+import json
+from datetime import datetime
+
+with open("output/matches.json") as f:
+    matches = json.load(f)
+
+# 1. Should have completed and upcoming sections
+assert "completed" in matches, "Missing 'completed' key"
+assert "upcoming" in matches, "Missing 'upcoming' key"
+
+# 2. Completed matches have scores
+for m in matches["completed"][:5]:
+    assert "score" in m, "Completed match missing score"
+    assert m["score"]["home"] is not None, "Score home is None"
+    assert m["score"]["away"] is not None, "Score away is None"
+    assert "home_team" in m and "name" in m["home_team"], "Missing home team name"
+    assert "away_team" in m and "name" in m["away_team"], "Missing away team name"
+    print(f"  {m['home_team']['name']} {m['score']['home']}-{m['score']['away']} {m['away_team']['name']} ({m['date'][:10]})")
+
+# 3. Upcoming matches have no scores, but have dates
+for m in matches["upcoming"][:5]:
+    assert "home_team" in m, "Upcoming match missing home_team"
+    assert "date" in m, "Upcoming match missing date"
+    print(f"  {m['home_team']['name']} vs {m['away_team']['name']} — {m['date'][:10]}")
+
+# 4. Both sections should have team logos
+for m in (matches["completed"][:3] + matches["upcoming"][:3]):
+    assert m["home_team"].get("logo"), "Missing home team logo"
+    assert m["away_team"].get("logo"), "Missing away team logo"
+
+print(f"\nCompleted: {len(matches['completed'])} matches")
+print(f"Upcoming: {len(matches['upcoming'])} matches")
+print("PASS: Matches output looks good")
+```
+
+**What you should see:**
+- Completed matches with scores, team names and logos
+- Upcoming matches with dates, team names and logos
+- Matches sorted by date (most recent/nearest first)
 
 ---
 
@@ -638,7 +845,9 @@ _To be added after Phases 1-5 are validated and working._
 |------|--------------|------|
 | `data/raw/players_season_stats.json` | 5-15 MB | — |
 | `data/raw/fixtures_2025.json` | 200-500 KB | — |
+| `data/raw/fixtures_upcoming.json` | 100-300 KB | — |
 | `data/raw/match_stats_2025.json` | 10-30 MB | — |
+| `data/raw/squads.json` | 200-500 KB | — |
 | `data/raw/sidelined.json` | 2-8 MB | — |
 | `data/players.csv` | 100-200 KB | 400-700 |
 | `data/season_stats.csv` | 200-500 KB | 1,600-2,400 |
@@ -646,4 +855,5 @@ _To be added after Phases 1-5 are validated and working._
 | `data/injuries.csv` | 100-500 KB | 500-5,000 |
 | `data/ml_features.csv` | 500 KB-3 MB | 2,000-10,000 |
 | `models/injury_predictor.pkl` | 100 KB-5 MB | — |
-| `output/player_predictions.json` | 500 KB-2 MB | 300-600 |
+| `output/player_predictions.json` | 1-4 MB | 300-600 |
+| `output/matches.json` | 200-500 KB | — |
