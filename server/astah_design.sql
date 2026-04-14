@@ -41,7 +41,6 @@ CREATE TABLE player (
  player_first_name VARCHAR(100),
  player_last_name VARCHAR(100),
  player_age SMALLINT,
- player_market_value NUMERIC(9),
  player_height SMALLINT,
  player_weight SMALLINT
 );
