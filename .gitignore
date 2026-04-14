@@ -4,3 +4,6 @@ models/
 output/
 __pycache__/
 *.pyc
+venv/
+.venv/
+path/
