@@ -1,14 +1,14 @@
 """
 Step 2.3 — Build match_stats.csv
 
-One row per player per match from match_stats_2025.json.
-Derives opponent and home/away from fixture context.
+Reads match stats for all 4 seasons and combines into one CSV.
+One row per player per match, with a 'season' column.
 Output: data/match_stats.csv
 """
 
 import json
 import pandas as pd
-from config import MATCH_STATS_FILE, MATCH_STATS_CSV
+from config import ALL_SEASONS, MATCH_STATS_CSV, match_stats_file
 
 
 def safe(val, cast=None):
@@ -20,12 +20,16 @@ def safe(val, cast=None):
         return None
 
 
-def main():
-    print("Loading match_stats_2025.json...")
-    with open(MATCH_STATS_FILE) as f:
-        raw = json.load(f)
-    print(f"  {len(raw)} fixtures")
+def parse_season(season: int) -> list[dict]:
+    path = match_stats_file(season)
+    if not path.exists():
+        print(f"  Season {season}: file not found, skipping.")
+        return []
 
+    with open(path) as f:
+        raw = json.load(f)
+
+    print(f"  Season {season}: {len(raw)} fixtures ...", end=" ", flush=True)
     rows = []
 
     for fixture_id, fixture in raw.items():
@@ -40,8 +44,8 @@ def main():
             home_away = "home" if team_name == home_team else "away"
 
             for player_block in team_block.get("players", []):
-                p     = player_block.get("player", {})
-                pid   = p.get("id")
+                p   = player_block.get("player", {})
+                pid = p.get("id")
                 if not pid:
                     continue
 
@@ -61,66 +65,78 @@ def main():
                     "player_id":         pid,
                     "player_name":       p.get("name"),
                     "fixture_id":        int(fixture_id),
+                    "season":            season,
                     "date":              date,
                     "round":             round_,
                     "team":              team_name,
                     "opponent":          opponent,
                     "home_away":         home_away,
-                    # Games
                     "minutes":           safe(games.get("minutes"), int),
                     "rating":            safe(games.get("rating"), float),
                     "position":          games.get("position"),
                     "captain":           games.get("captain"),
-                    # Shots
                     "shots_total":       safe(shots.get("total"), int),
                     "shots_on":          safe(shots.get("on"), int),
-                    # Goals
                     "goals":             safe(goals.get("total"), int),
                     "assists":           safe(goals.get("assists"), int),
                     "goals_conceded":    safe(goals.get("conceded"), int),
                     "saves":             safe(goals.get("saves"), int),
-                    # Passes
                     "passes_total":      safe(passes.get("total"), int),
                     "passes_key":        safe(passes.get("key"), int),
                     "passes_accuracy":   safe(passes.get("accuracy"), float),
-                    # Tackles
                     "tackles":           safe(tackles.get("total"), int),
                     "blocks":            safe(tackles.get("blocks"), int),
                     "interceptions":     safe(tackles.get("interceptions"), int),
-                    # Duels
                     "duels_total":       safe(duels.get("total"), int),
                     "duels_won":         safe(duels.get("won"), int),
-                    # Dribbles
                     "dribbles_attempts": safe(drib.get("attempts"), int),
                     "dribbles_success":  safe(drib.get("success"), int),
                     "dribbles_past":     safe(drib.get("past"), int),
-                    # Fouls
                     "fouls_drawn":       safe(fouls.get("drawn"), int),
                     "fouls_committed":   safe(fouls.get("committed"), int),
-                    # Cards
                     "yellow_cards":      safe(cards.get("yellow"), int),
                     "red_cards":         safe(cards.get("red"), int),
-                    # Penalties
                     "penalty_won":       safe(penalty.get("won"), int),
                     "penalty_committed": safe(penalty.get("commited"), int),
                     "penalty_scored":    safe(penalty.get("scored"), int),
                     "penalty_missed":    safe(penalty.get("missed"), int),
                 })
 
-    df = pd.DataFrame(rows)
+    print(f"{len(rows)} rows")
+    return rows
+
+
+def main():
+    print("Building match_stats.csv from all seasons...\n")
+
+    all_rows = []
+    for season in ALL_SEASONS:
+        all_rows.extend(parse_season(season))
+
+    df = pd.DataFrame(all_rows)
     df["date"] = pd.to_datetime(df["date"])
-    df = df.sort_values(["date", "fixture_id", "player_id"]).reset_index(drop=True)
+
+    # Deduplicate — safety net in case of re-fetch overlaps
+    before = len(df)
+    df = df.drop_duplicates(subset=["player_id", "fixture_id"], keep="first")
+    dropped = before - len(df)
+    if dropped:
+        print(f"\nDropped {dropped} duplicate player-fixture rows.")
+
+    df = df.sort_values(["season", "date", "fixture_id", "player_id"]).reset_index(drop=True)
 
     MATCH_STATS_CSV.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(MATCH_STATS_CSV, index=False)
 
     print(f"\n{'─'*50}")
     print(f"Total rows:        {len(df)}")
+    print(f"Rows per season:")
+    for season, count in df.groupby("season").size().items():
+        print(f"  {int(season)}: {count}")
     print(f"Unique fixtures:   {df['fixture_id'].nunique()}")
     print(f"Unique players:    {df['player_id'].nunique()}")
     print(f"Avg players/match: {len(df) / df['fixture_id'].nunique():.1f}")
     print(f"Date range:        {df['date'].min().date()} → {df['date'].max().date()}")
-    print(f"Minutes range:     {df['minutes'].min()} – {df['minutes'].max()}")
     print(f"\nSaved: {MATCH_STATS_CSV}")
 
 

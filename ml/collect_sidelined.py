@@ -6,6 +6,7 @@ Calls:    1 per unique player (~1,200)
 Output:   data/raw/sidelined.json  — dict keyed by player ID
 """
 
+import argparse
 import json
 import time
 import requests
@@ -56,6 +57,11 @@ def get_unique_player_ids() -> list[tuple[int, str]]:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", action="store_true",
+                        help="Clear cached progress and re-fetch all players")
+    args = parser.parse_args()
+
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
     player_ids = get_unique_player_ids()
@@ -64,7 +70,13 @@ def main():
 
     progress  = load_progress()
     sidelined = load_sidelined()
-    done      = set(str(pid) for pid in progress.get("sidelined_done", []))
+
+    if args.force:
+        print("--force: clearing sidelined cache, re-fetching all players...\n")
+        progress.pop("sidelined_done", None)
+        sidelined = {}
+
+    done = set(str(pid) for pid in progress.get("sidelined_done", []))
 
     total     = len(player_ids)
     remaining = total - len(done)

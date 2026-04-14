@@ -55,7 +55,9 @@ def compute_injury_features(df_player_injuries, ref_date):
 
     cutoff_12m = ref_date - pd.Timedelta(days=365)
     cutoff_24m = ref_date - pd.Timedelta(days=730)
-    season_start = pd.Timestamp("2025-08-01")
+    # Derive season start from ref_date — PL seasons begin in August
+    season_year  = ref_date.year if ref_date.month >= 8 else ref_date.year - 1
+    season_start = pd.Timestamp(f"{season_year}-08-01")
 
     last_12m = past[past["start_date"] >= cutoff_12m]
     last_24m = past[past["start_date"] >= cutoff_24m]

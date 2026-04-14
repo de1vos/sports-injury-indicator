@@ -38,6 +38,14 @@ MATCH_STATS_FILE       = ROOT / "data" / "raw" / "match_stats_2025.json"
 SQUADS_FILE            = ROOT / "data" / "raw" / "squads.json"
 SIDELINED_FILE         = ROOT / "data" / "raw" / "sidelined.json"
 
+# Per-season file helpers
+def fixtures_file(season: int) -> Path:
+    return RAW_DIR / f"fixtures_{season}.json"
+
+def match_stats_file(season: int) -> Path:
+    return RAW_DIR / f"match_stats_{season}.json"
+
+
 PLAYERS_CSV      = ROOT / "data" / "players.csv"
 SEASON_STATS_CSV = ROOT / "data" / "season_stats.csv"
 MATCH_STATS_CSV  = ROOT / "data" / "match_stats.csv"

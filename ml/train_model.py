@@ -16,12 +16,38 @@ Output: models/injury_predictor.pkl
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn.isotonic import IsotonicRegression
 from sklearn.metrics import (
     precision_recall_curve, auc, f1_score,
     classification_report, average_precision_score,
 )
 from xgboost import XGBClassifier
 from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR
+
+
+class IsotonicCalibrator:
+    """
+    Wraps a fitted base model and applies isotonic regression calibration.
+
+    XGBoost trained on 3 full retrospective seasons outputs over-inflated
+    probabilities (~37% base rate vs ~5-10% in the live season).
+    This wrapper maps raw scores to realistic probabilities that match the
+    validation-set distribution while preserving the ranking of players.
+    """
+    def __init__(self, base_model):
+        self.base_model = base_model
+        self.calibrator = IsotonicRegression(out_of_bounds="clip")
+        self.feature_importances_ = base_model.feature_importances_
+
+    def fit(self, X_val, y_val):
+        raw = self.base_model.predict_proba(X_val)[:, 1]
+        self.calibrator.fit(raw, y_val)
+        return self
+
+    def predict_proba(self, X):
+        raw = self.base_model.predict_proba(X)[:, 1]
+        cal = self.calibrator.predict(raw)
+        return np.column_stack([1 - cal, cal])
 
 
 # ── Columns to exclude from features ─────────────────────────────────────────
@@ -41,20 +67,34 @@ def load_and_split(path):
     print(f"  {len(df)} rows, {df['player_id'].nunique()} players")
     print(f"  Date range: {df['date'].min().date()} → {df['date'].max().date()}")
 
-    # Chronological split within available data (all 2025/26)
-    # Train: first 60% of dates, Val: next 20%, Test: last 20%
-    dates      = df["date"].sort_values()
-    train_cut  = dates.quantile(0.60)
-    val_cut    = dates.quantile(0.80)
+    # Season-based split: train on 2022-2024, validate+test on 2025/26
+    train   = df[df["season"].isin([2022, 2023, 2024])]
+    current = df[df["season"] == 2025].sort_values("date")
 
-    train = df[df["date"] <= train_cut]
-    val   = df[(df["date"] > train_cut) & (df["date"] <= val_cut)]
-    test  = df[df["date"] > val_cut]
+    if len(current) == 0:
+        # Injury data not yet refreshed — all 2025/26 rows were cut by the
+        # incomplete-window filter in engineer_target.py.
+        # Fall back: chronological split within historical data.
+        print("\n  ⚠  No 2025/26 rows found — injury data needs refreshing.")
+        print("     Run: make refresh-injuries && make refeature")
+        print("     Falling back to 60/20/20 chronological split within 2022-2024 data.\n")
+        dates     = train["date"].sort_values()
+        cut_train = dates.quantile(0.60)
+        cut_val   = dates.quantile(0.80)
+        val   = train[(train["date"] > cut_train) & (train["date"] <= cut_val)]
+        test  = train[train["date"] > cut_val]
+        train = train[train["date"] <= cut_train]
+        mode  = "fallback chronological"
+    else:
+        val_cut = current["date"].quantile(0.50)
+        val     = current[current["date"] <= val_cut]
+        test    = current[current["date"] >  val_cut]
+        mode    = "season-based"
 
-    print(f"\nSplit (chronological):")
-    print(f"  Train:      {len(train)} rows  up to {train_cut.date()}  ({train['injured_next_90d'].mean():.1%} positive)")
-    print(f"  Validation: {len(val)} rows  up to {val_cut.date()}    ({val['injured_next_90d'].mean():.1%} positive)")
-    print(f"  Test:       {len(test)} rows  from {test['date'].min().date()}   ({test['injured_next_90d'].mean():.1%} positive)")
+    print(f"Split ({mode}):")
+    print(f"  Train:      {len(train):6d} rows  ({train['injured_next_90d'].mean():.1%} positive)")
+    print(f"  Validation: {len(val):6d} rows  ({val['injured_next_90d'].mean():.1%} positive)")
+    print(f"  Test:       {len(test):6d} rows  ({test['injured_next_90d'].mean():.1%} positive)")
 
     return train, val, test
 
@@ -87,6 +127,13 @@ def train(X_train, y_train, scale_pos_weight):
     )
     model.fit(X_train, y_train)
     return model
+
+
+def calibrate(model, X_val, y_val):
+    print("\nCalibrating probabilities on validation set (isotonic)...")
+    calibrated = IsotonicCalibrator(model)
+    calibrated.fit(X_val, y_val)
+    return calibrated
 
 
 def find_best_threshold(model, X_val, y_val):
@@ -163,20 +210,24 @@ def main():
     # Train
     model = train(X_train, y_train, scale_pos_weight)
 
-    # Find best threshold on validation set
-    threshold = find_best_threshold(model, X_val, y_val)
+    # Calibrate on val set — corrects the train/live positive-rate distribution shift
+    calibrated_model = calibrate(model, X_val, y_val)
 
-    # Evaluate on all splits
-    evaluate(model, X_train, y_train, "Training set",   threshold)
-    evaluate(model, X_val,   y_val,   "Validation set", threshold)
-    pr_auc, f1 = evaluate(model, X_test, y_test, "Test set", threshold)
+    # Find best threshold on calibrated val predictions
+    threshold = find_best_threshold(calibrated_model, X_val, y_val)
 
-    # Feature importance
+    # Evaluate on all splits (use calibrated model for val + test)
+    evaluate(model,            X_train, y_train, "Training set (raw)",        threshold)
+    evaluate(calibrated_model, X_val,   y_val,   "Validation set (cal.)",     threshold)
+    pr_auc, f1 = evaluate(calibrated_model, X_test, y_test, "Test set (cal.)", threshold)
+
+    # Feature importance (from uncalibrated model — calibrator doesn't change importances)
     save_feature_importance(model, feature_cols)
 
-    # Save model + metadata as a bundle
+    # Save calibrated model + metadata as a bundle
     bundle = {
-        "model":        model,
+        "model":        calibrated_model,   # calibrated — used for all predictions
+        "raw_model":    model,              # raw XGBoost — for SHAP / feature importance
         "feature_cols": feature_cols,
         "threshold":    threshold,
         "pr_auc":       pr_auc,

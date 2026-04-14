@@ -118,10 +118,24 @@ def main():
         how="left",
     )
 
-    # Add season label (for train/val/test split later)
-    df["season"] = df["date"].apply(
-        lambda d: CURRENT_SEASON if d >= pd.Timestamp("2025-08-01") else CURRENT_SEASON - 1
+    # ── Add season label from match_stats (correct 2022/2023/2024/2025) ─────────
+    df = df.merge(
+        matches[["player_id", "fixture_id", "season"]].drop_duplicates(),
+        on=["player_id", "fixture_id"],
+        how="left",
     )
+
+    # ── Drop rows whose 90-day forward window hasn't closed yet ───────────────
+    # Uses the max injury start date in our dataset as a proxy for "data freshness".
+    # Rows after (max_injury_date - 90d) can't have complete labels.
+    max_injury_date = injuries["start_date"].max()
+    label_cutoff    = max_injury_date - pd.Timedelta(days=LOOKAHEAD_DAYS)
+    before_cutoff   = len(df)
+    df = df[df["date"] <= label_cutoff]
+    dropped_cutoff  = before_cutoff - len(df)
+    if dropped_cutoff:
+        print(f"  Dropped {dropped_cutoff} rows beyond label cutoff "
+              f"(max injury date: {max_injury_date.date()}, cutoff: {label_cutoff.date()})")
 
     # ── Drop rows with no target (shouldn't happen, but safety check) ─────────
     before = len(df)
