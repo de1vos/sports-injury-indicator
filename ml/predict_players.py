@@ -349,6 +349,21 @@ def main():
         else:
             fixture_to_gw[fid] = round_str  # fallback: use raw string
 
+    # ── Current gameweek ──────────────────────────────────────────────────────
+    # Last completed GW = highest GW number in fixtures_2025
+    now = datetime.now(timezone.utc)
+    completed_gws = []
+    for fx in fixtures_2025:
+        parts = fx["league"].get("round", "").rsplit("-", 1)
+        if len(parts) == 2 and parts[1].strip().isdigit():
+            fx_date = datetime.fromisoformat(fx["fixture"]["date"])
+            if fx_date.tzinfo is None:
+                fx_date = fx_date.replace(tzinfo=timezone.utc)
+            if fx_date < now:
+                completed_gws.append(int(parts[1].strip()))
+    current_gameweek = max(completed_gws) if completed_gws else 1
+    print(f"Current gameweek: GW{current_gameweek}")
+
     # ── Active 2025/26 players ────────────────────────────────────────────────
     current    = ml[ml["season"] == CURRENT_SEASON].copy()
     active_ids = current["player_id"].unique()
@@ -411,12 +426,22 @@ def main():
             (injuries["start_date"] >= pd.Timestamp(f"{CURRENT_SEASON - 1}-07-01"))
         ]
 
-        # Risk trend — team fixture schedule as 38-slot backbone.
-        # Each slot: risk score if played, "Injured" if injured, else forward-fill.
-        team_id_int    = safe_int(prof.get("team_id"))
-        team_fixtures  = (team_to_fixtures.get(team_id_int) or [])[-TREND_MATCHES:]
+        # Risk trend — 38 slots always labeled GW1–GW38.
+        # Current season fills GW1 onwards; previous season backfills the tail.
+        team_id_int = safe_int(prof.get("team_id"))
+        season_cut  = pd.Timestamp(f"{CURRENT_SEASON}-07-01")
 
-        # Player's feature rows keyed by fixture_id (last row if duplicates)
+        curr_fixtures = [fx for fx in (team_to_fixtures.get(team_id_int) or [])
+                         if pd.Timestamp(fx["fixture"]["date"][:10]) >= season_cut]
+        prev_fixtures = [fx for fx in (team_to_fixtures.get(team_id_int) or [])
+                         if pd.Timestamp(fx["fixture"]["date"][:10]) < season_cut]
+
+        n_current = len(curr_fixtures)                        # e.g. 32
+        n_prev    = max(0, TREND_MATCHES - n_current)         # e.g. 6
+        # Take the last n_prev fixtures from previous season
+        ordered_fixtures = prev_fixtures[-n_prev:] + curr_fixtures  # prev tail → curr
+
+        # Player's feature rows keyed by fixture_id
         player_fid_map = (
             ml[ml["player_id"] == player_id]
             .sort_values("date")
@@ -425,24 +450,22 @@ def main():
         )
 
         # Batch-predict all fixtures where player has a feature row
-        played_fids = [fx["fixture"]["id"] for fx in team_fixtures
+        played_fids = [fx["fixture"]["id"] for fx in ordered_fixtures
                        if fx["fixture"]["id"] in player_fid_map.index]
         if played_fids:
-            X_batch   = player_fid_map.loc[played_fids][feature_cols].fillna(0)
-            scores    = calibrated_model.predict_proba(X_batch)[:, 1]
+            X_batch      = player_fid_map.loc[played_fids][feature_cols].fillna(0)
+            scores       = calibrated_model.predict_proba(X_batch)[:, 1]
             fid_to_score = {fid: round(float(s), 4) for fid, s in zip(played_fids, scores)}
         else:
             fid_to_score = {}
 
-        trend      = []
-        last_risk  = None
-        season_cut = pd.Timestamp(f"{CURRENT_SEASON}-07-01")
+        trend     = {}
+        last_risk = None
 
-        for fx in team_fixtures:
-            fid      = fx["fixture"]["id"]
-            gw       = fixture_to_gw.get(fid, fx["league"]["round"])
-            fx_date  = pd.Timestamp(fx["fixture"]["date"][:10])
-            fx_season = CURRENT_SEASON if fx_date >= season_cut else CURRENT_SEASON - 1
+        for slot, fx in enumerate(ordered_fixtures, start=1):
+            fid     = fx["fixture"]["id"]
+            fx_date = pd.Timestamp(fx["fixture"]["date"][:10])
+            gw_key  = f"GW{slot}"
 
             # Was the player injured on this date?
             injured = False
@@ -460,10 +483,9 @@ def main():
                 last_risk = fid_to_score[fid]
                 risk_val  = last_risk
             else:
-                # Not injured, didn't play (bench / not selected) — forward-fill
                 risk_val = last_risk if last_risk is not None else round(injury_risk, 4)
 
-            trend.append({"gw": gw, "season": fx_season, "risk": risk_val})
+            trend[gw_key] = risk_val
 
         # Season stats — all available seasons, newest first
         all_season_stats = get_all_season_stats(season_stats, player_id)
@@ -510,7 +532,7 @@ def main():
             "injury_risk":       round(injury_risk, 4),
             "risk_level":        get_risk_level(injury_risk),
             "risk_factors":      factors,
-            "injury_risk_trend": trend,
+            "injury_risk_trend": trend,   # {"GW1": 0.35, "GW2": "Injured", ...}
 
             "season_stats": all_season_stats,
             "workload":              workload,
@@ -532,8 +554,14 @@ def main():
     pred_path    = OUTPUT_DIR / "predictions.json"
     matches_path = OUTPUT_DIR / "matches.json"
 
+    output = {
+        "current_gameweek": current_gameweek,
+        "current_season":   CURRENT_SEASON,
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "players":          records,
+    }
     with open(pred_path, "w") as f:
-        json.dump(records, f, indent=2, default=str)
+        json.dump(output, f, indent=2, default=str)
     with open(matches_path, "w") as f:
         json.dump(matches, f, indent=2, default=str)
 
