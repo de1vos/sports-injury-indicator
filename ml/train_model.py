@@ -16,38 +16,13 @@ Output: models/injury_predictor.pkl
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn.isotonic import IsotonicRegression
 from sklearn.metrics import (
     precision_recall_curve, auc, f1_score,
     classification_report, average_precision_score,
 )
 from xgboost import XGBClassifier
 from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR
-
-
-class IsotonicCalibrator:
-    """
-    Wraps a fitted base model and applies isotonic regression calibration.
-
-    XGBoost trained on 3 full retrospective seasons outputs over-inflated
-    probabilities (~37% base rate vs ~5-10% in the live season).
-    This wrapper maps raw scores to realistic probabilities that match the
-    validation-set distribution while preserving the ranking of players.
-    """
-    def __init__(self, base_model):
-        self.base_model = base_model
-        self.calibrator = IsotonicRegression(out_of_bounds="clip")
-        self.feature_importances_ = base_model.feature_importances_
-
-    def fit(self, X_val, y_val):
-        raw = self.base_model.predict_proba(X_val)[:, 1]
-        self.calibrator.fit(raw, y_val)
-        return self
-
-    def predict_proba(self, X):
-        raw = self.base_model.predict_proba(X)[:, 1]
-        cal = self.calibrator.predict(raw)
-        return np.column_stack([1 - cal, cal])
+from model_utils import SigmoidCalibrator
 
 
 # ── Columns to exclude from features ─────────────────────────────────────────
@@ -130,8 +105,8 @@ def train(X_train, y_train, scale_pos_weight):
 
 
 def calibrate(model, X_val, y_val):
-    print("\nCalibrating probabilities on validation set (isotonic)...")
-    calibrated = IsotonicCalibrator(model)
+    print("\nCalibrating probabilities on validation set (sigmoid/Platt)...")
+    calibrated = SigmoidCalibrator(model)
     calibrated.fit(X_val, y_val)
     return calibrated
 

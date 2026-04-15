@@ -104,7 +104,7 @@ All data comes from API-Football. Four endpoints, run once, cached locally.
 
 **Endpoint:** `GET /sidelined?player={id}`
 
-**Purpose:** Full career injury and suspension timeline for every player. One call per unique player ID returns their entire history — not limited to the 4 seasons.
+**Purpose:** Full career injury and suspension timeline for every player. One call per unique player ID returns their entire history — not limited to the 4 seasons. Note: this endpoint lags behind for recent seasons (typically complete up to ~2 months ago). Supplemented by Step 1.8.
 
 **Returns per record:**
 
@@ -116,7 +116,19 @@ All data comes from API-Football. Four endpoints, run once, cached locally.
 
 **Output:** `data/sidelined.json` — keyed by player ID, each containing an array of injury records.
 
-### Step 1.8 — Total call budget
+### Step 1.8 — Season injury reports (per-fixture)
+
+**Endpoint:** `GET /injuries?league=39&season={year}`
+
+**Seasons:** 2022, 2023, 2024, 2025
+
+**Purpose:** Pre-match injury reports per fixture showing which players were unavailable and why. More up-to-date than the sidelined endpoint, especially for the current season. Returns all PL injury reports for a full season in a single call — no pagination.
+
+**Calls:** 1 per season × 4 seasons = **4 calls**
+
+**Output:** `data/raw/injuries_season_{year}.json`
+
+### Step 1.9 — Total call budget
 
 | Step      | Endpoint                              | Calls      |
 | --------- | ------------------------------------- | ---------- |
@@ -127,11 +139,12 @@ All data comes from API-Football. Four endpoints, run once, cached locally.
 | 1.5       | `/players/squads` (kit numbers)       | ~20        |
 | 1.6       | `/fixtures` (25/26 upcoming)          | ~2         |
 | 1.7       | `/sidelined` (all unique players)     | ~1,200     |
-| **Total** |                                       | **~1,718** |
+| 1.8       | `/injuries` (4 seasons)               | ~4         |
+| **Total** |                                       | **~1,722** |
 
 Pro plan: 7,500 calls/day. Entire collection runs in **under 6 hours** with rate limiting (0.5s between calls).
 
-### Step 1.9 — Caching and resume
+### Step 1.10 — Caching and resume
 
 Every API response is cached to disk as JSON immediately after fetching. The script tracks which calls have been completed in a `data/progress.json` file. If interrupted, rerunning the script skips already-fetched data and resumes from where it left off. No wasted calls.
 
@@ -222,15 +235,21 @@ One row per player per match. From `/fixtures/players` (step 1.4). 2025/26 seaso
 
 ### 2.4 — Injury table
 
-One row per injury/sidelined event. From `/sidelined` (step 1.5).
+One row per injury/sidelined event. Built from two sources:
 
-| Column      | Source                | Example          |
-| ----------- | --------------------- | ---------------- |
-| player_id   | from query param                          | 1100             |
-| injury_type | type                                      | Hamstring Injury |
-| start_date  | start                                     | 2024-12-22       |
-| end_date    | end                                       | 2025-02-01       |
-| days_out    | computed: end - start                     | 41               |
+**Source 1 — sidelined.json:** Exact start/end dates, complete career history. Lags ~2 months on current season.
+
+**Source 2 — injuries_season_{year}.json:** Per-fixture absence reports clustered into injury events. Consecutive "Missing Fixture" entries within 45 days = one injury event. First fixture date = start_date, last fixture date + 14 days = approximate end_date. Fills the gap left by sidelined for recent months.
+
+Duplicates removed: season_injuries rows within 30 days of the same type as a sidelined row are dropped.
+
+| Column      | Source                                     | Example          |
+| ----------- | ------------------------------------------ | ---------------- |
+| player_id   | from query param                           | 1100             |
+| injury_type | type                                       | Hamstring Injury |
+| start_date  | start                                      | 2024-12-22       |
+| end_date    | end                                        | 2025-02-01       |
+| days_out    | computed: end - start                      | 41               |
 | severity    | computed from days_out (see mapping below) | Moderate         |
 | body_region | mapped from injury_type (see mapping below)| Thigh            |
 
@@ -324,13 +343,14 @@ Static features:
 - `position_encoded` — one-hot or label encoded (Goalkeeper, Defender, Midfielder, Attacker)
 - `height` — in cm
 - `weight` — in kg
-- `bmi` — computed: weight / (height/100)²
 
 ### 3.5 — Target variable
 
 For each player-gameweek row, look forward in the injury table:
 
 `injured_next_90d` — did a new injury (not suspension) start within 90 days of this gameweek? Binary: 1 = yes, 0 = no.
+
+Rows where the 90-day forward window hasn't closed yet (based on max injury date in injuries.csv) are dropped to avoid false negatives.
 
 **Output:** `data/ml_features.csv` — one row per player per gameweek, all features + target.
 
@@ -345,11 +365,11 @@ For each player-gameweek row, look forward in the injury table:
 (season-level features +              (learn injury patterns)
  injury history features)
 
-2025/26 GW1-25                   →    VALIDATION SET
-(match-level rolling features +       (tune hyperparameters)
+2025/26 GW1-50%                  →    VALIDATION SET
+(match-level rolling features +       (tune threshold + calibration)
  injury history features)
 
-2025/26 GW26-33                  →    TEST SET
+2025/26 GW50%+                   →    TEST SET
 (most recent weeks)                   (final evaluation)
 ```
 
@@ -377,7 +397,11 @@ XGBoost gradient boosted trees. Strong baseline for tabular data, handles missin
 
 Tuned with time-series cross-validation on training set.
 
-### 4.4 — Evaluation metrics
+### 4.4 — Calibration
+
+XGBoost trained on 3 complete retrospective seasons produces over-inflated raw probabilities (~40% base rate vs ~30% in the live season). Isotonic regression calibration is fitted on the validation set. Maps raw scores to realistic probabilities matching the current-season distribution while preserving player risk rankings.
+
+### 4.5 — Evaluation metrics
 
 - **PR-AUC** (precision-recall area under curve) — primary metric, handles imbalance
 - **F1 score** at optimal threshold
@@ -390,31 +414,77 @@ Tuned with time-series cross-validation on training set.
 
 ## Phase 5 — Live prediction
 
-### 5.1 — Generate predictions for every active player
+### 5.1 — Overview
 
-For each player currently in the 2025/26 PL season with minutes > 0:
+Single script: `ml/predict_players.py`
 
-1. Compute their current rolling features from match stats (latest gameweek)
-2. Compute their injury history features from sidelined data
-3. Add their profile features (age, position, height, weight)
-4. Feed feature vector into trained model
-5. Output: injury probability 0.0 to 1.0
+Reads all local data (no API calls except one to refresh upcoming fixtures), runs the calibrated model on every active 2025/26 player, and writes two JSON files the frontend reads directly.
 
-### 5.2 — Extract risk factors
+**Active players:** Anyone with at least one `season=2025` row in `match_stats.csv`.
 
-From XGBoost's SHAP values for each player, extract the top 3-5 features driving their risk score. Translate feature names into human-readable strings:
+### 5.2 — Current risk score
 
-- `minutes_last_30d = 520` → "High workload: 520 min in last 30 days"
-- `recurring_injury_flag = 1` → "Recurring hamstring injury (3× career)"
-- `workload_trend = 0.22` → "Workload increased 22% vs previous month"
-- `days_since_last_injury = 45` → "Recently returned from injury (45 days ago)"
-- `age = 32` → "Age-related risk factor"
+For each player, take their **most recent match row** from `ml_features.csv` (highest date where `season=2025`). Feed its 46 features into the calibrated model → `injury_risk` float (0.0–1.0).
 
-### 5.3 — Build player output file
+### 5.3 — Risk trend (last 12 matches)
 
-Combine everything into two JSON files the frontend reads:
+Slice the **last 12 match rows** per player from `ml_features.csv` ordered by date. Run the model on each row. Result: a 12-point array showing how the player's risk has evolved match-by-match across the season.
 
-#### `output/player_predictions.json` — Player data + predictions
+```
+Match 1 (Aug 17)  →  features at that date  →  0.22
+Match 2 (Aug 24)  →  features at that date  →  0.25
+...
+Match 12 (Dec 10) →  features at that date  →  0.34
+```
+
+Each value answers: *"what was this player's injury risk going into that match?"* If workload has been building you see a steady climb. If they just returned from injury you see a spike then gradual fall.
+
+### 5.4 — Risk factors (SHAP)
+
+SHAP (SHapley Additive exPlanations) explains each individual prediction by computing how much each feature pushed the risk up or down from the average player baseline.
+
+Example for a player at 34% risk:
+```
+Baseline (average player):          15%
++ injuries_last_24_months = 4:      +9%
++ matches_last_30d = 6:             +6%
++ days_since_last_injury = 12:      +5%
+- age = 23 (young):                 -2%
+─────────────────────────────────────────
+Final:                              34%
+```
+
+The top 3 positive SHAP features are translated into human-readable strings:
+
+| Feature | Value | Output string |
+|---------|-------|---------------|
+| `injuries_last_24_months` | 4 | "4 injuries in last 24 months" |
+| `matches_last_30d` | 6 | "High match load: 6 games in last 30 days" |
+| `minutes_last_30d` | 520 | "High workload: 520 min in last 30 days" |
+| `acute_chronic_ratio` | 1.4 | "Workload spike: ACWR 1.40" |
+| `days_since_last_injury` | 12 | "Recently returned from injury (12 days ago)" |
+| `consecutive_90min_starts` | 5 | "5 consecutive 90-min starts" |
+| `recurring_injury_flag` | 1 | "History of recurring {recurring_injury_type}" |
+| `workload_trend` | 0.22 | "Workload up 22% vs previous month" |
+| `age` | 33 | "Age-related risk (33 years old)" |
+
+### 5.5 — Season stats
+
+**Current season (`season_stats`):** from `season_stats.csv` where `season=2025`.
+
+**Previous season (`previous_season_stats`):** from `season_stats.csv` where `season=2024`. Allows the frontend to show year-over-year comparison. `null` if the player wasn't in the PL last season.
+
+### 5.6 — Matches output
+
+**Source:** `fixtures_2025.json` (completed) + `fixtures_upcoming.json` (upcoming).
+**Refresh upcoming:** one API call to `GET /fixtures?league=39&season=2025&status=NS` before generating output.
+
+**Completed:** all fixtures with `date >= today - 14 days`
+**Upcoming:** all fixtures with `date <= today + 14 days`
+
+### 5.7 — Output format
+
+#### `output/predictions.json`
 
 ```json
 [
@@ -433,36 +503,36 @@ Combine everything into two JSON files the frontend reads:
     "nationality": "England",
     "kit_number": 7,
 
-    "season_stats": {
-      "appearances": 25,
-      "minutes": 1735,
-      "rating": 7.53,
-      "goals": 6,
-      "assists": 10,
-      "tackles": 30,
-      "interceptions": 3,
-      "duels_total": 243,
-      "duels_won": 120,
-      "dribbles_attempts": 78,
-      "dribbles_success": 41,
-      "fouls_committed": 15,
-      "fouls_drawn": 32,
-      "yellow_cards": 3,
-      "red_cards": 0
-    },
-
     "injury_risk": 0.34,
     "risk_level": "Medium",
     "risk_factors": [
+      "4 injuries in last 24 months",
       "High workload: 520 min in last 30 days",
-      "2 prior hamstring injuries in career",
-      "Workload increased 15% vs previous month"
+      "Workload up 15% vs previous month"
     ],
     "injury_risk_trend": [0.22, 0.25, 0.28, 0.27, 0.30, 0.29, 0.31, 0.30, 0.33, 0.32, 0.34, 0.34],
 
+    "season_stats": {
+      "appearances": 25, "minutes": 1735, "rating": 7.53,
+      "goals": 6, "assists": 10, "tackles": 30, "interceptions": 3,
+      "duels_total": 243, "duels_won": 120,
+      "dribbles_attempts": 78, "dribbles_success": 41,
+      "fouls_committed": 15, "fouls_drawn": 32,
+      "yellow_cards": 3, "red_cards": 0
+    },
+
+    "previous_season_stats": {
+      "appearances": 35, "minutes": 2890, "rating": 7.71,
+      "goals": 16, "assists": 9, "tackles": 42, "interceptions": 5,
+      "duels_total": 310, "duels_won": 158,
+      "dribbles_attempts": 102, "dribbles_success": 54,
+      "fouls_committed": 22, "fouls_drawn": 45,
+      "yellow_cards": 2, "red_cards": 0
+    },
+
     "workload": {
-      "minutes_played": 1735,
-      "matches_played": 25,
+      "minutes_last_30d": 520,
+      "matches_last_30d": 6,
       "acute_chronic_ratio": 1.35,
       "match_density_14d": 4,
       "fouls_against_per_90": 2.1,
@@ -486,14 +556,6 @@ Combine everything into two JSON files the frontend reads:
         "days_out": 41,
         "severity": "Severe",
         "body_region": "Thigh"
-      },
-      {
-        "type": "Ankle Injury",
-        "start": "2023-09-10",
-        "end": "2023-10-15",
-        "days_out": 35,
-        "severity": "Severe",
-        "body_region": "Ankle"
       }
     ],
 
@@ -509,7 +571,7 @@ Combine everything into two JSON files the frontend reads:
 ]
 ```
 
-#### `output/matches.json` — Past and upcoming fixtures
+#### `output/matches.json`
 
 ```json
 {
@@ -537,14 +599,16 @@ Combine everything into two JSON files the frontend reads:
 }
 ```
 
-**Risk level thresholds:**
+### 5.8 — Risk level thresholds
 
-- Low: 0-20%
-- Medium: 20-45%
-- High: 45-70%
-- Critical: 70-100%
+| Level | Range |
+|-------|-------|
+| Low | 0–20% |
+| Medium | 20–45% |
+| High | 45–70% |
+| Critical | 70–100% |
 
-### 5.4 — Not available from API-Football
+### 5.9 — Not available from API-Football
 
 The following frontend requests **cannot** be fulfilled by API-Football and are excluded:
 
@@ -552,11 +616,18 @@ The following frontend requests **cannot** be fulfilled by API-Football and are 
 - **Contract end date** — not returned by any API-Football endpoint
 - **Preferred foot** — not returned by any API-Football endpoint
 
+### 5.10 — API calls for Phase 5
+
+| Action | Calls |
+|--------|-------|
+| Refresh upcoming fixtures | 1 |
+| Everything else | 0 (local) |
+
 ---
 
 ## Phase 6 — Weekly update
 
-Runs every gameweek after matches are completed. ~25 API calls.
+Runs every gameweek after matches are completed. ~15 API calls.
 
 ### 6.1 — Fetch new match data (~10 calls)
 
@@ -566,23 +637,25 @@ GET /fixtures/players?fixture={id}  ×  10 new PL matches
 
 Append to `data/match_stats.csv`.
 
-### 6.2 — Update sidelined for newly injured (~10-15 calls)
-
-Compare player `injured` flags from the latest `/fixtures/players` response against cached data. For any player whose status changed to injured:
+### 6.2 — Refresh season injury reports (4 calls)
 
 ```
-GET /sidelined?player={id}
+GET /injuries?league=39&season=2025
 ```
 
-Append new records to `data/injuries.csv`.
+Re-fetch to pick up newly reported injuries. Much cheaper than re-fetching sidelined (~1,781 calls).
 
-### 6.3 — Recompute features
+### 6.3 — Refresh upcoming fixtures (1 call)
 
-Recalculate rolling window features for all active players using updated match and injury data.
+```
+GET /fixtures?league=39&season=2025&status=NS
+```
 
-### 6.4 — Run predictions
+### 6.4 — Recompute features + predictions
 
-Feed updated features into the trained model. Regenerate `output/player_predictions.json`.
+```
+make refeature && make predict
+```
 
 ### 6.5 — Optional: retrain periodically
 
@@ -609,30 +682,49 @@ Every 4-8 weeks, retrain the model incorporating new data. The more gameweeks of
 ```
 injury-predictor/
 ├── .env                       # API key (gitignored)
-├── config.py                  # loads .env, constants, league ID, seasons
-├── collect_data.py            # Phase 1 — API calls with caching
-├── build_tables.py            # Phase 2 — raw JSON → clean CSVs
-├── engineer_features.py       # Phase 3 — CSVs → ML feature matrix
-├── train_model.py             # Phase 4 — feature matrix → trained model
-├── predict.py                 # Phase 5 — model + current data → predictions JSON
-├── weekly_update.py           # Phase 6 — incremental update pipeline
+├── ml/
+│   ├── config.py
+│   ├── Makefile
+│   ├── collect_players.py
+│   ├── collect_fixtures.py
+│   ├── collect_fixtures_historical.py
+│   ├── collect_fixtures_upcoming.py
+│   ├── collect_match_stats.py
+│   ├── collect_match_stats_historical.py
+│   ├── collect_squads.py
+│   ├── collect_sidelined.py
+│   ├── collect_injuries_season.py
+│   ├── build_players.py
+│   ├── build_season_stats.py
+│   ├── build_match_stats.py
+│   ├── build_injuries.py
+│   ├── engineer_rolling_features.py
+│   ├── engineer_season_features.py
+│   ├── engineer_injury_features.py
+│   ├── engineer_profile_features.py
+│   ├── engineer_target.py
+│   ├── train_model.py
+│   └── predict_players.py          ← Phase 5 (to be written)
 ├── data/
-│   ├── progress.json          # tracks completed API calls
-│   ├── raw/                   # raw API responses (cached JSON)
+│   ├── progress.json
+│   ├── raw/
 │   │   ├── players_season_stats.json
 │   │   ├── fixtures_2025.json
+│   │   ├── fixtures_{2022,2023,2024}.json
 │   │   ├── fixtures_upcoming.json
-│   │   ├── match_stats_2025.json
+│   │   ├── match_stats_{2022,2023,2024,2025}.json
 │   │   ├── squads.json
-│   │   └── sidelined.json
-│   ├── players.csv            # player profiles (incl. kit number)
-│   ├── season_stats.csv       # season aggregated stats
-│   ├── match_stats.csv        # per-match stats (25/26)
-│   ├── injuries.csv           # sidelined history (incl. severity, body region)
-│   └── ml_features.csv        # engineered feature matrix
+│   │   ├── sidelined.json
+│   │   └── injuries_season_{2022,2023,2024,2025}.json
+│   ├── players.csv
+│   ├── season_stats.csv
+│   ├── match_stats.csv
+│   ├── injuries.csv
+│   └── ml_features.csv
 ├── models/
-│   └── injury_predictor.pkl   # trained XGBoost model
+│   ├── injury_predictor.pkl
+│   └── feature_importance.csv
 └── output/
-    ├── player_predictions.json # player data + predictions for frontend
-    └── matches.json            # past results + upcoming fixtures for frontend
+    ├── predictions.json            ← consumed by frontend
+    └── matches.json                ← consumed by frontend
 ```

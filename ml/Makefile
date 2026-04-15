@@ -1,7 +1,7 @@
 PYTHON = python3.14
 
 # ── Run full pipeline from scratch ───────────────────────────────────────────
-.PHONY: all collect refresh-injuries build features train rebuild refeature help
+.PHONY: all collect refresh-injuries build features train rebuild refeature predict full-update help
 
 all: collect build features train
 
@@ -53,6 +53,16 @@ rebuild: build features train
 # Only re-run feature engineering + training (match_stats.csv unchanged)
 refeature: features train
 
+# ── 5. Predictions ────────────────────────────────────────────────────────────
+predict:
+	@echo "\n══ Refreshing upcoming fixtures ══"
+	$(PYTHON) collect_fixtures_upcoming.py
+	@echo "\n══ Generating predictions ══"
+	$(PYTHON) predict_players.py
+
+# Run after each gameweek: refresh injuries + upcoming, re-engineer, predict
+full-update: refresh-injuries predict
+
 # ── Help ──────────────────────────────────────────────────────────────────────
 help:
 	@echo ""
@@ -66,4 +76,6 @@ help:
 	@echo "  make train             — retrain the model"
 	@echo "  make rebuild           — build + features + train (skip API calls)"
 	@echo "  make refeature         — features + train only (match_stats.csv unchanged)"
+	@echo "  make predict           — refresh upcoming fixtures + generate predictions JSON"
+	@echo "  make full-update       — refresh injuries + predict (run after each gameweek)"
 	@echo ""
