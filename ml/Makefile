@@ -60,6 +60,18 @@ predict:
 	@echo "\n══ Generating predictions ══"
 	$(PYTHON) predict_players.py
 
+# Fetch new 2025/26 fixtures + match stats (GW23+ gap), then rebuild features
+refresh-current:
+	@echo "\n══ Clearing fixtures_2025_done flag ══"
+	$(PYTHON) -c "import json,pathlib; p=pathlib.Path('../data/progress.json'); d=json.loads(p.read_text()); d.pop('fixtures_2025_done',None); p.write_text(json.dumps(d,indent=2)); print('Done')"
+	@echo "\n══ Re-fetching completed 2025/26 fixtures ══"
+	$(PYTHON) collect_fixtures.py
+	@echo "\n══ Fetching missing match stats (GW23+) ══"
+	$(PYTHON) collect_match_stats.py
+	@echo "\n══ Rebuilding features + predictions ══"
+	$(MAKE) rebuild
+	$(MAKE) predict
+
 # Run after each gameweek: refresh injuries + upcoming, re-engineer, predict
 full-update: refresh-injuries predict
 
@@ -77,5 +89,6 @@ help:
 	@echo "  make rebuild           — build + features + train (skip API calls)"
 	@echo "  make refeature         — features + train only (match_stats.csv unchanged)"
 	@echo "  make predict           — refresh upcoming fixtures + generate predictions JSON"
+	@echo "  make refresh-current   — fetch GW23+ fixtures + match stats, rebuild features + predict"
 	@echo "  make full-update       — refresh injuries + predict (run after each gameweek)"
 	@echo ""

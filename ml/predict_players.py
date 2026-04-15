@@ -26,7 +26,7 @@ from datetime import datetime, timedelta, timezone
 
 from config import (
     PLAYERS_CSV, SEASON_STATS_CSV, INJURIES_CSV, ML_FEATURES_CSV,
-    FIXTURES_FILE, FIXTURES_UPCOMING_FILE,
+    FIXTURES_FILE, FIXTURES_PREV_FILE, FIXTURES_UPCOMING_FILE,
     MODEL_FILE, OUTPUT_DIR, RISK_THRESHOLDS, CURRENT_SEASON,
 )
 from model_utils import SigmoidCalibrator  # required for pickle deserialization
@@ -319,6 +319,8 @@ def main():
 
     with open(FIXTURES_FILE) as f:
         fixtures_2025 = json.load(f)
+    with open(FIXTURES_PREV_FILE) as f:
+        fixtures_2024 = json.load(f)
     with open(FIXTURES_UPCOMING_FILE) as f:
         fixtures_upcoming = json.load(f)
 
@@ -326,10 +328,19 @@ def main():
         print("  shap not installed — using rule-based risk factors")
         print("  Install with: pip install shap\n")
 
+    # ── Per-team fixture schedule (backbone for trend) ────────────────────────
+    team_to_fixtures: dict[int, list] = {}
+    for fx in fixtures_2024 + fixtures_2025:
+        for side in ("home", "away"):
+            tid = fx["teams"][side]["id"]
+            team_to_fixtures.setdefault(tid, []).append(fx)
+    for tid in team_to_fixtures:
+        team_to_fixtures[tid].sort(key=lambda x: x["fixture"]["date"])
+
     # ── Fixture → gameweek lookup ─────────────────────────────────────────────
     # Round format: "Regular Season - 33" → "GW33"
     fixture_to_gw: dict[int, str] = {}
-    for fx in fixtures_2025 + fixtures_upcoming:
+    for fx in fixtures_2024 + fixtures_2025 + fixtures_upcoming:
         fid   = fx["fixture"]["id"]
         round_str = fx["league"].get("round", "")
         parts = round_str.rsplit("-", 1)
@@ -394,44 +405,65 @@ def main():
         else:
             factors = get_risk_factors_rules(row_data)
 
-        # Risk trend — last N matches this season only
-        player_history = (
-            current[current["player_id"] == player_id]
-            .sort_values("date")
-            .tail(TREND_MATCHES)
-        )
-
-        # Active injuries this season for injured-gameweek detection
+        # Injuries across both seasons for injured-gameweek detection
         player_injuries = injuries[
             (injuries["player_id"] == player_id) &
-            (injuries["start_date"] >= pd.Timestamp(f"{CURRENT_SEASON}-07-01"))
+            (injuries["start_date"] >= pd.Timestamp(f"{CURRENT_SEASON - 1}-07-01"))
         ]
 
-        if len(player_history) > 0:
-            X_trend      = player_history[feature_cols].fillna(0)
-            risk_scores  = calibrated_model.predict_proba(X_trend)[:, 1]
-            trend = []
-            for (_, hist_row), score in zip(player_history.iterrows(), risk_scores):
-                match_date = hist_row["date"]
-                fid        = int(hist_row["fixture_id"]) if pd.notna(hist_row.get("fixture_id")) else None
-                gw         = fixture_to_gw.get(fid, str(match_date.date())) if fid else str(match_date.date())
+        # Risk trend — team fixture schedule as 38-slot backbone.
+        # Each slot: risk score if played, "Injured" if injured, else forward-fill.
+        team_id_int    = safe_int(prof.get("team_id"))
+        team_fixtures  = (team_to_fixtures.get(team_id_int) or [])[-TREND_MATCHES:]
 
-                # Check if player was injured on this match date
-                injured = False
-                for _, inj in player_injuries.iterrows():
-                    if pd.isna(inj["start_date"]):
-                        continue
-                    end_check = inj["end_date"] if pd.notna(inj["end_date"]) else pd.Timestamp("2099-01-01")
-                    if inj["start_date"] <= match_date <= end_check:
-                        injured = True
-                        break
+        # Player's feature rows keyed by fixture_id (last row if duplicates)
+        player_fid_map = (
+            ml[ml["player_id"] == player_id]
+            .sort_values("date")
+            .drop_duplicates("fixture_id", keep="last")
+            .set_index("fixture_id")
+        )
 
-                trend.append({
-                    "gw":   gw,
-                    "risk": "Injured" if injured else round(float(score), 4),
-                })
+        # Batch-predict all fixtures where player has a feature row
+        played_fids = [fx["fixture"]["id"] for fx in team_fixtures
+                       if fx["fixture"]["id"] in player_fid_map.index]
+        if played_fids:
+            X_batch   = player_fid_map.loc[played_fids][feature_cols].fillna(0)
+            scores    = calibrated_model.predict_proba(X_batch)[:, 1]
+            fid_to_score = {fid: round(float(s), 4) for fid, s in zip(played_fids, scores)}
         else:
-            trend = [{"gw": "GW1", "risk": round(injury_risk, 4)}]
+            fid_to_score = {}
+
+        trend      = []
+        last_risk  = None
+        season_cut = pd.Timestamp(f"{CURRENT_SEASON}-07-01")
+
+        for fx in team_fixtures:
+            fid      = fx["fixture"]["id"]
+            gw       = fixture_to_gw.get(fid, fx["league"]["round"])
+            fx_date  = pd.Timestamp(fx["fixture"]["date"][:10])
+            fx_season = CURRENT_SEASON if fx_date >= season_cut else CURRENT_SEASON - 1
+
+            # Was the player injured on this date?
+            injured = False
+            for _, inj in player_injuries.iterrows():
+                if pd.isna(inj["start_date"]):
+                    continue
+                end_check = inj["end_date"] if pd.notna(inj["end_date"]) else pd.Timestamp("2099-01-01")
+                if inj["start_date"] <= fx_date <= end_check:
+                    injured = True
+                    break
+
+            if injured:
+                risk_val = "Injured"
+            elif fid in fid_to_score:
+                last_risk = fid_to_score[fid]
+                risk_val  = last_risk
+            else:
+                # Not injured, didn't play (bench / not selected) — forward-fill
+                risk_val = last_risk if last_risk is not None else round(injury_risk, 4)
+
+            trend.append({"gw": gw, "season": fx_season, "risk": risk_val})
 
         # Season stats — all available seasons, newest first
         all_season_stats = get_all_season_stats(season_stats, player_id)
@@ -458,8 +490,7 @@ def main():
         }
 
         # Next match
-        team_id    = safe_int(prof.get("team_id"))
-        next_match = get_next_match(team_id, fixtures_upcoming) if team_id else None
+        next_match = get_next_match(team_id_int, fixtures_upcoming) if team_id_int else None
 
         records.append({
             "player_id":   player_id,

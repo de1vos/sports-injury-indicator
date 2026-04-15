@@ -21,7 +21,7 @@ from sklearn.metrics import (
     classification_report, average_precision_score,
 )
 from xgboost import XGBClassifier
-from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR
+from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV
 from model_utils import SigmoidCalibrator
 
 
@@ -42,9 +42,16 @@ def load_and_split(path):
     print(f"  {len(df)} rows, {df['player_id'].nunique()} players")
     print(f"  Date range: {df['date'].min().date()} → {df['date'].max().date()}")
 
+    # Label cutoff: rows beyond (max_injury_date - 90d) have incomplete labels.
+    # Keep them in ml_features.csv for prediction, but exclude from val/test.
+    injuries        = pd.read_csv(INJURIES_CSV, parse_dates=["start_date"])
+    max_injury_date = injuries["start_date"].max()
+    label_cutoff    = max_injury_date - pd.Timedelta(days=90)
+    print(f"  Label cutoff: {label_cutoff.date()}  (max injury date: {max_injury_date.date()})")
+
     # Season-based split: train on 2022-2024, validate+test on 2025/26
     train   = df[df["season"].isin([2022, 2023, 2024])]
-    current = df[df["season"] == 2025].sort_values("date")
+    current = df[(df["season"] == 2025) & (df["date"] <= label_cutoff)].sort_values("date")
 
     if len(current) == 0:
         # Injury data not yet refreshed — all 2025/26 rows were cut by the

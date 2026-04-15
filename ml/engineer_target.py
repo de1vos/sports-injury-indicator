@@ -126,16 +126,17 @@ def main():
     )
 
     # ── Drop rows whose 90-day forward window hasn't closed yet ───────────────
-    # Uses the max injury start date in our dataset as a proxy for "data freshness".
-    # Rows after (max_injury_date - 90d) can't have complete labels.
+    # Only applies to historical training seasons — current season rows are kept
+    # regardless (labels will be NaN/0, but they're used for prediction only).
     max_injury_date = injuries["start_date"].max()
     label_cutoff    = max_injury_date - pd.Timedelta(days=LOOKAHEAD_DAYS)
     before_cutoff   = len(df)
-    df = df[df["date"] <= label_cutoff]
+    df = df[(df["date"] <= label_cutoff) | (df["season"] == CURRENT_SEASON)]
     dropped_cutoff  = before_cutoff - len(df)
     if dropped_cutoff:
         print(f"  Dropped {dropped_cutoff} rows beyond label cutoff "
-              f"(max injury date: {max_injury_date.date()}, cutoff: {label_cutoff.date()})")
+              f"(max injury date: {max_injury_date.date()}, cutoff: {label_cutoff.date()})"
+              f" — current season rows kept regardless")
 
     # ── Drop rows with no target (shouldn't happen, but safety check) ─────────
     before = len(df)
