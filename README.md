@@ -1,1 +1,2 @@
-# sports-injury-indicator<img width="2160" height="512" alt="IMG_1669" src="https://github.com/user-attachments/assets/e9dfbbb1-a55f-464b-9c7e-70ea0d52d0d1" />
+# sports-injury-indicator<img width="4096" height="1714" alt="IMG_1670" src="https://github.com/user-attachments/assets/8dcb2e7d-6b52-42d3-8170-f925e0cdafa5" />
+
