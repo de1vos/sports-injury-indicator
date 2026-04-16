@@ -531,7 +531,9 @@ def main():
 
             "injury_risk":       round(injury_risk, 4),
             "risk_level":        get_risk_level(injury_risk),
-            "risk_factors":      factors,
+            "risk_factor_1":     factors[0] if len(factors) > 0 else None,
+            "risk_factor_2":     factors[1] if len(factors) > 1 else None,
+            "risk_factor_3":     factors[2] if len(factors) > 2 else None,
             "injury_risk_trend": trend,   # {"GW1": 0.35, "GW2": "Injured", ...}
 
             "season_stats": all_season_stats,
