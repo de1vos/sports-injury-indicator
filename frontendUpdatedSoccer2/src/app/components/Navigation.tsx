@@ -1,7 +1,17 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router';
-import { matches, teams, getRiskColor } from '../data/mockData';
+import { matches, teams, getRiskColor, getAllPlayers } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
+
+type SearchResult = { type: 'Match' | 'Team' | 'Player'; name: string; path: string; subtitle?: string; risk?: number };
+
+function toMatchResult(match: (typeof matches)[number], home: (typeof teams)[number], away: (typeof teams)[number]): SearchResult {
+  return { type: 'Match', name: `${home.name} vs ${away.name}`, path: `/match/${match.id}`, subtitle: `${match.date} · ${match.time}` };
+}
+
+function toPlayerResult(player: ReturnType<typeof getAllPlayers>[number]): SearchResult {
+  return { type: 'Player', name: `${player.firstName} ${player.lastName}`, path: `/team/${player.teamId}?player=${player.id}`, subtitle: `${player.teamName} · ${player.position}`, risk: player.injuryRisk };
+}
 
 const NAV_LINKS = [
   { to: '/', label: 'Dashboard', match: (p: string) => p === '/' },
@@ -32,84 +42,49 @@ export function Navigation() {
 
   const searchResults = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    const results: Array<{ type: 'Match' | 'Team' | 'Player'; name: string; path: string; subtitle?: string; risk?: number }> = [];
+    const results: SearchResult[] = [];
 
     if (!query) {
       matches
         .filter(m => m.status === 'upcoming')
         .slice(0, 2)
         .forEach(match => {
-          const homeTeam = teams.find(t => t.id === match.homeTeamId);
-          const awayTeam = teams.find(t => t.id === match.awayTeamId);
-          if (homeTeam && awayTeam) {
-            results.push({
-              type: 'Match',
-              name: `${homeTeam.name} vs ${awayTeam.name}`,
-              path: `/match/${match.id}`,
-              subtitle: `${match.date} · ${match.time}`,
-            });
-          }
+          const home = teams.find(t => t.id === match.homeTeamId);
+          const away = teams.find(t => t.id === match.awayTeamId);
+          if (home && away) results.push(toMatchResult(match, home, away));
         });
 
-      teams
-        .flatMap(team => team.players.map(p => ({ ...p, teamName: team.name, teamId: team.id })))
+      getAllPlayers()
         .sort((a, b) => b.injuryRisk - a.injuryRisk)
         .slice(0, 3)
-        .forEach(player => {
-          results.push({
-            type: 'Player',
-            name: `${player.firstName} ${player.lastName}`,
-            path: `/team/${player.teamId}?player=${player.id}`,
-            subtitle: `${player.teamName} · ${player.position}`,
-            risk: player.injuryRisk,
-          });
-        });
+        .forEach(player => results.push(toPlayerResult(player)));
 
       return results.slice(0, 5);
     }
 
     matches.forEach(match => {
-      const homeTeam = teams.find(t => t.id === match.homeTeamId);
-      const awayTeam = teams.find(t => t.id === match.awayTeamId);
-      if (homeTeam && awayTeam) {
-        const matchName = `${homeTeam.name} vs ${awayTeam.name}`.toLowerCase();
-        if (matchName.includes(query) || homeTeam.name.toLowerCase().includes(query) || awayTeam.name.toLowerCase().includes(query)) {
-          results.push({
-            type: 'Match',
-            name: `${homeTeam.name} vs ${awayTeam.name}`,
-            path: `/match/${match.id}`,
-            subtitle: `${match.date} · ${match.time}`,
-          });
+      const home = teams.find(t => t.id === match.homeTeamId);
+      const away = teams.find(t => t.id === match.awayTeamId);
+      if (home && away) {
+        const matchName = `${home.name} vs ${away.name}`.toLowerCase();
+        if (matchName.includes(query) || home.name.toLowerCase().includes(query) || away.name.toLowerCase().includes(query)) {
+          results.push(toMatchResult(match, home, away));
         }
       }
     });
 
     teams.forEach(team => {
       if (team.name.toLowerCase().includes(query)) {
-        results.push({
-          type: 'Team',
-          name: team.name,
-          path: `/team/${team.id}`,
-          subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk}%`,
-        });
+        results.push({ type: 'Team', name: team.name, path: `/team/${team.id}`, subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk}%` });
       }
     });
 
-    teams
-      .flatMap(team => team.players.map(p => ({ ...p, teamName: team.name, teamId: team.id })))
+    getAllPlayers()
       .filter(player => {
         const fullName = `${player.firstName} ${player.lastName}`.toLowerCase();
         return fullName.includes(query) || player.lastName.toLowerCase().includes(query);
       })
-      .forEach(player => {
-        results.push({
-          type: 'Player',
-          name: `${player.firstName} ${player.lastName}`,
-          path: `/team/${player.teamId}?player=${player.id}`,
-          subtitle: `${player.teamName} · ${player.position}`,
-          risk: player.injuryRisk,
-        });
-      });
+      .forEach(player => results.push(toPlayerResult(player)));
 
     return results.slice(0, 10);
   }, [searchQuery]);

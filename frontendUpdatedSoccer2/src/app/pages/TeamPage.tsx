@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router';
-import { teams, getRiskColor, type Player } from '../data/mockData';
+import { teams, getRiskColor, MATCH_DURATION, type Player, type SeasonStat } from '../data/mockData';
 import { PlayerCard } from '../components/PlayerCard';
 import { PlayerInjuryRiskChart } from '../components/PlayerInjuryRiskChart';
 import { StarIcon } from '../components/StarIcon';
@@ -91,32 +91,40 @@ const SEVERITY_STYLES: Record<string, string> = {
   'Minor': 'bg-yellow-100 text-yellow-700',
 };
 
+const INJURY_COLLAPSE_THRESHOLD = 4;
+
 function InjuryHistoryTable({ player }: { player: Player }) {
-  const hasSeverity = player.injuryHistory.some(i => i.severity);
+  const [expanded, setExpanded] = useState(false);
+  const total = player.injuryHistory.length;
+  const collapsible = total > INJURY_COLLAPSE_THRESHOLD;
+  const visible = collapsible && !expanded
+    ? player.injuryHistory.slice(0, INJURY_COLLAPSE_THRESHOLD)
+    : player.injuryHistory;
+
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6 mt-6 w-full">
+    <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6 w-full">
       <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Injury History</h3>
-      {player.injuryHistory.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[rgba(0,0,0,0.06)]">
-                <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Diagnosis</th>
-                <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Region</th>
-                <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">From</th>
-                <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Until</th>
-                {hasSeverity && <th className="text-center py-2 px-2 text-xs text-[#6B7280] font-semibold">Severity</th>}
-                {hasSeverity && <th className="text-center py-2 px-2 text-xs text-[#6B7280] font-semibold">Days Out</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {player.injuryHistory.map((injury, index) => (
-                <tr key={index} className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
-                  <td className="py-3 px-2 text-[#1A1A2E] font-medium">{injury.diagnosis}</td>
-                  <td className="py-3 px-2 text-[#6B7280]">{injury.region}</td>
-                  <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.from}</td>
-                  <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.until}</td>
-                  {hasSeverity && (
+      {total > 0 ? (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[rgba(0,0,0,0.06)]">
+                  <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Diagnosis</th>
+                  <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Region</th>
+                  <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">From</th>
+                  <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Until</th>
+                  <th className="text-center py-2 px-2 text-xs text-[#6B7280] font-semibold">Severity</th>
+                  <th className="text-center py-2 px-2 text-xs text-[#6B7280] font-semibold">Days Out</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((injury, index) => (
+                  <tr key={index} className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
+                    <td className="py-3 px-2 text-[#1A1A2E] font-medium">{injury.diagnosis}</td>
+                    <td className="py-3 px-2 text-[#6B7280]">{injury.region}</td>
+                    <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.from}</td>
+                    <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.until}</td>
                     <td className="py-3 px-2 text-center">
                       {injury.severity ? (
                         <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${SEVERITY_STYLES[injury.severity] ?? 'bg-[#F5F6FA] text-[#6B7280]'}`}>
@@ -124,23 +132,30 @@ function InjuryHistoryTable({ player }: { player: Player }) {
                         </span>
                       ) : <span className="text-[#6B7280]">-</span>}
                     </td>
-                  )}
-                  {hasSeverity && (
                     <td className="py-3 px-2 text-center font-mono text-[#1A1A2E]">
                       {injury.daysOut ?? '-'}
                     </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {collapsible && (
+            <button
+              onClick={() => setExpanded(prev => !prev)}
+              className="mt-4 w-full py-2 text-sm font-semibold text-[#1A56DB] hover:text-[#1240A8] hover:bg-[#F5F6FA] rounded-xl transition-colors"
+            >
+              {expanded ? 'Show less ↑' : `Show ${total - INJURY_COLLAPSE_THRESHOLD} more ↓`}
+            </button>
+          )}
+        </>
       ) : (
         <p className="text-[#6B7280] text-center py-8">No injury history recorded</p>
       )}
     </div>
   );
 }
+
 
 const SORT_OPTIONS = [
   { value: 'risk', label: 'Risk ↓' },
@@ -155,6 +170,7 @@ export function TeamPage() {
   const team = teams.find(t => t.id === teamId);
   const [sortBy, setSortBy] = useState('risk');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
   const { toggleFavorite, isFavorite } = useFavorites();
 
   if (!team) {
@@ -195,6 +211,8 @@ export function TeamPage() {
     setCurrentPlayerIndex(prev => (prev > 0 ? prev - 1 : sortedPlayers.length - 1));
   const handleNext = () =>
     setCurrentPlayerIndex(prev => (prev < sortedPlayers.length - 1 ? prev + 1 : 0));
+
+  const s = currentPlayer.seasonStats?.[0];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
@@ -237,23 +255,43 @@ export function TeamPage() {
         <SortBar options={SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
       </div>
 
+      {/* Navigation ABOVE mini cards */}
+      <div className="flex justify-center">
+        <PlayerNavigation
+          current={currentPlayerIndex + 1}
+          total={sortedPlayers.length}
+          onPrev={handlePrevious}
+          onNext={handleNext}
+        />
+      </div>
+
       {/* Mini Cards */}
-      <div className="overflow-x-auto touch-pan-x overscroll-x-contain pb-4 mb-8 pt-4">
-        <div className="flex gap-3 justify-center min-w-max px-4">
+      <div className="overflow-x-auto touch-pan-x overscroll-x-contain py-5 mb-10">
+        <div className="flex gap-2 justify-center min-w-max px-4">
           {sortedPlayers.map((player, index) => (
             <button
               key={player.id}
               onClick={() => setCurrentPlayerIndex(index)}
-              className={`w-20 h-28 rounded-2xl overflow-hidden transition-all ${
+              className={`w-[68px] h-[82px] rounded-xl overflow-hidden transition-all flex-shrink-0 ${
                 index === currentPlayerIndex
-                  ? 'ring-4 ring-[#1A56DB] scale-110'
-                  : 'opacity-60 hover:opacity-100 hover:scale-105'
+                  ? 'ring-2 ring-[#1A56DB] ring-offset-1 scale-105 opacity-100'
+                  : 'opacity-55 hover:opacity-90 hover:scale-[1.03]'
               }`}
-              style={{ backgroundColor: team.accentColor }}
+              style={{
+                backgroundColor: team.accentColor,
+                borderBottom: `3px solid ${getRiskColor(player.injuryRisk)}`,
+              }}
             >
-              <div className="h-full flex flex-col items-center justify-center p-2 text-white">
-                <div className="text-xs font-bold mb-1 text-center line-clamp-2">{player.lastName}</div>
-                <div className="text-lg font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
+              <div className="h-full flex flex-col items-center justify-between p-1.5 text-white">
+                <div className="flex-1 flex items-center justify-center w-full">
+                  <div className="text-[9px] font-semibold text-center leading-tight line-clamp-3 w-full">
+                    {player.firstName} {player.lastName}
+                  </div>
+                </div>
+                <div
+                  className="w-full text-center text-[10px] font-bold py-0.5 rounded-md"
+                  style={{ backgroundColor: getRiskColor(player.injuryRisk) }}
+                >
                   {player.injuryRisk}%
                 </div>
               </div>
@@ -264,12 +302,6 @@ export function TeamPage() {
 
       {/* Mobile: Player Card + Info */}
       <div className="lg:hidden flex flex-col items-center justify-start mb-8">
-        <PlayerNavigation
-          current={currentPlayerIndex + 1}
-          total={sortedPlayers.length}
-          onPrev={handlePrevious}
-          onNext={handleNext}
-        />
         <PlayerCard
           key={`mobile-${currentPlayer.id}`}
           player={currentPlayer}
@@ -304,35 +336,211 @@ export function TeamPage() {
       </div>
 
       {/* Desktop: Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Left: Chart + Performance + Injury Analysis */}
-        <div className="space-y-6">
-          <PlayerInjuryRiskChart player={currentPlayer} />
+      <div className="hidden lg:grid lg:grid-cols-2 gap-8 mb-8">
 
+        {/* ── Left column: Player card · Next match · Injury analysis · History ── */}
+        <div className="space-y-8">
+
+          {/* Player card — centred, slightly larger */}
+          <div className="flex justify-center pb-4">
+            <div className="scale-[1.06] origin-top">
+              <PlayerCard
+                key={`desktop-${currentPlayer.id}`}
+                player={currentPlayer}
+                teamName={team.name}
+                teamColor={team.accentColor}
+                isFavorite={isFavorite(currentPlayer.id)}
+                onToggleFavorite={() => toggleFavorite(currentPlayer.id)}
+              />
+            </div>
+          </div>
+
+          {/* Injury Analysis */}
           <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
-            <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Season Performance Metrics</h3>
-            <div className="space-y-4">
-              {(() => {
-                const s = currentPlayer.seasonStats?.[0];
-                return [
-                  { label: 'Games Played',   value: s?.appearances ?? currentPlayer.gamesPlayed,  max: 38,   color: '#F59E0B', display: String(s?.appearances ?? currentPlayer.gamesPlayed) },
-                  { label: 'Minutes Played', value: s?.minutes     ?? currentPlayer.minutesPlayed, max: 3000, color: '#1A56DB', display: (s?.minutes ?? currentPlayer.minutesPlayed).toLocaleString() },
-                  { label: 'Goals',          value: s?.goals       ?? 0,                           max: 30,   color: '#0D9488', display: s ? String(s.goals)   : '-' },
-                  { label: 'Assists',        value: s?.assists     ?? 0,                           max: 20,   color: '#8B5CF6', display: s ? String(s.assists) : '-' },
-                  { label: 'Tackles',        value: s?.tackles     ?? 0,                           max: 100,  color: '#DC2626', display: s ? String(s.tackles) : '-' },
-                ];
-              })().map(({ label, value, max, color, display }) => (
-                <div key={label}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-[#6B7280]">{label}</span>
-                    <span className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>{display}</span>
-                  </div>
-                  <div className="w-full h-2 bg-[#F5F6FA] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min((value / max) * 100, 100)}%`, backgroundColor: color }} />
-                  </div>
+            <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Injury Analysis</h3>
+
+            {/* Key injury metrics */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              {[
+                { label: 'Total Injuries',   value: currentPlayer.injurySummaryData?.career_total_injuries ?? currentPlayer.injuries,                                                                         red: false },
+                { label: 'Season Injuries',  value: currentPlayer.injurySummaryData?.injuries_this_season  ?? currentPlayer.injuries,                                                                         red: (currentPlayer.injurySummaryData?.injuries_this_season ?? currentPlayer.injuries) >= 2 },
+                { label: 'Matches Missed',   value: currentPlayer.injurySummaryData?.matches_missed_this_season ?? Math.round(currentPlayer.minutesMissed / MATCH_DURATION),                                 red: (currentPlayer.injurySummaryData?.matches_missed_this_season ?? Math.round(currentPlayer.minutesMissed / MATCH_DURATION)) >= 5 },
+                { label: 'Days Since Inj.',  value: currentPlayer.injurySummaryData?.days_since_last_injury ?? currentPlayer.daysSinceLastInjury,                                                             red: (currentPlayer.injurySummaryData?.days_since_last_injury ?? currentPlayer.daysSinceLastInjury) < 14 },
+                { label: 'Mins / Week',      value: Math.round(currentPlayer.minutesPlayed / 36),                                                                                                             red: false },
+              ].map(({ label, value, red }) => (
+                <div key={label} className="flex flex-col gap-0.5 p-3 bg-[#F5F6FA] rounded-2xl">
+                  <span className="text-xs text-[#6B7280]">{label}</span>
+                  <span className="text-2xl font-bold" style={{ fontFamily: 'var(--font-mono)', color: red ? '#DC2626' : '#1A1A2E' }}>{value}</span>
                 </div>
               ))}
             </div>
+
+            {/* Match stats grid */}
+            <div className="pt-4 border-t border-[rgba(0,0,0,0.06)]">
+              <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">Match Stats</p>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: 'Goals',     value: s?.goals             ?? '-' },
+                  { label: 'Assists',   value: s?.assists           ?? '-' },
+                  { label: 'Duels',     value: s?.duels_total       ?? '-' },
+                  { label: 'Dribbles',  value: s?.dribbles_attempts ?? '-' },
+                  { label: 'Fls Com.',  value: s?.fouls_committed   ?? '-' },
+                  { label: 'Fls Agst', value: s?.fouls_drawn        ?? currentPlayer.foulsAgainst ?? '-' },
+                  { label: 'Yel.',      value: s?.yellow_cards      ?? '-' },
+                  { label: 'Red',       value: s?.red_cards         ?? '-' },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex flex-col items-center p-2 bg-[#F5F6FA] rounded-xl">
+                    <span className="text-[9px] text-[#6B7280] mb-0.5 text-center leading-tight">{label}</span>
+                    <span className="text-base font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <InjuryHistoryTable player={currentPlayer} />
+        </div>
+
+        {/* ── Right column: Chart · Performance/Stats toggle · Risk factors ── */}
+        <div className="space-y-8">
+          <PlayerInjuryRiskChart player={currentPlayer} />
+
+          {/* Season Performance / Statistics toggle */}
+          <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
+            {/* Toggle buttons */}
+            <div className="flex gap-2 mb-5">
+              {(['performance', 'statistics'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setStatsTab(tab)}
+                  className={`flex-1 py-2 px-4 rounded-xl text-sm font-semibold transition-all ${
+                    statsTab === tab
+                      ? 'bg-[#1A56DB] text-white shadow-md'
+                      : 'bg-[#F5F6FA] text-[#6B7280] hover:bg-[#E5E7EB]'
+                  }`}
+                >
+                  {tab === 'performance' ? 'Season Performance' : 'Statistics'}
+                </button>
+              ))}
+            </div>
+
+            {statsTab === 'performance' && (() => {
+              const allSeasons = currentPlayer.seasonStats ?? [];
+              const SEASON_COLORS = ['#1A56DB', '#DC2626', '#0D9488', '#F59E0B', '#EA580C'];
+              const metrics: Array<{
+                label: string;
+                get: (r: SeasonStat) => number;
+                fallback: number;
+                max: number;
+                fmt: (v: number) => string;
+              }> = [
+                { label: 'Games Played',   get: r => r.appearances, fallback: currentPlayer.gamesPlayed,   max: 38,   fmt: v => String(v) },
+                { label: 'Minutes Played', get: r => r.minutes,     fallback: currentPlayer.minutesPlayed, max: 3000, fmt: v => v.toLocaleString() },
+                { label: 'Goals',          get: r => r.goals,       fallback: 0,                           max: 30,   fmt: v => String(v) },
+                { label: 'Assists',        get: r => r.assists,     fallback: 0,                           max: 20,   fmt: v => String(v) },
+                { label: 'Tackles',        get: r => r.tackles,     fallback: 0,                           max: 100,  fmt: v => String(v) },
+              ];
+              const rows: Array<{ season: string; color: string; get: (r: SeasonStat) => number }> =
+                allSeasons.length > 0
+                  ? allSeasons.map((r, i) => ({
+                      season: `${r.season}/${String(r.season + 1).slice(2)}`,
+                      color: SEASON_COLORS[i % SEASON_COLORS.length],
+                      get: (_: SeasonStat) => 0, // placeholder, overridden per metric
+                      _stat: r,
+                    }))
+                  : [];
+              return (
+                <div className="space-y-5">
+                  {metrics.map(({ label, get, fallback, max, fmt }) => {
+                    const bars: Array<{ season: string; value: number; color: string }> =
+                      allSeasons.length > 0
+                        ? allSeasons.map((r, i) => ({
+                            season: `${r.season}/${String(r.season + 1).slice(2)}`,
+                            value: get(r),
+                            color: SEASON_COLORS[i % SEASON_COLORS.length],
+                          }))
+                        : [{ season: '2025/26', value: fallback, color: SEASON_COLORS[0] }];
+
+                    // Sort largest → smallest so longest bar renders first (behind)
+                    const sorted = [...bars].sort((a, b) => b.value - a.value);
+
+                    return (
+                      <div key={label}>
+                        <p className="text-sm font-semibold text-[#1A1A2E] mb-2">{label}</p>
+
+                        {/* Single overlapping bar track */}
+                        <div className="relative w-full h-3 bg-[#F5F6FA] rounded-full overflow-hidden mb-2">
+                          {sorted.map(({ season, value, color }) => (
+                            <div
+                              key={season}
+                              className="absolute top-0 left-0 h-full rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min((value / max) * 100, 100)}%`, backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Season legend with values */}
+                        <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                          {bars.map(({ season, value, color }) => (
+                            <div key={season} className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                              <span className="text-xs font-medium" style={{ color }}>{season}</span>
+                              <span className="text-xs font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                                {fmt(value)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {statsTab === 'statistics' && (
+              <div className="overflow-x-auto -mx-1">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[rgba(0,0,0,0.06)]">
+                      {['Season', 'Apps', 'Mins', 'Goals', 'Ast', 'Rating', 'Tkl'].map((h, i) => (
+                        <th key={h} className={`py-2 px-2 text-xs text-[#6B7280] font-semibold ${i === 0 ? 'text-left' : 'text-center'}`}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentPlayer.seasonStats ? (
+                      currentPlayer.seasonStats.map(row => (
+                        <tr key={row.season} className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
+                          <td className="py-2.5 px-2 font-semibold text-[#1A1A2E]">{row.season}/{String(row.season + 1).slice(2)}</td>
+                          <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{row.appearances}</td>
+                          <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{row.minutes}</td>
+                          <td className="py-2.5 px-2 text-center font-mono font-bold text-[#1A1A2E]">{row.goals}</td>
+                          <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{row.assists}</td>
+                          <td className={`py-2.5 px-2 text-center font-mono font-bold ${row.rating >= 7 ? 'text-[#0D9488]' : row.rating >= 6.5 ? 'text-[#EA580C]' : 'text-[#DC2626]'}`}>{row.rating.toFixed(2)}</td>
+                          <td className="py-2.5 px-2 text-center font-mono text-[#6B7280]">{row.tackles}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <>
+                        <tr className="border-b border-[rgba(0,0,0,0.06)]">
+                          <td className="py-2.5 px-2 font-semibold text-[#1A1A2E]">2025/26</td>
+                          <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{currentPlayer.gamesPlayed}</td>
+                          <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{currentPlayer.minutesPlayed}</td>
+                          {Array(4).fill(null).map((_, i) => <td key={i} className="py-2.5 px-2 text-center font-mono text-[#6B7280]">-</td>)}
+                        </tr>
+                        {['2024/25', '2023/24'].map(season => (
+                          <tr key={season} className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
+                            <td className="py-2.5 px-2 font-semibold text-[#1A1A2E]">{season}</td>
+                            {Array(6).fill(null).map((_, i) => <td key={i} className="py-2.5 px-2 text-center font-mono text-[#6B7280]">-</td>)}
+                          </tr>
+                        ))}
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {currentPlayer.riskFactors && currentPlayer.riskFactors.length > 0 && (
@@ -348,78 +556,6 @@ export function TeamPage() {
               </ul>
             </div>
           )}
-
-          <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
-            <h3 className="text-xl font-bold text-[#1A1A2E] mb-6">Injury Analysis</h3>
-            <div className="space-y-4">
-              {(currentPlayer.injurySummaryData ? [
-                { label: 'Career Total Injuries',   value: currentPlayer.injurySummaryData.career_total_injuries,      red: false },
-                { label: 'Injuries This Season',    value: currentPlayer.injurySummaryData.injuries_this_season,       red: currentPlayer.injurySummaryData.injuries_this_season >= 2 },
-                { label: 'Days Since Last Injury',  value: currentPlayer.injurySummaryData.days_since_last_injury,     red: currentPlayer.injurySummaryData.days_since_last_injury < 14 },
-                { label: 'Matches Missed (Season)', value: currentPlayer.injurySummaryData.matches_missed_this_season, red: currentPlayer.injurySummaryData.matches_missed_this_season >= 5 },
-                { label: 'Matches Missed (Career)', value: currentPlayer.injurySummaryData.matches_missed_career,      red: false },
-              ] : [
-                { label: 'Total Injuries',          value: currentPlayer.injuries,                               red: currentPlayer.injuries >= 2 },
-                { label: 'Matches Missed',          value: Math.round(currentPlayer.minutesMissed / 90),        red: false },
-                { label: 'Days Since Last Injury',  value: currentPlayer.daysSinceLastInjury,                   red: false },
-                { label: 'Matches Per Week',        value: currentPlayer.matchDensity,                          red: false },
-              ]).map(({ label, value, red }) => (
-                <div key={label} className="flex items-center justify-between py-4 px-6 bg-[#F5F6FA] rounded-xl">
-                  <span className="text-lg text-[#6B7280]">{label}</span>
-                  <span className="text-3xl font-bold" style={{ fontFamily: 'var(--font-mono)', color: red ? '#DC2626' : '#1A1A2E' }}>
-                    {value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Player Card (Desktop Only) */}
-        <div className="hidden lg:flex flex-col items-center justify-start">
-          <PlayerNavigation
-            current={currentPlayerIndex + 1}
-            total={sortedPlayers.length}
-            onPrev={handlePrevious}
-            onNext={handleNext}
-          />
-          <PlayerCard
-            key={`desktop-${currentPlayer.id}`}
-            player={currentPlayer}
-            teamName={team.name}
-            teamColor={team.accentColor}
-            isFavorite={isFavorite(currentPlayer.id)}
-            onToggleFavorite={() => toggleFavorite(currentPlayer.id)}
-          />
-          {currentPlayer.nextMatch && (() => {
-            const m = currentPlayer.nextMatch!;
-            const matchDate = new Date(m.date);
-            const dateStr = matchDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-            const timeStr = matchDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            return (
-              <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6 mt-6 w-full">
-                <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Next Match</h3>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <img src={m.home_logo} alt={m.home_team} className="w-10 h-10 object-contain" />
-                    <span className="font-bold text-[#1A1A2E]">{m.home_team}</span>
-                  </div>
-                  <span className="text-sm font-bold text-[#6B7280]">VS</span>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-[#1A1A2E]">{m.away_team}</span>
-                    <img src={m.away_logo} alt={m.away_team} className="w-10 h-10 object-contain" />
-                  </div>
-                </div>
-                <div className="text-center text-sm text-[#6B7280]">
-                  <div className="font-semibold text-[#1A1A2E]">{dateStr} · {timeStr}</div>
-                  <div className="mt-1">{m.venue}</div>
-                  <div className="mt-1 text-xs">{m.round}</div>
-                </div>
-              </div>
-            );
-          })()}
-          <SeasonStatisticsTable player={currentPlayer} />
-          <InjuryHistoryTable player={currentPlayer} />
         </div>
       </div>
     </div>

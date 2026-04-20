@@ -2416,6 +2416,13 @@ export function getRiskColor(risk: number): string {
   return '#DC2626'; // red - high
 }
 
+export const MATCH_DURATION = 90;
+
+export function getAllPlayers() {
+  return teams.flatMap(team =>
+    team.players.map(p => ({ ...p, teamName: team.name, teamId: team.id, teamColor: team.accentColor }))
+  );
+}
 
 export const matches: Match[] = [
   // Recent matches (completed)

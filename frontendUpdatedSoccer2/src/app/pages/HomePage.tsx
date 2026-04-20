@@ -1,16 +1,11 @@
 import { Link } from 'react-router';
-import { matches, teams, getRiskColor } from '../data/mockData';
+import { matches, teams, getRiskColor, getAllPlayers } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
 
 export function HomePage() {
   const { toggleFavorite, isFavorite } = useFavorites();
 
   const getTeamById = (id: string) => teams.find(t => t.id === id);
-
-  // Separate matches by status
-  const ongoingMatches = matches.filter(m => m.status === 'ongoing');
-  const completedMatches = matches.filter(m => m.status === 'completed');
-  const upcomingMatches = matches.filter(m => m.status === 'upcoming');
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -24,7 +19,8 @@ export function HomePage() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Get upcoming matches with high risk player counts for both teams
+  const INJURY_RISK_THRESHOLD = 50;
+
   const upcomingMatchesData = matches
     .filter(m => m.status === 'upcoming')
     .map(match => {
@@ -32,36 +28,18 @@ export function HomePage() {
       const awayTeam = getTeamById(match.awayTeamId);
       if (!homeTeam || !awayTeam) return null;
 
-      const homeHighRiskCount = homeTeam.players.filter(p => p.injuryRisk > 50).length;
-      const awayHighRiskCount = awayTeam.players.filter(p => p.injuryRisk > 50).length;
+      const homeHighRiskCount = homeTeam.players.filter(p => p.injuryRisk >= INJURY_RISK_THRESHOLD).length;
+      const awayHighRiskCount = awayTeam.players.filter(p => p.injuryRisk >= INJURY_RISK_THRESHOLD).length;
       const totalHighRisk = homeHighRiskCount + awayHighRiskCount;
 
-      return {
-        match,
-        homeTeam,
-        awayTeam,
-        homeHighRiskCount,
-        awayHighRiskCount,
-        totalHighRisk
-      };
+      return { match, homeTeam, awayTeam, homeHighRiskCount, awayHighRiskCount, totalHighRisk };
     })
     .filter(item => item !== null && item.totalHighRisk > 0)
     .sort((a, b) => b.totalHighRisk - a.totalHighRisk)
     .slice(0, 6);
 
-  // Get all high risk players across all teams
-  const INJURY_RISK_THRESHOLD = 50;
-  const highRiskPlayers = teams
-    .flatMap(team =>
-      team.players
-        .filter(p => p.injuryRisk >= INJURY_RISK_THRESHOLD)
-        .map(player => ({
-          ...player,
-          teamId: team.id,
-          teamName: team.name,
-          teamColor: team.accentColor
-        }))
-    )
+  const highRiskPlayers = getAllPlayers()
+    .filter(p => p.injuryRisk >= INJURY_RISK_THRESHOLD)
     .sort((a, b) => b.injuryRisk - a.injuryRisk)
     .slice(0, 10);
 
@@ -105,23 +83,13 @@ export function HomePage() {
                   {/* Teams */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex flex-col items-center gap-1">
-                      <div
-                        className="text-lg font-bold"
-                        style={{ color: homeTeam.accentColor, fontFamily: 'var(--font-sans)' }}
-                      >
-                        {homeTeam.name.substring(0, 3).toUpperCase()}
-                      </div>
+                      <img src={homeTeam.logo} alt={homeTeam.name} className="w-10 h-10 object-contain" />
                       <span className="text-xs font-semibold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
                         {homeTeam.avgRisk}%
                       </span>
                     </div>
                     <div className="flex flex-col items-center gap-1">
-                      <div
-                        className="text-lg font-bold"
-                        style={{ color: awayTeam.accentColor, fontFamily: 'var(--font-sans)' }}
-                      >
-                        {awayTeam.name.substring(0, 3).toUpperCase()}
-                      </div>
+                      <img src={awayTeam.logo} alt={awayTeam.name} className="w-10 h-10 object-contain" />
                       <span className="text-xs font-semibold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
                         {awayTeam.avgRisk}%
                       </span>
@@ -285,11 +253,8 @@ export function HomePage() {
                         className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#F5F6FA] transition-colors"
                       >
                         {/* Team Logo */}
-                        <div
-                          className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm"
-                          style={{ backgroundColor: data.homeTeam.accentColor }}
-                        >
-                          {data.homeTeam.name.substring(0, 3).toUpperCase()}
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
+                          <img src={data.homeTeam.logo} alt={data.homeTeam.name} className="w-9 h-9 object-contain" />
                         </div>
 
                         {/* Team Info */}
@@ -312,11 +277,8 @@ export function HomePage() {
                         className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#F5F6FA] transition-colors"
                       >
                         {/* Team Logo */}
-                        <div
-                          className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm"
-                          style={{ backgroundColor: data.awayTeam.accentColor }}
-                        >
-                          {data.awayTeam.name.substring(0, 3).toUpperCase()}
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
+                          <img src={data.awayTeam.logo} alt={data.awayTeam.name} className="w-9 h-9 object-contain" />
                         </div>
 
                         {/* Team Info */}

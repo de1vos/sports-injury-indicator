@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area } from 'recharts';
+import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 import { Player } from '../data/mockData';
 
-interface ChartPoint { week: string; risk: number | null; }
+interface ChartPoint { week: string; risk: number | null; injured?: boolean; }
 
 // GW1 of 2025/26 season started ~Aug 16 2025
 const SEASON_START = new Date('2025-08-16');
@@ -30,7 +30,7 @@ function generateGWData(player: Player): ChartPoint[] {
     });
 
     if (isInjured) {
-      data.push({ week: `GW${gw}`, risk: null });
+      data.push({ week: `GW${gw}`, risk: null, injured: true });
     } else {
       const progress = (gw - startGW) / (endGW - startGW);
       const baseRisk = player.injuryRisk - player.riskTrend * (1 - progress);
@@ -51,7 +51,19 @@ function buildTrendData(player: Player): ChartPoint[] {
   return entries.map(e => ({
     week: e.gw,
     risk: e.risk === 'Injured' ? null : Math.round(e.risk * 100 * 10) / 10,
+    injured: e.risk === 'Injured' ? true : undefined,
   }));
+}
+
+function getInjurySpans(data: ChartPoint[]): Array<{ x1: string; x2: string }> {
+  const spans: Array<{ x1: string; x2: string }> = [];
+  let start: string | null = null;
+  for (const d of data) {
+    if (d.injured && !start) start = d.week;
+    if (!d.injured && start) { spans.push({ x1: start, x2: d.week }); start = null; }
+  }
+  if (start) spans.push({ x1: start, x2: data[data.length - 1].week });
+  return spans;
 }
 
 const getRiskZoneColor = (risk: number) => {
@@ -111,13 +123,7 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
 
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id={`riskGradient-${player.id}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-                <stop offset="100%" stopColor={color} stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
             <XAxis
               dataKey="week"
@@ -142,20 +148,22 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
               itemStyle={{ color: color, fontFamily: 'var(--font-mono)' }}
               formatter={(value: number | null) => value === null ? ['Injured', ''] : [`${value}%`, 'Risk']}
             />
+            {getInjurySpans(chartData).map(({ x1, x2 }, i) => (
+              <ReferenceArea key={i} x1={x1} x2={x2} fill="#DC2626" fillOpacity={0.12} stroke="#DC2626" strokeOpacity={0.3} />
+            ))}
             <ReferenceLine y={50} stroke="#DC2626" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={35} stroke="#EA580C" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={20} stroke="#0D9488" strokeDasharray="3 3" strokeOpacity={0.3} />
-            <Area
+            <Line
               type="monotone"
               dataKey="risk"
               stroke={color}
               strokeWidth={3}
-              fill={`url(#riskGradient-${player.id})`}
               dot={{ fill: color, r: 3 }}
               activeDot={{ r: 6 }}
               connectNulls={false}
             />
-          </AreaChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 
@@ -173,7 +181,7 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
         ))}
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#6B7280]" />
-          <span className="text-[#6B7280]">Gap = Injured</span>
+          <span className="text-[#6B7280]">Shaded = Injured</span>
         </div>
       </div>
     </div>

@@ -62,7 +62,12 @@ export function MatchPage() {
           <div className="flex items-center justify-center gap-4 sm:gap-8">
             {/* Home Team */}
             <div className="flex-1 text-center min-w-0">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#1A1A2E] mb-3 sm:mb-4 truncate px-2">{homeTeam.abbreviation}</h2>
+              <div className="flex flex-col items-center gap-3 mb-3 sm:mb-4">
+                <div className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border border-[rgba(0,0,0,0.06)]">
+                  <img src={homeTeam.logo} alt={homeTeam.name} className="w-12 h-12 object-contain" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1A1A2E] truncate px-2">{homeTeam.name}</h2>
+              </div>
               <div className="inline-flex flex-col gap-2">
                 <div className="text-xs sm:text-sm text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
                   Squad Avg Risk
@@ -104,7 +109,12 @@ export function MatchPage() {
 
             {/* Away Team */}
             <div className="flex-1 text-center min-w-0">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#1A1A2E] mb-3 sm:mb-4 truncate px-2">{awayTeam.abbreviation}</h2>
+              <div className="flex flex-col items-center gap-3 mb-3 sm:mb-4">
+                <div className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border border-[rgba(0,0,0,0.06)]">
+                  <img src={awayTeam.logo} alt={awayTeam.name} className="w-12 h-12 object-contain" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1A1A2E] truncate px-2">{awayTeam.name}</h2>
+              </div>
               <div className="inline-flex flex-col gap-2">
                 <div className="text-xs sm:text-sm text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
                   Squad Avg Risk

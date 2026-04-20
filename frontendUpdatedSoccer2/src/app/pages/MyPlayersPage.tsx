@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router';
-import { teams, getRiskColor } from '../data/mockData';
+import { getRiskColor, getAllPlayers } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
 import { StarIcon } from '../components/StarIcon';
 
@@ -7,13 +7,8 @@ export function MyPlayersPage() {
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
   const navigate = useNavigate();
 
-  // Get all favorite players with their team info
-  const favoritePlayers = teams
-    .flatMap(team =>
-      team.players
-        .filter(player => favorites.has(player.id))
-        .map(player => ({ ...player, teamName: team.name, teamId: team.id }))
-    )
+  const favoritePlayers = getAllPlayers()
+    .filter(p => favorites.has(p.id))
     .sort((a, b) => b.injuryRisk - a.injuryRisk);
 
   return (

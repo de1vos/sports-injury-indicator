@@ -1,4 +1,4 @@
-import { teams } from '../data/mockData';
+import { getAllPlayers } from '../data/mockData';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
@@ -25,67 +25,45 @@ const PIE_DATA_CONFIG = [
 export function StatisticsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const playerTeamMap = useMemo(
-    () => new Map(teams.flatMap(team => team.players.map(p => [p.id, team.name]))),
-    []
-  );
-
   const predictionRecords = useMemo<PredictionRecord[]>(() =>
-    teams.flatMap(team =>
-      team.players
-        .filter(player => player.injuryHistory.length > 0)
-        .flatMap(player =>
-          player.injuryHistory.map((injury, index) => {
-            const injuryDate = new Date(injury.from);
-            const predictionDate = new Date(injuryDate);
-            predictionDate.setDate(predictionDate.getDate() - 7);
-
-            return {
-              id: `${player.id}-${index}`,
-              playerName: `${player.firstName} ${player.lastName}`,
-              team: team.name,
-              predictionDate: predictionDate.toISOString().split('T')[0],
-              predictedRisk: player.injuryRisk,
-              actualInjury: true,
-              injuryDate: injury.from,
-              diagnosis: injury.diagnosis,
-              daysUntilInjury: 7,
-            };
-          })
-        )
-    ),
+    getAllPlayers()
+      .filter(player => player.injuryHistory.length > 0)
+      .flatMap(player =>
+        player.injuryHistory.map((injury, index) => {
+          const injuryDate = new Date(injury.from);
+          const predictionDate = new Date(injuryDate);
+          predictionDate.setDate(predictionDate.getDate() - 7);
+          return {
+            id: `${player.id}-${index}`,
+            playerName: `${player.firstName} ${player.lastName}`,
+            team: player.teamName,
+            predictionDate: predictionDate.toISOString().split('T')[0],
+            predictedRisk: player.injuryRisk,
+            actualInjury: true,
+            injuryDate: injury.from,
+            diagnosis: injury.diagnosis,
+            daysUntilInjury: 7,
+          };
+        })
+      ),
   []);
 
   const allPredictions = useMemo<PredictionRecord[]>(() => {
-    const allPlayers = teams.flatMap(team => team.players);
+    const allPlayers = getAllPlayers();
 
     const lowRiskNoInjury: PredictionRecord[] = allPlayers
       .filter(p => p.injuryRisk < 35 && p.injuryHistory.length === 0)
       .slice(0, 15)
-      .map(p => ({
-        id: `${p.id}-tn`,
-        playerName: `${p.firstName} ${p.lastName}`,
-        team: playerTeamMap.get(p.id) ?? '',
-        predictionDate: '2026-03-15',
-        predictedRisk: p.injuryRisk,
-        actualInjury: false,
-      }));
+      .map(p => ({ id: `${p.id}-tn`, playerName: `${p.firstName} ${p.lastName}`, team: p.teamName, predictionDate: '2026-03-15', predictedRisk: p.injuryRisk, actualInjury: false }));
 
     const highRiskNoInjury: PredictionRecord[] = allPlayers
       .filter(p => p.injuryRisk > 50 && p.injuryHistory.length === 0)
       .slice(0, 8)
-      .map(p => ({
-        id: `${p.id}-fp`,
-        playerName: `${p.firstName} ${p.lastName}`,
-        team: playerTeamMap.get(p.id) ?? '',
-        predictionDate: '2026-03-20',
-        predictedRisk: p.injuryRisk,
-        actualInjury: false,
-      }));
+      .map(p => ({ id: `${p.id}-fp`, playerName: `${p.firstName} ${p.lastName}`, team: p.teamName, predictionDate: '2026-03-20', predictedRisk: p.injuryRisk, actualInjury: false }));
 
     return [...predictionRecords, ...lowRiskNoInjury, ...highRiskNoInjury]
       .sort((a, b) => new Date(b.predictionDate).getTime() - new Date(a.predictionDate).getTime());
-  }, [predictionRecords, playerTeamMap]);
+  }, [predictionRecords]);
 
   const { truePositives, falsePositives, trueNegatives, falseNegatives, accuracy, precision, recall } = useMemo(() => {
     const tp = allPredictions.filter(p => p.predictedRisk > 50 && p.actualInjury).length;

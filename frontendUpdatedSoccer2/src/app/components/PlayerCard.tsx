@@ -9,7 +9,6 @@ interface PlayerCardProps {
   onToggleFavorite?: () => void;
 }
 
-// Helper function to lighten a color
 function lightenColor(color: string, percent: number): string {
   const num = parseInt(color.replace("#", ""), 16);
   const amt = Math.round(2.55 * percent);
@@ -26,7 +25,6 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
   const trendColor = player.riskTrend > 0 ? '#DC2626' : '#0D9488';
   const trendArrow = player.riskTrend > 0 ? '↑' : '↓';
 
-  // Create gradient using team color
   const lighterColor = lightenColor(teamColor, 20);
   const gradient = `linear-gradient(135deg, ${teamColor} 0%, ${lighterColor} 100%)`;
 

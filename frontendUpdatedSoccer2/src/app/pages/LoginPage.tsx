@@ -8,8 +8,6 @@ export function LoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login/signup logic here
-    console.log('Login:', { username, password, isCreatingAccount });
   };
 
   return (

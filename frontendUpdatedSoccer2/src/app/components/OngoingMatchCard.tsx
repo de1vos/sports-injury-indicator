@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Match, Team } from '../data/mockData';
+import { Match, Team, MATCH_DURATION } from '../data/mockData';
 
 interface OngoingMatchCardProps {
   match: Match;
@@ -23,8 +23,7 @@ export function OngoingMatchCard({ match, homeTeam, awayTeam }: OngoingMatchCard
 
       setTimeElapsed(elapsedMinutes);
 
-      // Total match time is 90 minutes
-      const timeRemaining = 90 - elapsedMinutes;
+      const timeRemaining = MATCH_DURATION - elapsedMinutes;
       setShouldFlash(timeRemaining <= 5 && timeRemaining > 0);
     };
 
@@ -34,9 +33,9 @@ export function OngoingMatchCard({ match, homeTeam, awayTeam }: OngoingMatchCard
     return () => clearInterval(interval);
   }, [match.kickoffTime]);
 
-  const displayTime = Math.min(timeElapsed, 90);
-  const progress = (displayTime / 90) * 100;
-  const timeRemaining = Math.max(0, 90 - timeElapsed);
+  const displayTime = Math.min(timeElapsed, MATCH_DURATION);
+  const progress = (displayTime / MATCH_DURATION) * 100;
+  const timeRemaining = Math.max(0, MATCH_DURATION - timeElapsed);
 
   return (
     <Link
@@ -62,23 +61,13 @@ export function OngoingMatchCard({ match, homeTeam, awayTeam }: OngoingMatchCard
       {/* Teams */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col items-center gap-1">
-          <div
-            className="text-lg font-bold"
-            style={{ color: homeTeam.accentColor, fontFamily: 'var(--font-sans)' }}
-          >
-            {homeTeam.name.substring(0, 3).toUpperCase()}
-          </div>
+          <img src={homeTeam.logo} alt={homeTeam.name} className="w-10 h-10 object-contain" />
           <span className="text-xs font-semibold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
             {homeTeam.avgRisk}%
           </span>
         </div>
         <div className="flex flex-col items-center gap-1">
-          <div
-            className="text-lg font-bold"
-            style={{ color: awayTeam.accentColor, fontFamily: 'var(--font-sans)' }}
-          >
-            {awayTeam.name.substring(0, 3).toUpperCase()}
-          </div>
+          <img src={awayTeam.logo} alt={awayTeam.name} className="w-10 h-10 object-contain" />
           <span className="text-xs font-semibold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
             {awayTeam.avgRisk}%
           </span>
