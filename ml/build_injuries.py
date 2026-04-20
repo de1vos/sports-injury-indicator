@@ -181,31 +181,50 @@ def load_season_injuries() -> pd.DataFrame:
 
 # ── Deduplication ─────────────────────────────────────────────────────────────
 
+# Vague injury type strings from the /injuries endpoint that add no value
+VAGUE_TYPES = {"other", "fitness", "injured", "injury", "unknown", "ill", "doubtful", ""}
+
+
 def deduplicate(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Remove season_injuries rows that are already covered by a sidelined row
-    (same player, injury type overlapping within 30 days).
+    Remove season_injuries rows already covered by a sidelined record.
+
+    Uses temporal overlap (with a 14-day buffer) rather than type matching —
+    the two sources use different terminology so type matching causes misses.
+    Also drops season_injuries rows with vague/uninformative injury types.
     """
     df["start_date"] = pd.to_datetime(df["start_date"], errors="coerce")
+    df["end_date"]   = pd.to_datetime(df["end_date"],   errors="coerce")
 
     sidelined = df[df["source"] == "sidelined"].copy()
     season    = df[df["source"] == "season_injuries"].copy()
 
+    BUFFER = pd.Timedelta(days=14)
+
     keep = []
     for _, row in season.iterrows():
-        pid   = row["player_id"]
-        start = row["start_date"]
-        itype = str(row["injury_type"]).lower()
+        # Drop vague types
+        itype = str(row.get("injury_type", "")).lower().strip()
+        if itype in VAGUE_TYPES:
+            continue
 
-        # Check if sidelined already has a close match
-        sl_player = sidelined[sidelined["player_id"] == pid]
-        duplicate = False
+        pid         = row["player_id"]
+        row_start   = row["start_date"]
+        row_end     = row["end_date"] if pd.notna(row.get("end_date")) else row_start + pd.Timedelta(days=30)
+
+        if pd.isna(row_start):
+            continue
+
+        # Check temporal overlap with any sidelined record for this player
+        sl_player  = sidelined[sidelined["player_id"] == pid]
+        duplicate  = False
         for _, sl in sl_player.iterrows():
             if pd.isna(sl["start_date"]):
                 continue
-            days_diff = abs((start - sl["start_date"]).days)
-            type_match = itype[:8] in str(sl["injury_type"]).lower()[:8]
-            if days_diff <= 30 and type_match:
+            sl_end = sl["end_date"] if pd.notna(sl.get("end_date")) else sl["start_date"] + pd.Timedelta(days=30)
+
+            # Overlapping if: row starts before sl ends (+ buffer) AND row ends after sl starts (- buffer)
+            if row_start <= sl_end + BUFFER and row_end >= sl["start_date"] - BUFFER:
                 duplicate = True
                 break
 

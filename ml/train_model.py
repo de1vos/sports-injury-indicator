@@ -16,38 +16,13 @@ Output: models/injury_predictor.pkl
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn.isotonic import IsotonicRegression
 from sklearn.metrics import (
     precision_recall_curve, auc, f1_score,
     classification_report, average_precision_score,
 )
 from xgboost import XGBClassifier
-from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR
-
-
-class IsotonicCalibrator:
-    """
-    Wraps a fitted base model and applies isotonic regression calibration.
-
-    XGBoost trained on 3 full retrospective seasons outputs over-inflated
-    probabilities (~37% base rate vs ~5-10% in the live season).
-    This wrapper maps raw scores to realistic probabilities that match the
-    validation-set distribution while preserving the ranking of players.
-    """
-    def __init__(self, base_model):
-        self.base_model = base_model
-        self.calibrator = IsotonicRegression(out_of_bounds="clip")
-        self.feature_importances_ = base_model.feature_importances_
-
-    def fit(self, X_val, y_val):
-        raw = self.base_model.predict_proba(X_val)[:, 1]
-        self.calibrator.fit(raw, y_val)
-        return self
-
-    def predict_proba(self, X):
-        raw = self.base_model.predict_proba(X)[:, 1]
-        cal = self.calibrator.predict(raw)
-        return np.column_stack([1 - cal, cal])
+from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV
+from model_utils import SigmoidCalibrator
 
 
 # ── Columns to exclude from features ─────────────────────────────────────────
@@ -67,9 +42,16 @@ def load_and_split(path):
     print(f"  {len(df)} rows, {df['player_id'].nunique()} players")
     print(f"  Date range: {df['date'].min().date()} → {df['date'].max().date()}")
 
+    # Label cutoff: rows beyond (max_injury_date - 90d) have incomplete labels.
+    # Keep them in ml_features.csv for prediction, but exclude from val/test.
+    injuries        = pd.read_csv(INJURIES_CSV, parse_dates=["start_date"])
+    max_injury_date = injuries["start_date"].max()
+    label_cutoff    = max_injury_date - pd.Timedelta(days=90)
+    print(f"  Label cutoff: {label_cutoff.date()}  (max injury date: {max_injury_date.date()})")
+
     # Season-based split: train on 2022-2024, validate+test on 2025/26
     train   = df[df["season"].isin([2022, 2023, 2024])]
-    current = df[df["season"] == 2025].sort_values("date")
+    current = df[(df["season"] == 2025) & (df["date"] <= label_cutoff)].sort_values("date")
 
     if len(current) == 0:
         # Injury data not yet refreshed — all 2025/26 rows were cut by the
@@ -130,8 +112,8 @@ def train(X_train, y_train, scale_pos_weight):
 
 
 def calibrate(model, X_val, y_val):
-    print("\nCalibrating probabilities on validation set (isotonic)...")
-    calibrated = IsotonicCalibrator(model)
+    print("\nCalibrating probabilities on validation set (sigmoid/Platt)...")
+    calibrated = SigmoidCalibrator(model)
     calibrated.fit(X_val, y_val)
     return calibrated
 
