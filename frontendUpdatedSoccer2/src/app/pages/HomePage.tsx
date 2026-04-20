@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { matches, teams, getRiskColor, getAllPlayers } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
 
 export function HomePage() {
-  const { toggleFavorite, isFavorite } = useFavorites();
+  const { isFavorite } = useFavorites();
+
+  const [riskFilter, setRiskFilter] = useState<'global' | 'watchlist'>('global');
+  const [spikeFilter, setSpikeFilter] = useState<'global' | 'watchlist'>('global');
 
   const getTeamById = (id: string) => teams.find(t => t.id === id);
 
@@ -21,27 +25,56 @@ export function HomePage() {
 
   const INJURY_RISK_THRESHOLD = 50;
 
-  const upcomingMatchesData = matches
-    .filter(m => m.status === 'upcoming')
-    .map(match => {
-      const homeTeam = getTeamById(match.homeTeamId);
-      const awayTeam = getTeamById(match.awayTeamId);
-      if (!homeTeam || !awayTeam) return null;
-
-      const homeHighRiskCount = homeTeam.players.filter(p => p.injuryRisk >= INJURY_RISK_THRESHOLD).length;
-      const awayHighRiskCount = awayTeam.players.filter(p => p.injuryRisk >= INJURY_RISK_THRESHOLD).length;
-      const totalHighRisk = homeHighRiskCount + awayHighRiskCount;
-
-      return { match, homeTeam, awayTeam, homeHighRiskCount, awayHighRiskCount, totalHighRisk };
-    })
-    .filter(item => item !== null && item.totalHighRisk > 0)
-    .sort((a, b) => b.totalHighRisk - a.totalHighRisk)
-    .slice(0, 6);
-
-  const highRiskPlayers = getAllPlayers()
+  const allHighRiskPlayers = getAllPlayers()
     .filter(p => p.injuryRisk >= INJURY_RISK_THRESHOLD)
     .sort((a, b) => b.injuryRisk - a.injuryRisk)
     .slice(0, 10);
+
+  const highRiskPlayers =
+    riskFilter === 'watchlist'
+      ? allHighRiskPlayers.filter(p => isFavorite(p.id))
+      : allHighRiskPlayers;
+
+  const allSpikePlayers = getAllPlayers()
+    .filter(p => p.riskTrend >= 5)
+    .sort((a, b) => b.riskTrend - a.riskTrend)
+    .slice(0, 6);
+
+  const spikePlayers =
+    spikeFilter === 'watchlist'
+      ? allSpikePlayers.filter(p => isFavorite(p.id))
+      : allSpikePlayers;
+
+  const FilterToggle = ({
+    value,
+    onChange,
+  }: {
+    value: 'global' | 'watchlist';
+    onChange: (v: 'global' | 'watchlist') => void;
+  }) => (
+    <div className="flex gap-1">
+      <button
+        onClick={() => onChange('global')}
+        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+          value === 'global'
+            ? 'bg-[#1A56DB] text-white'
+            : 'bg-[#F5F6FA] text-[#6B7280] hover:bg-gray-200'
+        }`}
+      >
+        Global
+      </button>
+      <button
+        onClick={() => onChange('watchlist')}
+        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+          value === 'watchlist'
+            ? 'bg-[#1A56DB] text-white'
+            : 'bg-[#F5F6FA] text-[#6B7280] hover:bg-gray-200'
+        }`}
+      >
+        Watchlist
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#F5F6FA]">
@@ -62,76 +95,78 @@ export function HomePage() {
             {[...matches]
               .filter(match => match.status !== 'ongoing')
               .sort((a, b) => {
-                // Upcoming matches come first
-                if (a.status === 'upcoming' && b.status !== 'upcoming') return -1;
-                if (a.status !== 'upcoming' && b.status === 'upcoming') return 1;
-                return 0;
+                // Upcoming first (sorted by kickoff ascending), completed after (sorted by kickoff descending)
+                if (a.status !== b.status) {
+                  return a.status === 'upcoming' ? -1 : 1;
+                }
+                const dateA = new Date(`${a.date}T${a.time}`).getTime();
+                const dateB = new Date(`${b.date}T${b.time}`).getTime();
+                return dateA - dateB;
               })
               .slice(0, 12)
               .map((match) => {
-              const homeTeam = getTeamById(match.homeTeamId);
-              const awayTeam = getTeamById(match.awayTeamId);
-              if (!homeTeam || !awayTeam) return null;
+                const homeTeam = getTeamById(match.homeTeamId);
+                const awayTeam = getTeamById(match.awayTeamId);
+                if (!homeTeam || !awayTeam) return null;
 
-              // Render completed and upcoming matches with regular card
-              return (
-                <Link
-                  key={match.id}
-                  to={`/match/${match.id}`}
-                  className="flex-shrink-0 w-[200px] bg-white rounded-2xl p-4 hover:shadow-lg transition-all border border-[rgba(0,0,0,0.06)]"
-                >
-                  {/* Teams */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex flex-col items-center gap-1">
-                      <img src={homeTeam.logo} alt={homeTeam.name} className="w-10 h-10 object-contain" />
-                      <span className="text-xs font-semibold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {homeTeam.avgRisk}%
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <img src={awayTeam.logo} alt={awayTeam.name} className="w-10 h-10 object-contain" />
-                      <span className="text-xs font-semibold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {awayTeam.avgRisk}%
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Score or VS */}
-                  <div className="text-center mb-3 py-2">
-                    {match.status === 'completed' && match.score ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {match.score.home}
-                        </span>
-                        <span className="text-[#6B7280]">-</span>
-                        <span className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {match.score.away}
+                return (
+                  <Link
+                    key={match.id}
+                    to={`/match/${match.id}`}
+                    className="flex-shrink-0 w-[200px] bg-white rounded-2xl p-4 hover:shadow-lg transition-all border border-[rgba(0,0,0,0.06)]"
+                  >
+                    {/* Teams */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex flex-col items-center gap-1">
+                        <img src={homeTeam.logo} alt={homeTeam.name} className="w-10 h-10 object-contain" />
+                        <span className="text-xs font-semibold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
+                          {homeTeam.avgRisk}%
                         </span>
                       </div>
-                    ) : (
-                      <div className="text-2xl font-bold text-[#6B7280]">VS</div>
-                    )}
-                  </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <img src={awayTeam.logo} alt={awayTeam.name} className="w-10 h-10 object-contain" />
+                        <span className="text-xs font-semibold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
+                          {awayTeam.avgRisk}%
+                        </span>
+                      </div>
+                    </div>
 
-                  {/* Date */}
-                  <div className="text-center mb-3">
-                    <div className="text-xs text-[#6B7280]">{formatDate(match.date)}</div>
-                    <div className="text-xs text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>{match.time}</div>
-                  </div>
+                    {/* Score or VS */}
+                    <div className="text-center mb-3 py-2">
+                      {match.status === 'completed' && match.score ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                            {match.score.home}
+                          </span>
+                          <span className="text-[#6B7280]">-</span>
+                          <span className="text-3xl font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                            {match.score.away}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-2xl font-bold text-[#6B7280]">VS</div>
+                      )}
+                    </div>
 
-                  {/* Status Badge */}
-                  <div className="text-center">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                      match.status === 'completed'
-                        ? 'bg-[#0D9488] text-white'
-                        : 'bg-[#1A56DB] text-white'
-                    }`}>
-                      {match.status === 'completed' ? 'Completed' : 'Upcoming'}
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+                    {/* Date */}
+                    <div className="text-center mb-3">
+                      <div className="text-xs text-[#6B7280]">{formatDate(match.date)}</div>
+                      <div className="text-xs text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>{match.time}</div>
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="text-center">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                        match.status === 'completed'
+                          ? 'bg-[#0D9488] text-white'
+                          : 'bg-[#1A56DB] text-white'
+                      }`}>
+                        {match.status === 'completed' ? 'Completed' : 'Upcoming'}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
           </div>
         </div>
       </div>
@@ -139,6 +174,7 @@ export function HomePage() {
       {/* Main Content - Two Columns */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
           {/* Left Column - High Risk Players */}
           <div>
             <div className="flex items-center justify-between mb-6">
@@ -146,16 +182,23 @@ export function HomePage() {
                 <h2 className="text-2xl font-bold text-[#1A1A2E]">HIGH RISK PLAYERS</h2>
                 <p className="text-sm text-[#6B7280] mt-1">Players with injury risk above {INJURY_RISK_THRESHOLD}%</p>
               </div>
-              <Link to="/my-players" className="text-sm text-[#1A56DB] hover:underline">
-                View all
-              </Link>
+              <div className="flex items-center gap-3">
+                <FilterToggle value={riskFilter} onChange={setRiskFilter} />
+                <Link to="/my-players" className="text-sm text-[#1A56DB] hover:underline">
+                  View all
+                </Link>
+              </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
               <div className="divide-y divide-[rgba(0,0,0,0.06)]">
                 {highRiskPlayers.length === 0 ? (
                   <div className="p-8 text-center">
-                    <p className="text-[#6B7280]">No high risk players found</p>
+                    <p className="text-[#6B7280]">
+                      {riskFilter === 'watchlist'
+                        ? 'No watchlist players at high risk'
+                        : 'No high risk players found'}
+                    </p>
                   </div>
                 ) : (
                   highRiskPlayers.map((player, index) => (
@@ -164,50 +207,53 @@ export function HomePage() {
                       to={`/team/${player.teamId}?player=${player.id}`}
                       className="block p-4 hover:bg-[#F5F6FA] transition-colors"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
                         {/* Rank */}
-                        <div className="flex-shrink-0 w-8">
-                          <span className="text-lg font-bold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
+                        <div className="flex-shrink-0 w-6">
+                          <span className="text-sm font-bold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>
                             {index + 1}
                           </span>
                         </div>
 
-                        {/* Kit Number Badge */}
-                        <div
-                          className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm"
-                          style={{ backgroundColor: player.teamColor }}
-                        >
-                          #{player.kitNumber}
-                        </div>
+                        {/* Photo or Kit Number Badge */}
+                        {player.photo ? (
+                          <img
+                            src={player.photo}
+                            alt={`${player.firstName} ${player.lastName}`}
+                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm"
+                            style={{ backgroundColor: player.teamColor }}
+                          >
+                            #{player.kitNumber}
+                          </div>
+                        )}
 
                         {/* Player Info */}
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-[#1A1A2E]">
-                            {player.firstName} {player.lastName}
+                            {player.lastName} {player.firstName}
                           </h4>
                           <p className="text-sm text-[#6B7280]">
-                            {player.teamName} • {player.position}
+                            {player.teamName} · {player.position}
                           </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-[#6B7280]">
-                              {player.injuries} injuries this season
-                            </span>
-                          </div>
                         </div>
 
-                        {/* Risk Badge */}
+                        {/* Risk Badge + injuries */}
                         <div className="flex-shrink-0 text-right">
                           <div
-                            className="px-3 py-2 rounded-xl font-bold text-white text-lg"
+                            className="px-3 py-1 rounded-xl font-bold text-white text-base"
                             style={{
                               fontFamily: 'var(--font-mono)',
-                              backgroundColor: getRiskColor(player.injuryRisk)
+                              backgroundColor: getRiskColor(player.injuryRisk),
                             }}
                           >
                             {player.injuryRisk}%
                           </div>
                           <div className="text-xs text-[#6B7280] mt-1">
-                            Injury Risk
+                            {player.injuries} inj. this season
                           </div>
                         </div>
                       </div>
@@ -218,82 +264,83 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Right Column - High Risk Teams */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-[#1A1A2E]">UPCOMING MATCHES</h2>
-                <p className="text-sm text-[#6B7280] mt-1">Teams with players above injury risk threshold</p>
-              </div>
-              <Link to="/teams" className="text-sm text-[#1A56DB] hover:underline">
-                View all
-              </Link>
-            </div>
+          {/* Right Column - Risk Spikes + Upcoming Matches */}
+          <div className="flex flex-col gap-8">
 
-            <div className="space-y-4">
-              {upcomingMatchesData.length === 0 ? (
-                <div className="bg-white rounded-2xl p-8 text-center border border-[rgba(0,0,0,0.06)]">
-                  <p className="text-[#6B7280]">No upcoming match data available</p>
+            {/* RECENT INJURY RISK SPIKES */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#1A1A2E]">RECENT INJURY RISK SPIKES</h2>
+                  <p className="text-sm text-[#6B7280] mt-1">Players with the largest recent risk increases</p>
                 </div>
-              ) : (
-                upcomingMatchesData.map((data, matchIndex) => (
-                  <div key={data.match.id} className="bg-white rounded-2xl shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden p-4">
-                    {/* Match Header */}
-                    <div className="flex items-center justify-end mb-4">
-                      <span className="text-xs text-[#6B7280]">
-                        {data.totalHighRisk} total player{data.totalHighRisk !== 1 ? 's' : ''} at risk
-                      </span>
+                <FilterToggle value={spikeFilter} onChange={setSpikeFilter} />
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
+                <div className="divide-y divide-[rgba(0,0,0,0.06)]">
+                  {spikePlayers.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <p className="text-[#6B7280]">
+                        {spikeFilter === 'watchlist'
+                          ? 'No watchlist players at high risk'
+                          : 'No risk spike data available'}
+                      </p>
                     </div>
-
-                    {/* Teams Side by Side */}
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-4">
-                      {/* Home Team */}
+                  ) : (
+                    spikePlayers.map((player) => (
                       <Link
-                        to={`/team/${data.homeTeam.id}`}
-                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#F5F6FA] transition-colors"
+                        key={player.id}
+                        to={`/team/${player.teamId}?player=${player.id}`}
+                        className="block p-4 hover:bg-[#F5F6FA] transition-colors"
                       >
-                        {/* Team Logo */}
-                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
-                          <img src={data.homeTeam.logo} alt={data.homeTeam.name} className="w-9 h-9 object-contain" />
-                        </div>
+                        <div className="flex items-center gap-3">
+                          {/* Photo or Kit Number Badge */}
+                          {player.photo ? (
+                            <img
+                              src={player.photo}
+                              alt={`${player.firstName} ${player.lastName}`}
+                              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div
+                              className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm"
+                              style={{ backgroundColor: player.teamColor }}
+                            >
+                              #{player.kitNumber}
+                            </div>
+                          )}
 
-                        {/* Team Info */}
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-[#1A1A2E] truncate">{data.homeTeam.name}</h4>
-                          <span className="text-sm text-[#6B7280]">
-                            {data.homeHighRiskCount} player{data.homeHighRiskCount !== 1 ? 's' : ''} at risk
-                          </span>
+                          {/* Player Info */}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-[#1A1A2E]">
+                              {player.lastName} {player.firstName}
+                            </h4>
+                            <p className="text-sm text-[#6B7280]">
+                              {player.teamName} · {player.position}
+                            </p>
+                            <p className="text-xs text-[#6B7280] mt-0.5">
+                              {player.injuries} inj. this season
+                            </p>
+                          </div>
+
+                          {/* Spike Badge */}
+                          <div className="flex-shrink-0">
+                            <span
+                              className="px-3 py-1 rounded-xl font-bold text-white text-sm"
+                              style={{ fontFamily: 'var(--font-mono)', backgroundColor: '#DC2626' }}
+                            >
+                              +{player.riskTrend}%
+                            </span>
+                          </div>
                         </div>
                       </Link>
-
-                      {/* VS Divider */}
-                      <div className="flex-shrink-0 flex items-center justify-center px-3">
-                        <span className="text-sm font-bold text-[#6B7280]">VS</span>
-                      </div>
-
-                      {/* Away Team */}
-                      <Link
-                        to={`/team/${data.awayTeam.id}`}
-                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#F5F6FA] transition-colors"
-                      >
-                        {/* Team Logo */}
-                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
-                          <img src={data.awayTeam.logo} alt={data.awayTeam.name} className="w-9 h-9 object-contain" />
-                        </div>
-
-                        {/* Team Info */}
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-[#1A1A2E] truncate">{data.awayTeam.name}</h4>
-                          <span className="text-sm text-[#6B7280]">
-                            {data.awayHighRiskCount} player{data.awayHighRiskCount !== 1 ? 's' : ''} at risk
-                          </span>
-                        </div>
-                      </Link>
-                    </div>
-                  </div>
-                ))
-              )}
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
       </div>

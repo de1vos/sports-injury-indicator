@@ -25,6 +25,9 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
   const trendColor = player.riskTrend > 0 ? '#DC2626' : '#0D9488';
   const trendArrow = player.riskTrend > 0 ? '↑' : '↓';
 
+  const today = new Date().toISOString().split('T')[0];
+  const isInjured = (player.injuryHistory ?? []).some(entry => entry.until >= today);
+
   const lighterColor = lightenColor(teamColor, 20);
   const gradient = `linear-gradient(135deg, ${teamColor} 0%, ${lighterColor} 100%)`;
 
@@ -76,9 +79,15 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           <div className="text-5xl font-bold mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
             {player.injuryRisk}%
           </div>
-          <div className="text-[9px] uppercase tracking-wider opacity-80" style={{ fontFamily: 'var(--font-mono)' }}>
+          <div className="text-[9px] uppercase tracking-wider opacity-80 mb-1.5" style={{ fontFamily: 'var(--font-mono)' }}>
             INJURY RISK
           </div>
+          <span
+            className="px-2 py-0.5 rounded-full text-xs font-bold"
+            style={{ backgroundColor: isInjured ? '#DC2626' : '#0D9488', color: 'white' }}
+          >
+            {isInjured ? 'Injured' : 'Fit'}
+          </span>
         </div>
 
         {/* Stats Grid */}
@@ -93,18 +102,18 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           </div>
           <div>
             <div className="text-[10px] uppercase opacity-70 mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              HEIGHT
+              MISSED
             </div>
             <div className="text-base font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
-              {player.height || '-'}
+              {player.injurySummaryData?.matches_missed_this_season ?? Math.round((player.minutesMissed ?? 0) / 90)}
             </div>
           </div>
           <div>
             <div className="text-[10px] uppercase opacity-70 mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              WEIGHT
+              MINS
             </div>
             <div className="text-base font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
-              {player.weight || '-'}
+              {player.minutesPlayed?.toLocaleString() ?? '-'}
             </div>
           </div>
           <div>

@@ -2,8 +2,14 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
 import { teams } from '../data/mockData';
 
-type SortField = 'date' | 'player' | 'team' | 'diagnosis' | 'region';
+type SortField = 'date' | 'endDate' | 'lastName' | 'firstName' | 'team' | 'diagnosis' | 'region' | 'severity';
 type SortDirection = 'asc' | 'desc';
+
+const SEVERITY_ORDER: Record<string, number> = {
+  'Long-term': 3,
+  'Moderate': 2,
+  'Minor': 1,
+};
 
 export function ReportedInjuriesPage() {
   const [sortField, setSortField] = useState<SortField>('date');
@@ -17,7 +23,8 @@ export function ReportedInjuriesPage() {
         player.injuryHistory.map(injury => ({
           ...injury,
           playerId: player.id,
-          playerName: `${player.firstName} ${player.lastName}`,
+          playerFirstName: player.firstName,
+          playerLastName: player.lastName,
           teamId: team.id,
           teamName: team.name,
           position: player.position,
@@ -43,10 +50,18 @@ export function ReportedInjuriesPage() {
       let comparison = 0;
       switch (sortField) {
         case 'date':       comparison = a.from.localeCompare(b.from); break;
-        case 'player':     comparison = a.playerName.localeCompare(b.playerName); break;
+        case 'endDate':    comparison = a.until.localeCompare(b.until); break;
+        case 'lastName':   comparison = a.playerLastName.localeCompare(b.playerLastName); break;
+        case 'firstName':  comparison = a.playerFirstName.localeCompare(b.playerFirstName); break;
         case 'team':       comparison = a.teamName.localeCompare(b.teamName); break;
         case 'diagnosis':  comparison = a.diagnosis.localeCompare(b.diagnosis); break;
         case 'region':     comparison = a.region.localeCompare(b.region); break;
+        case 'severity': {
+          const aVal = SEVERITY_ORDER[a.severity ?? ''] ?? 0;
+          const bVal = SEVERITY_ORDER[b.severity ?? ''] ?? 0;
+          comparison = aVal - bVal;
+          break;
+        }
       }
       return sortDirection === 'asc' ? comparison : -comparison;
     });
@@ -117,58 +132,107 @@ export function ReportedInjuriesPage() {
           <table className="w-full">
             <thead className="bg-[#F5F6FA]">
               <tr>
-                {([
-                  { field: 'date', label: 'Date' },
-                  { field: 'player', label: 'Player' },
-                  { field: 'team', label: 'Team' },
-                  { field: 'diagnosis', label: 'Diagnosis' },
-                  { field: 'region', label: 'Region' },
-                ] as const).map(({ field, label }) => (
-                  <th key={field} className={thClass} onClick={() => handleSort(field)}>
-                    <div className="flex items-center gap-2">
-                      {label}
-                      <SortIcon field={field} />
-                    </div>
-                  </th>
-                ))}
-                <th className="text-left py-4 px-6 text-sm font-semibold text-[#6B7280]">Until</th>
+                {/* Start Date */}
+                <th className={thClass} onClick={() => handleSort('date')}>
+                  <div className="flex items-center gap-2">Start Date<SortIcon field="date" /></div>
+                </th>
+                {/* End Date */}
+                <th className={thClass} onClick={() => handleSort('endDate')}>
+                  <div className="flex items-center gap-2">End Date<SortIcon field="endDate" /></div>
+                </th>
+                {/* Last Name */}
+                <th className={thClass} onClick={() => handleSort('lastName')}>
+                  <div className="flex items-center gap-2">Last Name<SortIcon field="lastName" /></div>
+                </th>
+                {/* First Name */}
+                <th className={thClass} onClick={() => handleSort('firstName')}>
+                  <div className="flex items-center gap-2">First Name<SortIcon field="firstName" /></div>
+                </th>
+                {/* Position — not sortable */}
+                <th className="text-left py-4 px-6 text-sm font-semibold text-[#6B7280]">Position</th>
+                {/* Team */}
+                <th className={thClass} onClick={() => handleSort('team')}>
+                  <div className="flex items-center gap-2">Team<SortIcon field="team" /></div>
+                </th>
+                {/* Diagnosis */}
+                <th className={thClass} onClick={() => handleSort('diagnosis')}>
+                  <div className="flex items-center gap-2">Diagnosis<SortIcon field="diagnosis" /></div>
+                </th>
+                {/* Region */}
+                <th className={thClass} onClick={() => handleSort('region')}>
+                  <div className="flex items-center gap-2">Region<SortIcon field="region" /></div>
+                </th>
+                {/* Severity */}
+                <th className={thClass} onClick={() => handleSort('severity')}>
+                  <div className="flex items-center gap-2">Severity<SortIcon field="severity" /></div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[rgba(0,0,0,0.06)]">
-              {allInjuries.map((injury, index) => (
-                <tr key={index} className="hover:bg-[#F5F6FA] transition-colors">
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                      {injury.from}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Link
-                      to={`/team/${injury.teamId}?player=${injury.playerId}`}
-                      className="font-semibold text-[#1A56DB] hover:underline"
-                    >
-                      {injury.playerName}
-                    </Link>
-                    <div className="text-sm text-[#6B7280]">{injury.position}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Link to={`/team/${injury.teamId}`} className="text-sm text-[#1A56DB] hover:underline">
-                      {injury.teamName}
-                    </Link>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-[#1A1A2E] font-medium">{injury.diagnosis}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-[#6B7280]">{injury.region}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                      {injury.until}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {allInjuries.map((injury, index) => {
+                let severityEl: React.ReactNode;
+                if (injury.severity === 'Long-term') {
+                  severityEl = <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">Long-term</span>;
+                } else if (injury.severity === 'Moderate') {
+                  severityEl = <span className="text-xs font-semibold px-2 py-1 rounded-full bg-orange-100 text-orange-700">Moderate</span>;
+                } else if (injury.severity === 'Minor') {
+                  severityEl = <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">Minor</span>;
+                } else {
+                  severityEl = <span className="text-sm text-[#6B7280]">—</span>;
+                }
+
+                return (
+                  <tr key={index} className="hover:bg-[#F5F6FA] transition-colors">
+                    {/* Start Date */}
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {injury.from}
+                      </span>
+                    </td>
+                    {/* End Date */}
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {injury.until}
+                      </span>
+                    </td>
+                    {/* Last Name — with link */}
+                    <td className="py-4 px-6">
+                      <Link
+                        to={`/team/${injury.teamId}?player=${injury.playerId}`}
+                        className="font-semibold text-[#1A56DB] hover:underline"
+                      >
+                        {injury.playerLastName}
+                      </Link>
+                    </td>
+                    {/* First Name */}
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-[#1A1A2E]">{injury.playerFirstName}</span>
+                    </td>
+                    {/* Position */}
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-[#6B7280]">{injury.position}</span>
+                    </td>
+                    {/* Team */}
+                    <td className="py-4 px-6">
+                      <Link to={`/team/${injury.teamId}`} className="text-sm text-[#1A56DB] hover:underline">
+                        {injury.teamName}
+                      </Link>
+                    </td>
+                    {/* Diagnosis */}
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-[#1A1A2E] font-medium">{injury.diagnosis}</span>
+                    </td>
+                    {/* Region */}
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-[#6B7280]">{injury.region}</span>
+                    </td>
+                    {/* Severity */}
+                    <td className="py-4 px-6">
+                      {severityEl}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -176,3 +240,4 @@ export function ReportedInjuriesPage() {
     </div>
   );
 }
+
