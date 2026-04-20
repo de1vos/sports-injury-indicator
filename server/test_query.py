@@ -2,9 +2,9 @@ import json
 from sqlmodel import Session
 from database_init import engine
 from models.player_page import get_all_players_with_details, get_player_by_id, get_player_seasons, get_player_injury_summary
-from models.dashboard import get_matches_around_today, get_high_risk_players, get_teams_with_risk_count
+from models.dashboard import get_high_risk_players, get_teams_with_risk_count
 from models.my_players import get_favourite_players
-from models.teams import get_teams_overview
+from models.teams import get_teams_overview, get_all_next_matches
 
 TEST_USER_ID = 1
 TEST_PLAYER_ID = 2
@@ -26,10 +26,6 @@ with Session(engine) as session:
     injury_summary = get_player_injury_summary(TEST_PLAYER_ID, session)
     print(json.dumps(injury_summary, indent=2))
 
-    print("\n=== Matches (±1 week) ===")
-    matches = get_matches_around_today(session)
-    print(json.dumps(matches, indent=2))
-
     print("\n=== High Risk Players (risk > 0.50) ===")
     high_risk = get_high_risk_players(session)
     print(json.dumps(high_risk, indent=2))
@@ -45,3 +41,7 @@ with Session(engine) as session:
     print("\n=== Teams Overview ===")
     overview = get_teams_overview(session)
     print(json.dumps(overview, indent=2))
+
+    print("\n=== Next Matches ===")
+    next_matches = get_all_next_matches(session)
+    print(json.dumps([m.model_dump() for m in next_matches], indent=2, default=str))

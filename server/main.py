@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import player, team, match, my_players
+from routers import player_page, teams, dashboard, my_players
 
 app = FastAPI(title="Sports Injury Indicator API")
 
@@ -11,9 +11,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(player.router)
-app.include_router(team.router)
-app.include_router(match.router)
+app.include_router(player_page.router)
+app.include_router(teams.router)
+app.include_router(dashboard.router)
 app.include_router(my_players.router)
 
 

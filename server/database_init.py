@@ -16,7 +16,7 @@ class Nation(SQLModel, table=True):
         sa_column_args=[Identity(always=True)]
     )
     nation_name: str = Field(max_length=100)
-    nation_flag_image: Optional[str] = Field(default=None, max_length=500)
+    nation_flag_image: str = Field(max_length=500)
 
     players: List["Player"] = Relationship(back_populates="nation")
 
@@ -28,8 +28,8 @@ class Team(SQLModel, table=True):
         sa_column_args=[Identity(always=True)]
     )
     team_name: str = Field(max_length=200)
-    team_logo: Optional[str] = Field(default=None, max_length=500)
-    team_color: Optional[str] = Field(default=None, max_length=10)
+    team_logo: str = Field(max_length=500)
+    team_color: str = Field(max_length=10)
 
     players: List["Player"] = Relationship(back_populates="team")
     home_matches: List["PastMatch"] = Relationship(
@@ -70,17 +70,17 @@ class PastMatch(SQLModel, table=True):
         primary_key=True,
         sa_column_args=[Identity(always=True)]
     )
-    away_team_id: Optional[int] = Field(default=None, foreign_key="team.team_id")
-    home_team_id: Optional[int] = Field(default=None, foreign_key="team.team_id")
+    away_team_id: int = Field(foreign_key="team.team_id")
+    home_team_id: int = Field(foreign_key="team.team_id")
     past_match_date: date
     past_match_time: Optional[time] = Field(
         default=None,
         sa_column=Column(Time(timezone=False))
     )
-    past_match_goals_home: Optional[int] = Field(default=None)
-    past_match_goals_away: Optional[int] = Field(default=None)
-    past_match_fixture_id: Optional[int] = Field(default=None)
-    past_match_venue: Optional[str] = Field(default=None, max_length=200)
+    past_match_goals_home: int
+    past_match_goals_away: int
+    past_match_fixture_id: int
+    past_match_venue: str = Field(max_length=200)
 
     home_team: "Team" = Relationship(
         back_populates="home_matches",
@@ -99,15 +99,15 @@ class NextMatch(SQLModel, table=True):
         primary_key=True,
         sa_column_args=[Identity(always=True)]
     )
-    away_team_id: Optional[int] = Field(default=None, foreign_key="team.team_id")
-    home_team_id: Optional[int] = Field(default=None, foreign_key="team.team_id")
+    away_team_id: int = Field(foreign_key="team.team_id")
+    home_team_id: int = Field(foreign_key="team.team_id")
     next_match_date: date
     next_match_time: Optional[time] = Field(
         default=None,
         sa_column=Column(Time(timezone=False))
     )
-    next_match_fixture_id: Optional[int] = Field(default=None)
-    next_match_venue: Optional[str] = Field(default=None, max_length=200)
+    next_match_fixture_id: int
+    next_match_venue: str = Field(max_length=200)
 
     home_team: "Team" = Relationship(
         back_populates="home_next_matches",
@@ -125,28 +125,28 @@ class Player(SQLModel, table=True):
         primary_key=True,
         sa_column_args=[Identity(always=True)]
     )
-    team_id: Optional[int] = Field(default=None, foreign_key="team.team_id")
-    nation_id: Optional[int] = Field(default=None, foreign_key="nation.nation_id")
+    team_id: int = Field(foreign_key="team.team_id")
+    nation_id: int = Field(foreign_key="nation.nation_id")
     player_first_name: str = Field(max_length=100)
     player_last_name: str = Field(max_length=100)
-    player_age: Optional[int] = Field(default=None)
-    player_height: Optional[str] = Field(default=None, max_length=50)
-    player_weight: Optional[str] = Field(default=None, max_length=50)
-    player_photo: Optional[str] = Field(default=None, max_length=500)
-    player_kit_number: Optional[int] = Field(default=None)
-    player_injury_risk: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    player_risk_factor_1: Optional[str] = Field(default=None, max_length=50)
-    player_risk_factor_2: Optional[str] = Field(default=None, max_length=50)
-    player_risk_factor_3: Optional[str] = Field(default=None, max_length=50)
+    player_position: str = Field(max_length=50)
+    player_age: int
+    player_height: str = Field(max_length=50)
+    player_weight: str = Field(max_length=50)
+    player_photo: str = Field(max_length=500)
+    player_kit_number: int
+    player_injury_risk: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    player_risk_factor_1: str = Field(max_length=50)
+    player_risk_factor_2: str = Field(max_length=50)
+    player_risk_factor_3: str = Field(max_length=50)
 
     team: Optional["Team"] = Relationship(back_populates="players")
     nation: Optional["Nation"] = Relationship(back_populates="players")
-    injuries: List["PlayerInjury"] = Relationship(back_populates="player")
     seasons: List["PlayerSeason"] = Relationship(back_populates="player")
     graph_data: Optional["GraphData"] = Relationship(back_populates="player")
     favourited_by: List["UserFavourite"] = Relationship(back_populates="player")
 
-# 6. PlayerInjury
+# 7. PlayerInjury
 class PlayerInjury(SQLModel, table=True):
     __tablename__: ClassVar[str] = "player_injury"
     player_injury_id: Optional[int] = Field(
@@ -154,17 +154,17 @@ class PlayerInjury(SQLModel, table=True):
         primary_key=True,
         sa_column_args=[Identity(always=True)]
     )
-    player_id: Optional[int] = Field(default=None, foreign_key="player.player_id")
+    player_season_id: int = Field(foreign_key="player_season.player_season_id")
     player_injury_type: str = Field(max_length=200)
-    player_injury_days_out: Optional[int] = Field(default=None)
+    player_injury_days_out: int
     player_injury_start: date
     player_injury_end: Optional[date] = Field(default=None)
-    player_injury_severity: Optional[str] = Field(default=None, max_length=50)
-    player_injury_region: Optional[str] = Field(default=None, max_length=50)
+    player_injury_severity: str = Field(max_length=50)
+    player_injury_region: str = Field(max_length=50)
 
-    player: Optional["Player"] = Relationship(back_populates="injuries")
+    season: Optional["PlayerSeason"] = Relationship(back_populates="injuries")
 
-# 7. PlayerSeason
+# 8. PlayerSeason
 class PlayerSeason(SQLModel, table=True):
     __tablename__: ClassVar[str] = "player_season"
     player_season_id: Optional[int] = Field(
@@ -172,19 +172,25 @@ class PlayerSeason(SQLModel, table=True):
         primary_key=True,
         sa_column_args=[Identity(always=True)]
     )
-    player_id: Optional[int] = Field(default=None, foreign_key="player.player_id")
+    player_id: int = Field(foreign_key="player.player_id")
     player_season_year: int
-    player_season_appearences: Optional[int] = Field(default=None)
-    player_season_minutes: Optional[int] = Field(default=None)
-    player_season_fouls_drawn: Optional[int] = Field(default=None)
-    player_season_duels_total: Optional[int] = Field(default=None)
-    player_season_tackles: Optional[int] = Field(default=None)
-    player_season_dribbles_attempts: Optional[int] = Field(default=None)
-    player_season_games_missed: Optional[int] = Field(default=None)
+    player_season_appearences: int
+    player_season_minutes: int
+    player_season_fouls_drawn: int
+    player_season_fouls_commited: int
+    player_season_duels_total: int
+    player_season_tackles: int
+    player_season_yellow_cards: int
+    player_season_red_cards: int
+    player_season_goals: int
+    player_season_assists: int
+    player_season_dribbles_attempts: int
+    player_season_games_missed: int
 
     player: Optional["Player"] = Relationship(back_populates="seasons")
+    injuries: List["PlayerInjury"] = Relationship(back_populates="season")
 
-# 8. UserFavourite
+# 9. UserFavourite
 class UserFavourite(SQLModel, table=True):
     __tablename__: ClassVar[str] = "user_favourite"
     user_favourite_id: Optional[int] = Field(
@@ -192,61 +198,63 @@ class UserFavourite(SQLModel, table=True):
         primary_key=True,
         sa_column_args=[Identity(always=True)]
     )
-    player_id: Optional[int] = Field(default=None, foreign_key="player.player_id")
-    user_id: Optional[int] = Field(default=None, foreign_key="app_user.user_id")
+    player_id: int = Field(foreign_key="player.player_id")
+    user_id: int = Field(foreign_key="app_user.user_id")
 
     player: Optional["Player"] = Relationship(back_populates="favourited_by")
     user: Optional["AppUser"] = Relationship(back_populates="favourites")
 
-# 9. GraphData
+# 10. GraphData
 class GraphData(SQLModel, table=True):
     __tablename__: ClassVar[str] = "graph_data"
     graph_data_id: Optional[int] = Field(
-        default=None, 
-        primary_key=True, 
+        default=None,
+        primary_key=True,
         sa_column_args=[Identity(always=True)]
     )
-    player_id: Optional[int] = Field(default=None, foreign_key="player.player_id")
+    player_id: int = Field(foreign_key="player.player_id")
+    player_injury_trend: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    graph_data_current_gw: str = Field(max_length=10)
 
     # Mapping all 38 weeks
-    gw_1: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_2: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_3: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_4: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_5: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_6: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_7: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_8: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_9: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_10: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_11: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_12: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_13: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_14: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_15: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_16: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_17: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_18: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_19: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_20: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_21: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_22: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_23: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_24: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_25: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_26: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_27: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_28: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_29: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_30: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_31: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_32: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_33: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_34: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_35: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_36: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_37: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
-    gw_38: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(2, 2)))
+    gw_1: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_2: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_3: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_4: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_5: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_6: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_7: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_8: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_9: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_10: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_11: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_12: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_13: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_14: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_15: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_16: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_17: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_18: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_19: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_20: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_21: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_22: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_23: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_24: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_25: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_26: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_27: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_28: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_29: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_30: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_31: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_32: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_33: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_34: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_35: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_36: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_37: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_38: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
 
     player: Optional["Player"] = Relationship(back_populates="graph_data")
 
