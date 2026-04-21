@@ -316,35 +316,45 @@ export function TeamPage() {
       {/* Mini Cards */}
       <div className="overflow-x-auto touch-pan-x overscroll-x-contain py-5 mb-10">
         <div className="flex gap-2 justify-center min-w-max px-4">
-          {sortedPlayers.map((player, index) => (
-            <button
-              key={player.id}
-              onClick={() => setCurrentPlayerIndex(index)}
-              className={`w-[68px] h-[82px] rounded-xl overflow-hidden transition-all flex-shrink-0 ${
-                index === currentPlayerIndex
-                  ? 'ring-2 ring-[#1A56DB] ring-offset-1 scale-105 opacity-100'
-                  : 'opacity-55 hover:opacity-90 hover:scale-[1.03]'
-              }`}
-              style={{
-                backgroundColor: team.accentColor,
-                borderBottom: `3px solid ${getRiskColor(player.injuryRisk)}`,
-              }}
-            >
-              <div className="h-full flex flex-col items-center justify-between p-1.5 text-white">
-                <div className="flex-1 flex items-center justify-center w-full">
-                  <div className="text-[9px] font-semibold text-center leading-tight line-clamp-3 w-full">
-                    {player.firstName} {player.lastName}
+          {sortedPlayers.map((player, index) => {
+            const isInjured = player.riskLevel === 'Injured';
+            return (
+              <button
+                key={player.id}
+                onClick={() => setCurrentPlayerIndex(index)}
+                className={`w-[68px] h-[82px] rounded-xl overflow-hidden transition-all flex-shrink-0 ${
+                  index === currentPlayerIndex
+                    ? 'ring-2 ring-[#1A56DB] ring-offset-1 scale-105 opacity-100'
+                    : 'opacity-55 hover:opacity-90 hover:scale-[1.03]'
+                }`}
+                style={{
+                  backgroundColor: team.accentColor,
+                  borderBottom: `3px solid ${getRiskColor(player.injuryRisk)}`,
+                }}
+              >
+                <div className="h-full flex flex-col items-center justify-between p-1.5 text-white">
+                  <div className="flex-1 flex items-center justify-center w-full">
+                    <div className="text-[9px] font-semibold text-center leading-tight line-clamp-3 w-full">
+                      {player.firstName} {player.lastName}
+                    </div>
+                  </div>
+                  <div className="w-full flex flex-col gap-0.5">
+                    <div
+                      className="w-full text-center text-[10px] font-bold py-0.5 rounded-md"
+                      style={{ backgroundColor: getRiskColor(player.injuryRisk) }}
+                    >
+                      {player.injuryRisk}%
+                    </div>
+                    <div
+                      className="w-full text-center text-[8px] font-bold py-0.5 rounded-md bg-white text-black"
+                    >
+                      {isInjured ? 'INJ' : 'FIT'}
+                    </div>
                   </div>
                 </div>
-                <div
-                  className="w-full text-center text-[10px] font-bold py-0.5 rounded-md"
-                  style={{ backgroundColor: getRiskColor(player.injuryRisk) }}
-                >
-                  {player.injuryRisk}%
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -425,14 +435,14 @@ export function TeamPage() {
                   const todayStr = new Date().toISOString().split('T')[0];
                   const isInjured = (currentPlayer.injuryHistory ?? []).some(entry => entry.until >= todayStr);
                   return (
-                    <div className="flex items-center gap-4 p-4 bg-[#F5F6FA] rounded-2xl mb-5">
+                    <div className="flex items-center justify-between p-4 bg-[#F5F6FA] rounded-2xl mb-5">
                       <div>
                         <div className="text-xs text-[#6B7280] mb-1">Injury Risk</div>
                         <div className="text-3xl font-bold" style={{ fontFamily: 'var(--font-mono)', color: getRiskColor(currentPlayer.injuryRisk) }}>
                           {currentPlayer.injuryRisk}%
                         </div>
                       </div>
-                      <div>
+                      <div className="flex flex-col items-end">
                         <div className="text-xs text-[#6B7280] mb-1">Injury Status</div>
                         <span
                           className="px-2 py-0.5 rounded-full text-xs font-bold"
@@ -467,14 +477,14 @@ export function TeamPage() {
                   <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">Match Stats</p>
                   <div className="grid grid-cols-4 gap-2">
                     {[
-                      { label: 'Goals',     value: s?.goals             ?? '-' },
-                      { label: 'Assists',   value: s?.assists           ?? '-' },
-                      { label: 'Duels',     value: s?.duels_total       ?? '-' },
-                      { label: 'Dribbles',  value: s?.dribbles_attempts ?? '-' },
-                      { label: 'Fls Com.',  value: s?.fouls_committed   ?? '-' },
-                      { label: 'Fls Agst', value: s?.fouls_drawn        ?? currentPlayer.foulsAgainst ?? '-' },
-                      { label: 'Yel.',      value: s?.yellow_cards      ?? '-' },
-                      { label: 'Red',       value: s?.red_cards         ?? '-' },
+                      { label: 'Goals',          value: s?.goals             ?? '-' },
+                      { label: 'Assists',        value: s?.assists           ?? '-' },
+                      { label: 'Duels',          value: s?.duels_total       ?? '-' },
+                      { label: 'Dribbles',       value: s?.dribbles_attempts ?? '-' },
+                      { label: 'Fouls Committed', value: s?.fouls_committed   ?? '-' },
+                      { label: 'Fouls Against',  value: s?.fouls_drawn        ?? currentPlayer.foulsAgainst ?? '-' },
+                      { label: 'Yellow Cards',   value: s?.yellow_cards      ?? '-' },
+                      { label: 'Red Cards',      value: s?.red_cards         ?? '-' },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex flex-col items-center p-2 bg-[#F5F6FA] rounded-xl">
                         <span className="text-[9px] text-[#6B7280] mb-0.5 text-center leading-tight">{label}</span>

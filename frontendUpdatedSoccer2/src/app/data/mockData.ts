@@ -118,6 +118,31 @@ export interface Match {
   date: string;
   time: string;
   venue: string;
+  status: 'upcoming' | 'live' | 'finished';
+  homeGoals?: number;
+  awayGoals?: number;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  abbreviation: string;
+  accentColor: string;
+  logo: string;
+  squadSize: number;
+  avgRisk: number;
+  totalInjuries: number;
+  totalMinutesLost: number;
+  players: Player[];
+}
+
+export interface Match {
+  id: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  date: string;
+  time: string;
+  venue: string;
   status: 'completed' | 'upcoming' | 'ongoing';
   score?: {
     home: number;
@@ -2557,5 +2582,330 @@ export const matches: Match[] = [
     time: '20:00',
     venue: 'London Stadium',
     status: 'upcoming'
+  },
+];
+
+export const mockTrendingPlayers = [
+  {
+    id: 'player-1',
+    firstName: 'Harry',
+    lastName: 'Kane',
+    photo: 'https://example.com/harry-kane.jpg',
+    teamName: 'Tottenham',
+    position: 'Forward',
+    injuryTrend: 15.2,
+    seasonalInjuries: 2,
+  },
+  {
+    id: 'player-2',
+    firstName: 'Kevin',
+    lastName: 'De Bruyne',
+    photo: 'https://example.com/kevin-de-bruyne.jpg',
+    teamName: 'Manchester City',
+    position: 'Midfielder',
+    injuryTrend: 12.8,
+    seasonalInjuries: 1,
+  },
+  {
+    id: 'player-3',
+    firstName: 'Mohamed',
+    lastName: 'Salah',
+    photo: 'https://example.com/mohamed-salah.jpg',
+    teamName: 'Liverpool',
+    position: 'Forward',
+    injuryTrend: 10.5,
+    seasonalInjuries: 3,
+  },
+  {
+    id: 'player-4',
+    firstName: 'Bruno',
+    lastName: 'Fernandes',
+    photo: 'https://example.com/bruno-fernandes.jpg',
+    teamName: 'Manchester United',
+    position: 'Midfielder',
+    injuryTrend: 8.9,
+    seasonalInjuries: 0,
+  },
+  {
+    id: 'player-5',
+    firstName: 'Virgil',
+    lastName: 'van Dijk',
+    photo: 'https://example.com/virgil-van-dijk.jpg',
+    teamName: 'Liverpool',
+    position: 'Defender',
+    injuryTrend: 7.3,
+    seasonalInjuries: 1,
+  },
+];
+
+export const mockPlayers: Player[] = [
+  {
+    id: 'kane',
+    firstName: 'Harry',
+    lastName: 'Kane',
+    position: 'ST',
+    kitNumber: 10,
+    age: 30,
+    nationality: '🏴',
+    marketValue: '€100M',
+    injuryRisk: 45,
+    gamesPlayed: 28,
+    minutesPlayed: 2520,
+    injuries: 1,
+    minutesMissed: 270,
+    riskTrend: 5,
+    avgDistance: 10.5,
+    sprintsPerMatch: 35,
+    foulsAgainst: 2.1,
+    acuteChronicRatio: 1.15,
+    daysSinceLastInjury: 45,
+    matchDensity: 0.89,
+    injuryHistory: [
+      { diagnosis: 'Ankle sprain', region: 'Right ankle', from: '2026-02-15', until: '2026-03-01' },
+    ],
+    photo: 'https://example.com/harry-kane.jpg',
+    riskLevel: 'moderate',
+    riskFactors: ['High match density', 'Recent injury'],
+    injuryRiskTrend: [
+      { gw: 'GW20', season: 2026, risk: 40 },
+      { gw: 'GW21', season: 2026, risk: 42 },
+      { gw: 'GW22', season: 2026, risk: 45 },
+    ],
+    seasonStats: [
+      {
+        season: 2025,
+        appearances: 28,
+        minutes: 2520,
+        rating: 8.2,
+        goals: 15,
+        assists: 8,
+        tackles: 25,
+        interceptions: 12,
+        duels_total: 180,
+        duels_won: 95,
+        dribbles_attempts: 45,
+        dribbles_success: 30,
+        fouls_committed: 28,
+        fouls_drawn: 35,
+        yellow_cards: 2,
+        red_cards: 0,
+      },
+    ],
+    workloadData: {
+      minutes_last_30d: 540,
+      matches_last_30d: 6,
+      acute_chronic_ratio: 1.15,
+      match_density_14d: 0.89,
+      fouls_against_per_90: 2.1,
+      consecutive_90min_starts: 4,
+    },
+    injurySummaryData: {
+      career_total_injuries: 12,
+      injuries_this_season: 1,
+      days_since_last_injury: 45,
+      matches_missed_this_season: 3,
+      minutes_missed_this_season: 270,
+      matches_missed_career: 25,
+    },
+    nextMatch: {
+      fixture_id: 12345,
+      date: '2026-04-25',
+      home_team: 'Tottenham',
+      home_logo: 'https://example.com/tottenham-logo.png',
+      away_team: 'Chelsea',
+      away_logo: 'https://example.com/chelsea-logo.png',
+      venue: 'Tottenham Hotspur Stadium',
+      round: 'GW35',
+    },
+  },
+  {
+    id: 'salah',
+    firstName: 'Mohamed',
+    lastName: 'Salah',
+    position: 'RW',
+    kitNumber: 11,
+    age: 31,
+    nationality: '🇪🇬',
+    marketValue: '€80M',
+    injuryRisk: 38,
+    gamesPlayed: 30,
+    minutesPlayed: 2700,
+    injuries: 2,
+    minutesMissed: 180,
+    riskTrend: -3,
+    avgDistance: 10.8,
+    sprintsPerMatch: 42,
+    foulsAgainst: 1.8,
+    acuteChronicRatio: 1.05,
+    daysSinceLastInjury: 60,
+    matchDensity: 0.92,
+    injuryHistory: [
+      { diagnosis: 'Hamstring strain', region: 'Left hamstring', from: '2026-01-20', until: '2026-02-05' },
+      { diagnosis: 'Shoulder injury', region: 'Right shoulder', from: '2025-11-10', until: '2025-11-25' },
+      { diagnosis: 'Ankle sprain', region: 'Right ankle', from: '2026-04-15', until: '' },
+      { diagnosis: 'Calf strain', region: 'Right calf', from: '2025-12-01', until: '2025-12-08' },
+    ],
+    photo: 'https://example.com/mohamed-salah.jpg',
+    riskLevel: 'Injured',
+    riskFactors: ['Good recovery', 'Low acute load'],
+    injuryRiskTrend: [
+      { gw: 'GW20', season: 2026, risk: 42 },
+      { gw: 'GW21', season: 2026, risk: 'Injured' },
+      { gw: 'GW22', season: 2026, risk: 'Injured' },
+    ],
+    seasonStats: [
+      {
+        season: 2025,
+        appearances: 30,
+        minutes: 2700,
+        rating: 8.5,
+        goals: 22,
+        assists: 12,
+        tackles: 30,
+        interceptions: 15,
+        duels_total: 200,
+        duels_won: 110,
+        dribbles_attempts: 80,
+        dribbles_success: 55,
+        fouls_committed: 20,
+        fouls_drawn: 40,
+        yellow_cards: 1,
+        red_cards: 0,
+      },
+    ],
+    workloadData: {
+      minutes_last_30d: 630,
+      matches_last_30d: 7,
+      acute_chronic_ratio: 1.05,
+      match_density_14d: 0.92,
+      fouls_against_per_90: 1.8,
+      consecutive_90min_starts: 5,
+    },
+    injurySummaryData: {
+      career_total_injuries: 8,
+      injuries_this_season: 2,
+      days_since_last_injury: 60,
+      matches_missed_this_season: 2,
+      minutes_missed_this_season: 180,
+      matches_missed_career: 15,
+    },
+    nextMatch: {
+      fixture_id: 12346,
+      date: '2026-04-26',
+      home_team: 'Liverpool',
+      home_logo: 'https://example.com/liverpool-logo.png',
+      away_team: 'Manchester City',
+      away_logo: 'https://example.com/man-city-logo.png',
+      venue: 'Anfield',
+      round: 'GW35',
+    },
+  },
+  {
+    id: 'vandijk',
+    firstName: 'Virgil',
+    lastName: 'van Dijk',
+    position: 'CB',
+    kitNumber: 4,
+    age: 32,
+    nationality: '🇳🇱',
+    marketValue: '€45M',
+    injuryRisk: 52,
+    gamesPlayed: 25,
+    minutesPlayed: 2250,
+    injuries: 3,
+    minutesMissed: 450,
+    riskTrend: 8,
+    avgDistance: 9.2,
+    sprintsPerMatch: 15,
+    foulsAgainst: 1.2,
+    acuteChronicRatio: 1.25,
+    daysSinceLastInjury: 30,
+    matchDensity: 0.85,
+    injuryHistory: [
+      { diagnosis: 'Knee injury', region: 'Right knee', from: '2026-03-01', until: '2026-03-20' },
+      { diagnosis: 'Back strain', region: 'Lower back', from: '2025-12-10', until: '2025-12-28' },
+      { diagnosis: 'Ankle sprain', region: 'Left ankle', from: '2025-09-15', until: '2025-10-05' },
+    ],
+    photo: 'https://example.com/virgil-van-dijk.jpg',
+    riskLevel: 'moderate',
+    riskFactors: ['Recent injury', 'Age-related concerns'],
+    injuryRiskTrend: [
+      { gw: 'GW20', season: 2026, risk: 48 },
+      { gw: 'GW21', season: 2026, risk: 50 },
+      { gw: 'GW22', season: 2026, risk: 52 },
+    ],
+    seasonStats: [
+      {
+        season: 2025,
+        appearances: 25,
+        minutes: 2250,
+        rating: 7.8,
+        goals: 2,
+        assists: 1,
+        tackles: 45,
+        interceptions: 35,
+        duels_total: 150,
+        duels_won: 110,
+        dribbles_attempts: 10,
+        dribbles_success: 8,
+        fouls_committed: 15,
+        fouls_drawn: 8,
+        yellow_cards: 3,
+        red_cards: 0,
+      },
+    ],
+    workloadData: {
+      minutes_last_30d: 540,
+      matches_last_30d: 6,
+      acute_chronic_ratio: 1.25,
+      match_density_14d: 0.85,
+      fouls_against_per_90: 1.2,
+      consecutive_90min_starts: 4,
+    },
+    injurySummaryData: {
+      career_total_injuries: 15,
+      injuries_this_season: 3,
+      days_since_last_injury: 30,
+      matches_missed_this_season: 5,
+      minutes_missed_this_season: 450,
+      matches_missed_career: 40,
+    },
+    nextMatch: {
+      fixture_id: 12346,
+      date: '2026-04-26',
+      home_team: 'Liverpool',
+      home_logo: 'https://example.com/liverpool-logo.png',
+      away_team: 'Manchester City',
+      away_logo: 'https://example.com/man-city-logo.png',
+      venue: 'Anfield',
+      round: 'GW35',
+    },
+  },
+];
+
+export const mockTeams: Team[] = [
+  {
+    id: 'tottenham',
+    name: 'Tottenham Hotspur',
+    abbreviation: 'TOT',
+    accentColor: '#132257',
+    logo: 'https://example.com/tottenham-logo.png',
+    squadSize: 25,
+    avgRisk: 42,
+    totalInjuries: 8,
+    totalMinutesLost: 2160,
+    players: [mockPlayers[0]], // Harry Kane
+  },
+  {
+    id: 'liverpool',
+    name: 'Liverpool',
+    abbreviation: 'LIV',
+    accentColor: '#C8102E',
+    logo: 'https://example.com/liverpool-logo.png',
+    squadSize: 28,
+    avgRisk: 35,
+    totalInjuries: 5,
+    totalMinutesLost: 1350,
+    players: [mockPlayers[1], mockPlayers[2]], // Mohamed Salah, Virgil van Dijk
   },
 ];

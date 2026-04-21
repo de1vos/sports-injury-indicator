@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
+import { useMemo, useState, useEffect } from 'react';
+import { ComposedChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 import { Player } from '../data/mockData';
 
 interface ChartPoint { week: string; risk: number | null; injured?: boolean; }
@@ -50,7 +50,7 @@ function buildTrendData(player: Player): ChartPoint[] {
   const entries = player.injuryRiskTrend.slice(-20);
   return entries.map(e => ({
     week: e.gw,
-    risk: e.risk === 'Injured' ? null : Math.round(e.risk * 100 * 10) / 10,
+    risk: e.risk === 'Injured' ? null : Math.round(e.risk * 10) / 10,
     injured: e.risk === 'Injured' ? true : undefined,
   }));
 }
@@ -74,6 +74,30 @@ const getRiskZoneColor = (risk: number) => {
 };
 
 export function PlayerInjuryRiskChart({ player }: { player: Player }) {
+  const [animatedRisk, setAnimatedRisk] = useState(0);
+
+  useEffect(() => {
+    setAnimatedRisk(0);
+    const target = player.injuryRisk;
+    const duration = 1500; // 1.5 seconds
+    const steps = 60; // 60 fps
+    const increment = target / steps;
+    const interval = duration / steps;
+
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        setAnimatedRisk(target);
+        clearInterval(timer);
+      } else {
+        setAnimatedRisk(Math.round(current));
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [player.injuryRisk]);
+
   const chartData = useMemo(
     () => buildTrendData(player),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,8 +121,8 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
       <div className="flex items-center justify-between mb-6 p-4 bg-[#F5F6FA] rounded-2xl">
         <div>
           <div className="text-xs uppercase text-[#6B7280] mb-1">Current Risk</div>
-          <div className="text-4xl font-bold" style={{ fontFamily: 'var(--font-mono)', color }}>
-            {player.injuryRisk}%
+          <div className="text-5xl font-bold" style={{ fontFamily: 'var(--font-mono)', color }}>
+            {animatedRisk}%
           </div>
         </div>
         {hasGaps ? (
@@ -124,6 +148,12 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id={`gradient-${player.id}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity={0.8} />
+                <stop offset="100%" stopColor={color} stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
             <XAxis
               dataKey="week"
@@ -146,19 +176,25 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
               contentStyle={{ backgroundColor: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', padding: '8px 12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
               labelStyle={{ color: '#1A1A2E', fontWeight: 600, marginBottom: '4px' }}
               itemStyle={{ color: color, fontFamily: 'var(--font-mono)' }}
-              formatter={(value: number | null) => value === null ? ['Injured', ''] : [`${value}%`, 'Risk']}
+              formatter={(value: number | null, name: string, props: any) => {
+                if (value === null || props?.payload?.injured) {
+                  return ['Injured', ''];
+                }
+                return [`${value}%`, 'Risk'];
+              }}
             />
             {getInjurySpans(chartData).map(({ x1, x2 }, i) => (
-              <ReferenceArea key={i} x1={x1} x2={x2} fill="#DC2626" fillOpacity={0.12} stroke="#DC2626" strokeOpacity={0.3} />
+              <ReferenceArea key={i} x1={x1} x2={x2} fill="#DC2626" fillOpacity={0.4} stroke="#DC2626" strokeOpacity={0.5} />
             ))}
             <ReferenceLine y={50} stroke="#DC2626" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={35} stroke="#EA580C" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={20} stroke="#0D9488" strokeDasharray="3 3" strokeOpacity={0.3} />
-            <Line
+            <Area
               type="monotone"
               dataKey="risk"
               stroke={color}
               strokeWidth={3}
+              fill={`url(#gradient-${player.id})`}
               dot={{ fill: color, r: 3 }}
               activeDot={{ r: 6 }}
               connectNulls={false}

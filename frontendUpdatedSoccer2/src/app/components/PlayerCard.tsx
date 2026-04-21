@@ -9,6 +9,13 @@ interface PlayerCardProps {
   onToggleFavorite?: () => void;
 }
 
+function getSeverityColor(risk: number): string {
+  if (risk >= 70) return '#DC2626'; // High - Red
+  if (risk >= 50) return '#EA580C'; // Elevated - Orange
+  if (risk >= 35) return '#0D9488'; // Moderate - Teal
+  return '#1A56DB'; // Low - Blue
+}
+
 function lightenColor(color: string, percent: number): string {
   const num = parseInt(color.replace("#", ""), 16);
   const amt = Math.round(2.55 * percent);
@@ -33,7 +40,7 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
 
   return (
     <div
-      className="relative w-[320px] h-[450px] rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.15)]"
+      className="relative w-[320px] h-[450px] rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.25)] transition-all duration-300 hover:scale-[1.02] cursor-pointer"
       style={{ background: gradient }}
     >
       {/* Favorite Star */}
@@ -83,8 +90,8 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
             INJURY RISK
           </div>
           <span
-            className="px-2 py-0.5 rounded-full text-xs font-bold"
-            style={{ backgroundColor: isInjured ? '#DC2626' : '#0D9488', color: 'white' }}
+            className="px-2 py-0.5 rounded-full text-xs font-bold bg-white"
+            style={{ color: getSeverityColor(player.injuryRisk) }}
           >
             {isInjured ? 'Injured' : 'Fit'}
           </span>
@@ -102,7 +109,7 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           </div>
           <div>
             <div className="text-[10px] uppercase opacity-70 mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              MISSED
+              MISSED MATCHES
             </div>
             <div className="text-base font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
               {player.injurySummaryData?.matches_missed_this_season ?? Math.round((player.minutesMissed ?? 0) / 90)}
@@ -110,7 +117,7 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           </div>
           <div>
             <div className="text-[10px] uppercase opacity-70 mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              MINS
+              MINS PLAYED
             </div>
             <div className="text-base font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
               {player.minutesPlayed?.toLocaleString() ?? '-'}
@@ -147,9 +154,12 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-white/20">
+        <div className="pt-3 border-t border-white/20 flex justify-between items-end">
           <div className="text-2xl opacity-90">
             {player.nationality}
+          </div>
+          <div className="text-[8px] opacity-60 text-right">
+            * Data based on this season
           </div>
         </div>
       </div>
