@@ -73,7 +73,8 @@
           "player_injury_region": "Knee",
           "player_injury_start": "2026-01-10",
           "player_injury_end": "2026-05-10",
-          "player_injury_severity": "Severe"
+          "player_injury_severity": "Severe",
+          "player_injury_days_out": 120
         }
       ]
     },
@@ -114,9 +115,11 @@
       "test_call": "GET /dashboard/high-risk-players",
       "example_response": [
         {
+          "player_id": 10,
           "player_first_name": "Reece",
           "player_last_name": "James",
           "player_photo": "link.to.james.photo.com",
+          "team_id": 4,
           "team_name": "Chelsea",
           "player_position": "Defender",
           "player_injury_risk": 0.88,
@@ -129,9 +132,11 @@
       "test_call": "GET /dashboard/trending-risk-players",
       "example_response": [
         {
+          "player_id": 10,
           "player_first_name": "Reece",
           "player_last_name": "James",
           "player_photo": "link.to.james.photo.com",
+          "team_id": 4,
           "team_name": "Chelsea",
           "player_position": "Defender",
           "player_injury_trend": 742.15,
@@ -146,6 +151,7 @@
       "test_call": "GET /teams/overview",
       "example_response": [
         {
+          "team_id": 1,
           "team_name": "Liverpool",
           "team_logo": "link.to.liverpool.badge.com",
           "amount_of_players": 4,
@@ -161,9 +167,11 @@
       "test_call": "GET /my-players/1",
       "example_response": [
         {
+          "player_id": 1,
           "player_first_name": "Alexander",
           "player_last_name": "Isak",
           "player_photo": "link.to.isak.photo.com",
+          "team_id": 1,
           "team_name": "Liverpool",
           "player_position": "Forward",
           "player_injury_trend": 42.3,

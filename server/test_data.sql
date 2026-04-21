@@ -127,7 +127,7 @@ VALUES (8, 'Muscle fatigue', 10, '2026-01-20'::date, '2026-01-30'::date, 'Minor'
 INSERT INTO player_injury (player_season_id, player_injury_type, player_injury_days_out, player_injury_start, player_injury_end, player_injury_severity, player_injury_region)
 VALUES (11, 'Groin strain', 28, '2025-09-15'::date, '2025-10-13'::date, 'Moderate', 'Groin');
 
--- Graph data (player_id 1–6 for variety)
+-- Graph data (all players)
 INSERT INTO graph_data (player_id, player_injury_trend, graph_data_current_gw, gw_1, gw_2, gw_3, gw_4, gw_5, gw_6, gw_7, gw_8, gw_9, gw_10, gw_11, gw_12, gw_13, gw_14, gw_15, gw_16, gw_17, gw_18, gw_19, gw_20, gw_21, gw_22, gw_23, gw_24, gw_25, gw_26, gw_27, gw_28, gw_29, gw_30, gw_31, gw_32, gw_33, gw_34, gw_35, gw_36, gw_37, gw_38)
 VALUES (1, 42.30, 'GW29', 0.73, 0.14, 0.96, 0.08, 0.55, 0.32, 0.81, 0.47, 0.62, 0.19, 0.88, 0.03, 0.71, 0.44, 0.57, 0.29, 0.93, 0.66, 0.12, 0.84, 0.39, 0.75, 0.21, 0.58, 0.90, 0.43, 0.07, 0.68, 0.35, 0.82, 0.16, 0.94, 0.50, 0.27, 0.79, 0.61, 0.04, 0.48);
 
@@ -142,6 +142,24 @@ VALUES (9, 158.40, 'GW29', 0.50, 0.55, 0.62, 0.58, 0.65, 0.70, 0.63, 0.68, 0.72,
 
 INSERT INTO graph_data (player_id, player_injury_trend, graph_data_current_gw, gw_1, gw_2, gw_3, gw_4, gw_5, gw_6, gw_7, gw_8, gw_9, gw_10, gw_11, gw_12, gw_13, gw_14, gw_15, gw_16, gw_17, gw_18, gw_19, gw_20, gw_21, gw_22, gw_23, gw_24, gw_25, gw_26, gw_27, gw_28, gw_29, gw_30, gw_31, gw_32, gw_33, gw_34, gw_35, gw_36, gw_37, gw_38)
 VALUES (10, 742.15, 'GW29', 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.82, 0.87, 0.83, 0.88, 0.85, 0.90, 0.87, 0.83, 0.88, 0.85, 0.91, 0.88, 0.84, 0.89, 0.86, 0.82, 0.87, 0.84, 0.88, 0.85, 0.90, 0.87, 0.83, 0.88, 0.85, 0.89, 0.86, 0.82);
+
+INSERT INTO graph_data (player_id, player_injury_trend, graph_data_current_gw, gw_1, gw_2, gw_3, gw_4, gw_5, gw_6, gw_7, gw_8, gw_9, gw_10, gw_11, gw_12, gw_13, gw_14, gw_15, gw_16, gw_17, gw_18, gw_19, gw_20, gw_21, gw_22, gw_23, gw_24, gw_25, gw_26, gw_27, gw_28, gw_29, gw_30, gw_31, gw_32, gw_33, gw_34, gw_35, gw_36, gw_37, gw_38)
+VALUES (3, 28.60, 'GW29', 0.30, 0.35, 0.28, 0.33, 0.38, 0.31, 0.36, 0.40, 0.34, 0.29, 0.37, 0.32, 0.27, 0.35, 0.30, 0.38, 0.33, 0.28, 0.36, 0.31, 0.26, 0.34, 0.29, 0.37, 0.32, 0.40, 0.35, 0.30, 0.38, 0.33, 0.28, 0.36, 0.31, 0.39, 0.34, 0.29, 0.37, 0.32);
+
+INSERT INTO graph_data (player_id, player_injury_trend, graph_data_current_gw, gw_1, gw_2, gw_3, gw_4, gw_5, gw_6, gw_7, gw_8, gw_9, gw_10, gw_11, gw_12, gw_13, gw_14, gw_15, gw_16, gw_17, gw_18, gw_19, gw_20, gw_21, gw_22, gw_23, gw_24, gw_25, gw_26, gw_27, gw_28, gw_29, gw_30, gw_31, gw_32, gw_33, gw_34, gw_35, gw_36, gw_37, gw_38)
+VALUES (4, 63.20, 'GW29', 0.42, 0.50, 0.46, 0.53, 0.48, 0.55, 0.51, 0.44, 0.58, 0.52, 0.47, 0.54, 0.49, 0.56, 0.50, 0.45, 0.53, 0.48, 0.57, 0.51, 0.46, 0.54, 0.49, 0.44, 0.52, 0.47, 0.55, 0.50, 0.58, 0.53, 0.48, 0.56, 0.51, 0.46, 0.54, 0.49, 0.57, 0.52);
+
+INSERT INTO graph_data (player_id, player_injury_trend, graph_data_current_gw, gw_1, gw_2, gw_3, gw_4, gw_5, gw_6, gw_7, gw_8, gw_9, gw_10, gw_11, gw_12, gw_13, gw_14, gw_15, gw_16, gw_17, gw_18, gw_19, gw_20, gw_21, gw_22, gw_23, gw_24, gw_25, gw_26, gw_27, gw_28, gw_29, gw_30, gw_31, gw_32, gw_33, gw_34, gw_35, gw_36, gw_37, gw_38)
+VALUES (6, 98.75, 'GW29', 0.52, 0.57, 0.61, 0.55, 0.63, 0.58, 0.66, 0.60, 0.54, 0.62, 0.67, 0.59, 0.64, 0.57, 0.61, 0.65, 0.59, 0.53, 0.60, 0.64, 0.58, 0.63, 0.57, 0.61, 0.66, 0.60, 0.55, 0.62, 0.67, 0.61, 0.56, 0.63, 0.58, 0.65, 0.60, 0.54, 0.61, 0.66);
+
+INSERT INTO graph_data (player_id, player_injury_trend, graph_data_current_gw, gw_1, gw_2, gw_3, gw_4, gw_5, gw_6, gw_7, gw_8, gw_9, gw_10, gw_11, gw_12, gw_13, gw_14, gw_15, gw_16, gw_17, gw_18, gw_19, gw_20, gw_21, gw_22, gw_23, gw_24, gw_25, gw_26, gw_27, gw_28, gw_29, gw_30, gw_31, gw_32, gw_33, gw_34, gw_35, gw_36, gw_37, gw_38)
+VALUES (7, 19.45, 'GW29', 0.25, 0.22, 0.28, 0.24, 0.20, 0.26, 0.23, 0.29, 0.21, 0.27, 0.24, 0.20, 0.26, 0.23, 0.28, 0.21, 0.25, 0.22, 0.27, 0.24, 0.20, 0.26, 0.23, 0.29, 0.22, 0.25, 0.21, 0.27, 0.24, 0.20, 0.26, 0.23, 0.28, 0.21, 0.25, 0.22, 0.27, 0.24);
+
+INSERT INTO graph_data (player_id, player_injury_trend, graph_data_current_gw, gw_1, gw_2, gw_3, gw_4, gw_5, gw_6, gw_7, gw_8, gw_9, gw_10, gw_11, gw_12, gw_13, gw_14, gw_15, gw_16, gw_17, gw_18, gw_19, gw_20, gw_21, gw_22, gw_23, gw_24, gw_25, gw_26, gw_27, gw_28, gw_29, gw_30, gw_31, gw_32, gw_33, gw_34, gw_35, gw_36, gw_37, gw_38)
+VALUES (8, 112.30, 'GW29', 0.60, 0.65, 0.58, 0.63, 0.70, 0.66, 0.61, 0.68, 0.73, 0.67, 0.62, 0.69, 0.64, 0.71, 0.66, 0.60, 0.67, 0.72, 0.65, 0.61, 0.68, 0.63, 0.70, 0.65, 0.60, 0.67, 0.72, 0.66, 0.61, 0.69, 0.64, 0.71, 0.66, 0.62, 0.69, 0.64, 0.71, 0.67);
+
+INSERT INTO graph_data (player_id, player_injury_trend, graph_data_current_gw, gw_1, gw_2, gw_3, gw_4, gw_5, gw_6, gw_7, gw_8, gw_9, gw_10, gw_11, gw_12, gw_13, gw_14, gw_15, gw_16, gw_17, gw_18, gw_19, gw_20, gw_21, gw_22, gw_23, gw_24, gw_25, gw_26, gw_27, gw_28, gw_29, gw_30, gw_31, gw_32, gw_33, gw_34, gw_35, gw_36, gw_37, gw_38)
+VALUES (11, 77.90, 'GW29', 0.48, 0.53, 0.57, 0.51, 0.46, 0.54, 0.59, 0.52, 0.47, 0.55, 0.60, 0.53, 0.48, 0.56, 0.51, 0.58, 0.53, 0.47, 0.55, 0.50, 0.57, 0.52, 0.46, 0.54, 0.59, 0.53, 0.48, 0.56, 0.51, 0.58, 0.52, 0.47, 0.55, 0.50, 0.57, 0.52, 0.48, 0.55);
 
 -- Matches (past and upcoming across multiple gameweeks)
 -- GW30 - past
@@ -181,6 +199,97 @@ VALUES (3, 4, '2026-04-26'::date, '14:00:00', 3007, 'gw34', 'Emirates Stadium', 
 
 INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
 VALUES (2, 1, '2026-04-27'::date, '14:00:00', 2002, 'gw34', 'Tottenham Hotspur Stadium', 0, 0, 0.75, 0.51, false);
+
+-- GW35 - upcoming
+INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
+VALUES (1, 3, '2026-05-03'::date, '16:30:00', 4001, 'gw35', 'Anfield', 0, 0, 0.57, 0.70, false);
+
+INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
+VALUES (4, 2, '2026-05-04'::date, '14:00:00', 4002, 'gw35', 'Stamford Bridge', 0, 0, 0.73, 0.60, false);
+
+-- GW36 - upcoming
+INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
+VALUES (2, 3, '2026-05-10'::date, '14:00:00', 4003, 'gw36', 'Tottenham Hotspur Stadium', 0, 0, 0.60, 0.70, false);
+
+INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
+VALUES (1, 4, '2026-05-10'::date, '16:30:00', 4004, 'gw36', 'Anfield', 0, 0, 0.57, 0.73, false);
+
+-- GW37 - upcoming
+INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
+VALUES (3, 2, '2026-05-17'::date, '14:00:00', 4005, 'gw37', 'Emirates Stadium', 0, 0, 0.70, 0.60, false);
+
+INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
+VALUES (4, 1, '2026-05-17'::date, '16:30:00', 4006, 'gw37', 'Stamford Bridge', 0, 0, 0.73, 0.57, false);
+
+-- GW38 - upcoming (final day)
+INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
+VALUES (1, 2, '2026-05-24'::date, '16:00:00', 4007, 'gw38', 'Anfield', 0, 0, 0.57, 0.60, false);
+
+INSERT INTO match (home_team_id, away_team_id, match_date, match_time, match_fixture_id, match_game_week, match_venue, match_goals_home, match_goals_away, home_avg_injury_risk, away_avg_injury_risk, match_is_played)
+VALUES (3, 4, '2026-05-24'::date, '16:00:00', 4008, 'gw38', 'Emirates Stadium', 0, 0, 0.70, 0.73, false);
+
+-- Player seasons 2024 (season year 2024 = 2024/2025 season)
+-- player_season_id 12–22
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (1, 2024, 34, 2900, 58, 18, 88, 25, 2, 0, 18, 10, 210, 3);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (2, 2024, 25, 1800, 30, 15, 55, 10, 5, 1, 8, 4, 70, 10);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (3, 2024, 35, 3150, 18, 28, 130, 60, 1, 0, 4, 2, 8, 1);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (4, 2024, 30, 2400, 28, 20, 75, 38, 4, 0, 5, 14, 65, 5);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (5, 2024, 32, 2700, 44, 22, 80, 18, 6, 0, 26, 12, 95, 4);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (6, 2024, 30, 2500, 35, 12, 68, 9, 2, 0, 30, 5, 50, 6);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (7, 2024, 33, 2970, 4, 7, 18, 4, 0, 0, 0, 0, 1, 2);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (8, 2024, 30, 2200, 60, 20, 90, 22, 5, 0, 15, 11, 160, 5);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (9, 2024, 36, 3100, 75, 24, 100, 38, 7, 0, 16, 18, 215, 1);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (10, 2024, 10, 750, 12, 14, 40, 20, 2, 0, 1, 3, 25, 18);
+
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
+VALUES (11, 2024, 28, 2100, 38, 14, 68, 16, 3, 0, 13, 9, 120, 6);
+
+-- Injuries for 2024 seasons (player_season_id 12–22)
+-- Isak 2024 (ps_id=12): hamstring
+INSERT INTO player_injury (player_season_id, player_injury_type, player_injury_days_out, player_injury_start, player_injury_end, player_injury_severity, player_injury_region)
+VALUES (12, 'Hamstring strain', 18, '2025-02-05'::date, '2025-02-23'::date, 'Minor', 'Hamstring');
+
+-- Zlatan 2024 (ps_id=13): back spasm + knee bruise
+INSERT INTO player_injury (player_season_id, player_injury_type, player_injury_days_out, player_injury_start, player_injury_end, player_injury_severity, player_injury_region)
+VALUES (13, 'Back spasm', 12, '2024-11-10'::date, '2024-11-22'::date, 'Minor', 'Back');
+
+INSERT INTO player_injury (player_season_id, player_injury_type, player_injury_days_out, player_injury_start, player_injury_end, player_injury_severity, player_injury_region)
+VALUES (13, 'Knee bruise', 7, '2025-03-01'::date, '2025-03-08'::date, 'Minor', 'Knee');
+
+-- Kane 2024 (ps_id=16): thigh strain
+INSERT INTO player_injury (player_season_id, player_injury_type, player_injury_days_out, player_injury_start, player_injury_end, player_injury_severity, player_injury_region)
+VALUES (16, 'Thigh strain', 25, '2025-01-18'::date, '2025-02-12'::date, 'Moderate', 'Thigh');
+
+-- Reece James 2024 (ps_id=21): hamstring tear
+INSERT INTO player_injury (player_season_id, player_injury_type, player_injury_days_out, player_injury_start, player_injury_end, player_injury_severity, player_injury_region)
+VALUES (21, 'Hamstring tear', 55, '2024-09-20'::date, '2024-11-14'::date, 'Severe', 'Hamstring');
+
+-- Martinelli 2024 (ps_id=19): ankle sprain
+INSERT INTO player_injury (player_season_id, player_injury_type, player_injury_days_out, player_injury_start, player_injury_end, player_injury_severity, player_injury_region)
+VALUES (19, 'Ankle sprain', 14, '2025-04-01'::date, '2025-04-15'::date, 'Minor', 'Ankle');
+
+-- Nkunku 2024 (ps_id=22): knee surgery
+INSERT INTO player_injury (player_season_id, player_injury_type, player_injury_days_out, player_injury_start, player_injury_end, player_injury_severity, player_injury_region)
+VALUES (22, 'Knee surgery', 75, '2024-10-05'::date, '2024-12-19'::date, 'Severe', 'Knee');
 
 -- App user
 INSERT INTO app_user (user_mail, user_password) VALUES ('user@mail.com', 'user_password');
