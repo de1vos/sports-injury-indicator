@@ -8,8 +8,9 @@ export interface ApiTeamOverview {
   team_name: string;
   team_logo: string;
   amount_of_players: number;
-  average_risk_of_injury: number; // 0–1
-  total_season_injuries: number;
+  average_risk_of_injury: number;   // 0–1
+  active_injuries: number;
+  percent_of_squad_injured: number; // 0–1
 }
 
 export interface ApiTeamPlayer {
@@ -116,6 +117,7 @@ export interface ApiMyPlayer {
   player_first_name: string;
   player_last_name: string;
   player_photo: string;
+  team_id?: number;
   team_name: string;
   player_position: string;
   player_injury_trend: number;

@@ -106,7 +106,8 @@ export interface Team {
   logo: string;
   squadSize: number;
   avgRisk: number;
-  totalInjuries: number;
+  totalInjuries: number;   // active injuries
+  percentInjured: number;  // 0–100
   totalMinutesLost: number;
   players: Player[];
 }

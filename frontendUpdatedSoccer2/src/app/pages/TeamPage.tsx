@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useSearchParams, useLocation, Link } from 'react-router';
+import { useParams, useSearchParams, useLocation, useNavigate, Link } from 'react-router';
 import type { TeamOverviewItem } from '../api/mappers';
 import { getRiskColor, MATCH_DURATION, type Player, type SeasonStat } from '../data/mockData';
 import {
@@ -183,6 +183,7 @@ export function TeamPage() {
   const { teamId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('risk');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
@@ -236,7 +237,7 @@ export function TeamPage() {
       const index = sortedPlayers.findIndex(p => p.id === playerParam);
       if (index !== -1) {
         setCurrentPlayerIndex(index);
-        setSearchParams({});
+        setSearchParams({}, { replace: true });
       }
     }
   }, [searchParams, playerList, sortedPlayers, setSearchParams]);
@@ -276,14 +277,14 @@ export function TeamPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-4">
-          <Link
-            to="/"
+          <button
+            onClick={() => navigate(-1)}
             className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#1A56DB] text-[#1A56DB] hover:bg-[#1A56DB] hover:text-white transition-all"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-          </Link>
+          </button>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border border-[rgba(0,0,0,0.06)]">
               <img src={team.logo} alt={team.name} className="w-9 h-9 object-contain" />

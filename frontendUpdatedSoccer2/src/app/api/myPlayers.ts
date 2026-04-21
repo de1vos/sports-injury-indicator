@@ -3,6 +3,7 @@ import type { ApiMyPlayer } from './types';
 
 export interface MyPlayerItem {
   id?: string;
+  teamId?: string;
   firstName: string;
   lastName: string;
   photo: string;
@@ -14,6 +15,7 @@ export interface MyPlayerItem {
 
 const mapMyPlayer = (p: ApiMyPlayer): MyPlayerItem => ({
   id: p.player_id != null ? String(p.player_id) : undefined,
+  teamId: p.team_id != null ? String(p.team_id) : undefined,
   firstName: p.player_first_name,
   lastName: p.player_last_name,
   photo: p.player_photo,

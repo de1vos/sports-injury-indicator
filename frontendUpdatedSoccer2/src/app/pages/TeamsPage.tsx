@@ -52,7 +52,7 @@ export function TeamsPage() {
           {/* Team Rows */}
           <div className="space-y-3">
             {sortedTeams.map((team) => {
-              const percentInjured = Math.round((team.totalInjuries / team.squadSize) * 100);
+              const percentInjured = team.percentInjured;
               return (
                 <Link
                   key={team.id}

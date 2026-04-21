@@ -94,46 +94,47 @@ export function MyPlayersPage() {
           {players.map((player, index) => {
             const trendPositive = player.injuryTrend > 0;
             const trendLabel = `${trendPositive ? '+' : ''}${player.injuryTrend.toFixed(1)}%`;
+            const href = player.id && player.teamId
+              ? `/team/${player.teamId}?player=${player.id}`
+              : null;
+            const inner = (
+              <>
+                {player.photo ? (
+                  <img
+                    src={player.photo}
+                    alt={`${player.firstName} ${player.lastName}`}
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-[#D1D5DB] rounded-full flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-[#1A1A2E]">
+                    <span className="font-bold">{player.firstName}</span>{' '}
+                    <span className="font-normal">{player.lastName}</span>
+                  </div>
+                  <div className="text-xs text-[#6B7280]">{player.teamName} · {player.position}</div>
+                </div>
+                <span className={`text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${trendPositive ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                  {trendLabel}
+                </span>
+                <span className="text-xs text-[#6B7280] flex-shrink-0 hidden sm:block">
+                  {player.seasonalInjuries} inj.
+                </span>
+              </>
+            );
             return (
               <div key={player.id ?? `${player.firstName}-${player.lastName}-${index}`}>
-                <div className="flex items-center gap-4 px-6 py-4 hover:bg-[#F5F6FA] transition-colors">
-                  {/* Photo */}
-                  {player.photo ? (
-                    <img
-                      src={player.photo}
-                      alt={`${player.firstName} ${player.lastName}`}
-                      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-[#D1D5DB] rounded-full flex-shrink-0" />
-                  )}
-
-                  {/* Name + subtitle */}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-[#1A1A2E]">
-                      <span className="font-bold">{player.lastName}</span>{' '}
-                      <span className="font-normal">{player.firstName}</span>
-                    </div>
-                    <div className="text-xs text-[#6B7280]">{player.teamName} · {player.position}</div>
+                {href ? (
+                  <Link to={href} className="flex items-center gap-4 px-6 py-4 hover:bg-[#F5F6FA] transition-colors">
+                    {inner}
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-4 px-6 py-4">
+                    {inner}
                   </div>
-
-                  {/* Injury trend badge */}
-                  <span
-                    className={`text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${
-                      trendPositive ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                    }`}
-                  >
-                    {trendLabel}
-                  </span>
-
-                  {/* Seasonal injuries */}
-                  <span className="text-xs text-[#6B7280] flex-shrink-0 hidden sm:block">
-                    {player.seasonalInjuries} inj.
-                  </span>
-                </div>
-                {index < players.length - 1 && (
-                  <div className="border-b border-[rgba(0,0,0,0.06)]" />
                 )}
+                {index < players.length - 1 && <div className="border-b border-[rgba(0,0,0,0.06)]" />}
               </div>
             );
           })}
@@ -144,11 +145,11 @@ export function MyPlayersPage() {
           {players.map((player, index) => {
             const trendPositive = player.injuryTrend > 0;
             const trendLabel = `${trendPositive ? '+' : ''}${player.injuryTrend.toFixed(1)}%`;
-            return (
-              <div
-                key={player.id ?? `${player.firstName}-${player.lastName}-${index}`}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-[rgba(0,0,0,0.06)] hover:shadow-md transition-all"
-              >
+            const href = player.id && player.teamId
+              ? `/team/${player.teamId}?player=${player.id}`
+              : null;
+            const cardContent = (
+              <>
                 <div className="flex items-center gap-3 mb-4">
                   {player.photo ? (
                     <img
@@ -161,36 +162,41 @@ export function MyPlayersPage() {
                   )}
                   <div>
                     <h3 className="font-bold text-[#1A1A2E]">
-                      {player.lastName} {player.firstName}
+                      {player.firstName} {player.lastName}
                     </h3>
                     <p className="text-sm text-[#6B7280]">{player.teamName} · {player.position}</p>
                   </div>
                 </div>
-
                 <div className="flex items-center justify-between pt-4 border-t border-[rgba(0,0,0,0.06)]">
                   <div>
                     <div className="text-xs text-[#6B7280] mb-1">Injury Trend</div>
-                    <span
-                      className={`text-sm font-semibold px-2 py-1 rounded-full ${
-                        trendPositive ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                      }`}
-                    >
+                    <span className={`text-sm font-semibold px-2 py-1 rounded-full ${trendPositive ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                       {trendLabel}
                     </span>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-[#6B7280] mb-1">Seasonal Inj.</div>
-                    <div
-                      className="text-sm font-bold"
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        color: player.seasonalInjuries >= 2 ? '#DC2626' : '#1A1A2E'
-                      }}
-                    >
+                    <div className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: player.seasonalInjuries >= 2 ? '#DC2626' : '#1A1A2E' }}>
                       {player.seasonalInjuries}
                     </div>
                   </div>
                 </div>
+              </>
+            );
+            return href ? (
+              <Link
+                key={player.id ?? `${player.firstName}-${player.lastName}-${index}`}
+                to={href}
+                className="block bg-white rounded-2xl p-6 shadow-sm border border-[rgba(0,0,0,0.06)] hover:shadow-md hover:border-[#1A56DB] transition-all"
+              >
+                {cardContent}
+              </Link>
+            ) : (
+              <div
+                key={player.id ?? `${player.firstName}-${player.lastName}-${index}`}
+                className="bg-white rounded-2xl p-6 shadow-sm border border-[rgba(0,0,0,0.06)]"
+              >
+                {cardContent}
               </div>
             );
           })}

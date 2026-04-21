@@ -17,11 +17,12 @@ export const mapTeamOverview = (t: ApiTeamOverview): TeamOverviewItem => ({
   id: String(t.team_id),
   name: t.team_name,
   abbreviation: t.team_name.slice(0, 3).toUpperCase(),
-  accentColor: '#1A56DB',       // not provided by API
+  accentColor: '#1A56DB',
   logo: t.team_logo,
   squadSize: t.amount_of_players,
   avgRisk: Math.round(t.average_risk_of_injury * 100),
-  totalInjuries: t.total_season_injuries,
+  totalInjuries: t.active_injuries,
+  percentInjured: Math.round(t.percent_of_squad_injured * 100),
   totalMinutesLost: 0,
 });
 
