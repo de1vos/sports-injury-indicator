@@ -32,21 +32,13 @@ class Team(SQLModel, table=True):
     team_color: str = Field(max_length=10)
 
     players: List["Player"] = Relationship(back_populates="team")
-    home_matches: List["PastMatch"] = Relationship(
+    home_matches: List["Match"] = Relationship(
         back_populates="home_team",
-        sa_relationship_kwargs={"foreign_keys": "[PastMatch.home_team_id]"}
+        sa_relationship_kwargs={"foreign_keys": "[Match.home_team_id]"}
     )
-    away_matches: List["PastMatch"] = Relationship(
+    away_matches: List["Match"] = Relationship(
         back_populates="away_team",
-        sa_relationship_kwargs={"foreign_keys": "[PastMatch.away_team_id]"}
-    )
-    home_next_matches: List["NextMatch"] = Relationship(
-        back_populates="home_team",
-        sa_relationship_kwargs={"foreign_keys": "[NextMatch.home_team_id]"}
-    )
-    away_next_matches: List["NextMatch"] = Relationship(
-        back_populates="away_team",
-        sa_relationship_kwargs={"foreign_keys": "[NextMatch.away_team_id]"}
+        sa_relationship_kwargs={"foreign_keys": "[Match.away_team_id]"}
     )
 
 # 3. AppUser
@@ -62,60 +54,37 @@ class AppUser(SQLModel, table=True):
 
     favourites: List["UserFavourite"] = Relationship(back_populates="user")
 
-# 4. PastMatch
-class PastMatch(SQLModel, table=True):
-    __tablename__: ClassVar[str] = "past_match"
-    past_match_id: Optional[int] = Field(
+# 4. Match
+class Match(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "match"
+    match_id: Optional[int] = Field(
         default=None,
         primary_key=True,
         sa_column_args=[Identity(always=True)]
     )
-    away_team_id: int = Field(foreign_key="team.team_id")
     home_team_id: int = Field(foreign_key="team.team_id")
-    past_match_date: date
-    past_match_time: Optional[time] = Field(
+    away_team_id: int = Field(foreign_key="team.team_id")
+    match_date: date
+    match_time: Optional[time] = Field(
         default=None,
         sa_column=Column(Time(timezone=False))
     )
-    past_match_goals_home: int
-    past_match_goals_away: int
-    past_match_fixture_id: int
-    past_match_venue: str = Field(max_length=200)
+    match_fixture_id: int
+    match_game_week: str = Field(max_length=10)
+    match_venue: str = Field(max_length=200)
+    match_goals_home: int
+    match_goals_away: int
+    home_avg_injury_risk: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    away_avg_injury_risk: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    match_is_played: bool
 
-    home_team: "Team" = Relationship(
+    home_team: Optional["Team"] = Relationship(
         back_populates="home_matches",
-        sa_relationship_kwargs={"foreign_keys": "[PastMatch.home_team_id]"}
+        sa_relationship_kwargs={"foreign_keys": "[Match.home_team_id]"}
     )
-    away_team: "Team" = Relationship(
+    away_team: Optional["Team"] = Relationship(
         back_populates="away_matches",
-        sa_relationship_kwargs={"foreign_keys": "[PastMatch.away_team_id]"}
-    )
-
-# 5. NextMatch
-class NextMatch(SQLModel, table=True):
-    __tablename__: ClassVar[str] = "next_match"
-    next_match_id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        sa_column_args=[Identity(always=True)]
-    )
-    away_team_id: int = Field(foreign_key="team.team_id")
-    home_team_id: int = Field(foreign_key="team.team_id")
-    next_match_date: date
-    next_match_time: Optional[time] = Field(
-        default=None,
-        sa_column=Column(Time(timezone=False))
-    )
-    next_match_fixture_id: int
-    next_match_venue: str = Field(max_length=200)
-
-    home_team: "Team" = Relationship(
-        back_populates="home_next_matches",
-        sa_relationship_kwargs={"foreign_keys": "[NextMatch.home_team_id]"}
-    )
-    away_team: "Team" = Relationship(
-        back_populates="away_next_matches",
-        sa_relationship_kwargs={"foreign_keys": "[NextMatch.away_team_id]"}
+        sa_relationship_kwargs={"foreign_keys": "[Match.away_team_id]"}
     )
 
 # 6. Player
@@ -213,7 +182,7 @@ class GraphData(SQLModel, table=True):
         sa_column_args=[Identity(always=True)]
     )
     player_id: int = Field(foreign_key="player.player_id")
-    player_injury_trend: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    player_injury_trend: Decimal = Field(sa_column=Column(Numeric(5, 2), nullable=False))
     graph_data_current_gw: str = Field(max_length=10)
 
     # Mapping all 38 weeks

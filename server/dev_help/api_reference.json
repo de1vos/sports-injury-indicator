@@ -1,0 +1,195 @@
+{
+  "players": {
+    "GET /players/team/{team_id}": {
+      "description": "All players in a team",
+      "test_call": "GET /players/team/1",
+      "example_response": [
+        {
+          "player_id": 1,
+          "player_first_name": "Alexander",
+          "player_last_name": "Isak",
+          "player_injury_risk": 0.5
+        }
+      ]
+    },
+    "GET /players/{player_id}/card": {
+      "description": "Full profile for one player",
+      "test_call": "GET /players/1/card",
+      "example_response": {
+        "player_first_name": "Alexander",
+        "player_last_name": "Isak",
+        "player_age": 25,
+        "player_weight": "75 kg",
+        "player_height": "190 cm",
+        "player_photo": "link.to.isak.photo.com",
+        "player_position": "Forward",
+        "player_kit_number": 14,
+        "nation_name": "Sweden",
+        "player_injury_risk": 0.5,
+        "player_injury_status": "available",
+        "player_injury_trend": 42.3,
+        "player_season_injuries": 1,
+        "player_season_minutes": 1800,
+        "player_season_missed_games": 5
+      }
+    },
+    "GET /players/{player_id}/graph": {
+      "description": "Gameweek injury risk graph data",
+      "test_call": "GET /players/1/graph",
+      "example_response": {
+        "gw_1": 0.73,
+        "gw_2": 0.14,
+        "gw_38": 0.48,
+        "graph_data_current_gw": "GW29",
+        "player_injury_trend": 42.3
+      }
+    },
+    "GET /players/{player_id}/seasons": {
+      "description": "All seasons for a player, newest first",
+      "test_call": "GET /players/1/seasons",
+      "example_response": [
+        {
+          "player_season_year": 2025,
+          "player_season_appearances": 30,
+          "player_season_minutes": 1800,
+          "player_season_fouls_drawn": 62,
+          "player_season_fouls_commited": 20,
+          "player_season_duels_total": 90,
+          "player_season_tackles": 28,
+          "player_season_yellow_cards": 3,
+          "player_season_red_cards": 0,
+          "player_season_goals": 15,
+          "player_season_assists": 8,
+          "player_season_dribbles_attempts": 228
+        }
+      ]
+    },
+    "GET /players/{player_id}/injury-history": {
+      "description": "All injuries across all seasons, newest first",
+      "test_call": "GET /players/1/injury-history",
+      "example_response": [
+        {
+          "player_injury_type": "ACL tear",
+          "player_injury_region": "Knee",
+          "player_injury_start": "2026-01-10",
+          "player_injury_end": "2026-05-10",
+          "player_injury_severity": "Severe"
+        }
+      ]
+    },
+    "GET /players/{player_id}/injury-analysis": {
+      "description": "Summary of a player's injury record",
+      "test_call": "GET /players/1/injury-analysis",
+      "example_response": {
+        "player_total_injuries": 1,
+        "player_season_injuries": 1,
+        "player_total_games_missed": 5,
+        "player_days_since_injury": 0,
+        "player_average_games_played": 51.4
+      }
+    }
+  },
+  "dashboard": {
+    "GET /dashboard/matches/{game_week}": {
+      "description": "All matches for a gameweek",
+      "test_call": "GET /dashboard/matches/gw34",
+      "example_response": [
+        {
+          "home_team_name": "Liverpool",
+          "away_team_name": "Tottenham",
+          "home_team_logo": "link.to.liverpool.badge.com",
+          "away_team_logo": "link.to.tottenham.badge.com",
+          "home_team_goals": null,
+          "away_team_goals": null,
+          "home_average_injury_risk": 0.51,
+          "away_average_injury_risk": 0.75,
+          "match_time": "17:30:00",
+          "match_date": "2026-04-25",
+          "match_is_played": false
+        }
+      ]
+    },
+    "GET /dashboard/high-risk-players?user_id=": {
+      "description": "Players ordered by injury risk",
+      "test_call": "GET /dashboard/high-risk-players",
+      "example_response": [
+        {
+          "player_first_name": "Reece",
+          "player_last_name": "James",
+          "player_photo": "link.to.james.photo.com",
+          "team_name": "Chelsea",
+          "player_position": "Defender",
+          "player_injury_risk": 0.88,
+          "player_seasonal_injuries": 1
+        }
+      ]
+    },
+    "GET /dashboard/trending-risk-players?user_id=": {
+      "description": "Players ordered by injury trend",
+      "test_call": "GET /dashboard/trending-risk-players",
+      "example_response": [
+        {
+          "player_first_name": "Reece",
+          "player_last_name": "James",
+          "player_photo": "link.to.james.photo.com",
+          "team_name": "Chelsea",
+          "player_position": "Defender",
+          "player_injury_trend": 742.15,
+          "player_seasonal_injuries": 1
+        }
+      ]
+    }
+  },
+  "teams": {
+    "GET /teams/overview": {
+      "description": "All teams with player count and risk",
+      "test_call": "GET /teams/overview",
+      "example_response": [
+        {
+          "team_name": "Liverpool",
+          "team_logo": "link.to.liverpool.badge.com",
+          "amount_of_players": 4,
+          "average_risk_of_injury": 0.57,
+          "total_season_injuries": 1
+        }
+      ]
+    }
+  },
+  "my_players": {
+    "GET /my-players/{user_id}": {
+      "description": "Favourite players for a user",
+      "test_call": "GET /my-players/1",
+      "example_response": [
+        {
+          "player_first_name": "Alexander",
+          "player_last_name": "Isak",
+          "player_photo": "link.to.isak.photo.com",
+          "team_name": "Liverpool",
+          "player_position": "Forward",
+          "player_injury_trend": 42.3,
+          "player_seasonal_injuries": 1
+        }
+      ]
+    }
+  },
+  "reported_injuries": {
+    "GET /reported-injuries/": {
+      "description": "All injuries from latest season",
+      "test_call": "GET /reported-injuries/",
+      "example_response": [
+        {
+          "injury_date_start": "2026-01-10",
+          "injury_date_end": "2026-05-10",
+          "player_first_name": "Alexander",
+          "player_last_name": "Isak",
+          "team_name": "Liverpool",
+          "player_injury_diagnosis": "ACL tear",
+          "player_injury_region": "Knee",
+          "player_injury_severity": "Severe",
+          "player_position": "Forward",
+          "player_injury_days_out": 120
+        }
+      ]
+    }
+  }
+}
