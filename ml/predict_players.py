@@ -3,14 +3,14 @@ Phase 5 — Live predictions
 
 For every active 2025/26 PL player:
   - Current injury risk score (calibrated probability 0–1)
-  - Risk trend over last 38 matches this season (raw scores, with injured markers)
+  - Risk trend over last 38 gameweeks (dict: GW1–GW38, current season first, prev season backfill)
   - Top 3 risk factors (SHAP if available, else rule-based)
-  - Season stats (current + previous season)
+  - All season stats (array, newest first)
   - Injury summary and full injury history
   - Next match
 
 Outputs:
-  output/predictions.json  — player data + predictions (consumed by frontend)
+  output/predictions.json  — {current_gameweek, current_season, generated_at, players}
   output/matches.json      — completed + upcoming fixtures (±2 weeks)
 
 Run: python3.14 predict_players.py
@@ -23,10 +23,11 @@ import warnings
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from config import (
     PLAYERS_CSV, SEASON_STATS_CSV, INJURIES_CSV, ML_FEATURES_CSV,
-    FIXTURES_FILE, FIXTURES_PREV_FILE, FIXTURES_UPCOMING_FILE,
+    FIXTURES_FILE, FIXTURES_UPCOMING_FILE,
     MODEL_FILE, OUTPUT_DIR, RISK_THRESHOLDS, CURRENT_SEASON,
 )
 from model_utils import SigmoidCalibrator  # required for pickle deserialization
@@ -41,6 +42,8 @@ except ImportError:
 TREND_MATCHES = 38
 TWO_WEEKS     = timedelta(days=14)
 
+FIXTURES_PREV_FILE = Path(FIXTURES_FILE).parent / f"fixtures_{CURRENT_SEASON - 1}.json"
+
 SEASON_STATS_COLS = [
     "appearances", "minutes", "rating", "goals", "assists",
     "tackles", "interceptions", "duels_total", "duels_won",
@@ -48,6 +51,29 @@ SEASON_STATS_COLS = [
     "fouls_committed", "fouls_drawn",
     "yellow_cards", "red_cards",
 ]
+
+TEAM_ABBREVIATIONS = {
+    "Arsenal":           "ARS",
+    "Aston Villa":       "AVL",
+    "Bournemouth":       "BOU",
+    "Brentford":         "BRE",
+    "Brighton":          "BHA",
+    "Chelsea":           "CHE",
+    "Crystal Palace":    "CRY",
+    "Everton":           "EVE",
+    "Fulham":            "FUL",
+    "Ipswich":           "IPS",
+    "Leicester":         "LEI",
+    "Liverpool":         "LIV",
+    "Manchester City":   "MCI",
+    "Manchester United": "MUN",
+    "Newcastle":         "NEW",
+    "Nottingham Forest": "NFO",
+    "Southampton":       "SOU",
+    "Tottenham":         "TOT",
+    "West Ham":          "WHU",
+    "Wolves":            "WOL",
+}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -82,7 +108,6 @@ def safe_str(val):
 
 # ── Risk factor templates ─────────────────────────────────────────────────────
 
-# Maps feature name → function(value) → human-readable string
 FACTOR_TEMPLATES = {
     "injuries_last_24_months":    lambda v: f"{int(v)} injuries in last 24 months",
     "injuries_last_12_months":    lambda v: f"{int(v)} injuries in last 12 months",
@@ -100,25 +125,22 @@ FACTOR_TEMPLATES = {
     "recovery_trend":             lambda v: "Recovery times trending longer",
 }
 
-# Rules used for fallback (without SHAP): threshold → show factor
 FACTOR_RULES = [
-    # (feature,                   condition,              template_key or None)
     ("days_since_last_injury",    lambda v: 0 < v <= 30, "days_since_last_injury"),
-    ("injuries_last_24_months",   lambda v: v >= 3,       "injuries_last_24_months"),
-    ("injuries_last_12_months",   lambda v: v >= 2,       "injuries_last_12_months"),
-    ("acute_chronic_ratio",       lambda v: v >= 1.3,     "acute_chronic_ratio"),
-    ("consecutive_90min_starts",  lambda v: v >= 4,       "consecutive_90min_starts"),
-    ("matches_last_30d",          lambda v: v >= 6,       "matches_last_30d"),
-    ("minutes_last_30d",          lambda v: v >= 450,     "minutes_last_30d"),
-    ("workload_trend",             lambda v: v >= 0.15,    "workload_trend"),
-    ("yellow_cards_last_30d",     lambda v: v >= 3,       "yellow_cards_last_30d"),
-    ("age",                       lambda v: v >= 30,      "age"),
-    ("recovery_trend",            lambda v: v > 0,        "recovery_trend"),
+    ("injuries_last_24_months",   lambda v: v >= 3,      "injuries_last_24_months"),
+    ("injuries_last_12_months",   lambda v: v >= 2,      "injuries_last_12_months"),
+    ("acute_chronic_ratio",       lambda v: v >= 1.3,    "acute_chronic_ratio"),
+    ("consecutive_90min_starts",  lambda v: v >= 4,      "consecutive_90min_starts"),
+    ("matches_last_30d",          lambda v: v >= 6,      "matches_last_30d"),
+    ("minutes_last_30d",          lambda v: v >= 450,    "minutes_last_30d"),
+    ("workload_trend",             lambda v: v >= 0.15,   "workload_trend"),
+    ("yellow_cards_last_30d",     lambda v: v >= 3,      "yellow_cards_last_30d"),
+    ("age",                       lambda v: v >= 30,     "age"),
+    ("recovery_trend",            lambda v: v > 0,       "recovery_trend"),
 ]
 
 
 def _recurring_factor(row_data: dict) -> str | None:
-    """Returns a risk factor string if recurring injury flag is set."""
     flag = row_data.get("recurring_injury_flag", 0)
     if not flag or (isinstance(flag, float) and np.isnan(flag)) or flag < 1:
         return None
@@ -129,20 +151,14 @@ def _recurring_factor(row_data: dict) -> str | None:
 
 
 def get_risk_factors_shap(shap_row: np.ndarray, feature_cols: list, row_data: dict) -> list[str]:
-    """Top 3 risk factors based on SHAP values (most impactful features pushing risk up)."""
     factors = []
-
-    # Recurring injury handled separately (not a numeric SHAP story)
     rec = _recurring_factor(row_data)
     if rec:
         factors.append(rec)
-
-    # Sort features by SHAP contribution (descending), positive only
     ranked = sorted(
         [(col, shap_row[i]) for i, col in enumerate(feature_cols) if shap_row[i] > 0],
         key=lambda x: x[1], reverse=True,
     )
-
     for feature, _ in ranked:
         if feature == "recurring_injury_flag":
             continue
@@ -157,18 +173,14 @@ def get_risk_factors_shap(shap_row: np.ndarray, feature_cols: list, row_data: di
             continue
         if len(factors) >= 3:
             break
-
     return factors[:3]
 
 
 def get_risk_factors_rules(row_data: dict) -> list[str]:
-    """Rule-based fallback when SHAP is not available."""
     factors = []
-
     rec = _recurring_factor(row_data)
     if rec:
         factors.append(rec)
-
     for feature, condition, tmpl_key in FACTOR_RULES:
         val = row_data.get(feature)
         if val is None or (isinstance(val, float) and np.isnan(val)):
@@ -180,7 +192,6 @@ def get_risk_factors_rules(row_data: dict) -> list[str]:
             continue
         if len(factors) >= 3:
             break
-
     return factors[:3]
 
 
@@ -337,20 +348,7 @@ def main():
     for tid in team_to_fixtures:
         team_to_fixtures[tid].sort(key=lambda x: x["fixture"]["date"])
 
-    # ── Fixture → gameweek lookup ─────────────────────────────────────────────
-    # Round format: "Regular Season - 33" → "GW33"
-    fixture_to_gw: dict[int, str] = {}
-    for fx in fixtures_2024 + fixtures_2025 + fixtures_upcoming:
-        fid   = fx["fixture"]["id"]
-        round_str = fx["league"].get("round", "")
-        parts = round_str.rsplit("-", 1)
-        if len(parts) == 2 and parts[1].strip().isdigit():
-            fixture_to_gw[fid] = f"GW{parts[1].strip()}"
-        else:
-            fixture_to_gw[fid] = round_str  # fallback: use raw string
-
     # ── Current gameweek ──────────────────────────────────────────────────────
-    # Last completed GW = highest GW number in fixtures_2025
     now = datetime.now(timezone.utc)
     completed_gws = []
     for fx in fixtures_2025:
@@ -376,11 +374,10 @@ def main():
                .last()
                .reset_index()
     )
-    X_current    = current_rows[feature_cols].fillna(0)
+    X_current     = current_rows[feature_cols].fillna(0)
     current_probs = calibrated_model.predict_proba(X_current)[:, 1]
     current_rows["_risk"] = current_probs
 
-    # player_id → row position in current_rows
     pid_to_pos = {int(row["player_id"]): i for i, row in current_rows.iterrows()}
 
     # ── SHAP (batch, computed once for all players) ───────────────────────────
@@ -389,7 +386,7 @@ def main():
         print("Computing SHAP values...")
         explainer = shap.TreeExplainer(raw_model)
         sv = explainer.shap_values(X_current)
-        shap_values = sv[1] if isinstance(sv, list) else sv  # positive class
+        shap_values = sv[1] if isinstance(sv, list) else sv
 
     # ── Players lookup ────────────────────────────────────────────────────────
     players_idx = players.set_index("player_id")
@@ -397,6 +394,8 @@ def main():
     # ── Build records ─────────────────────────────────────────────────────────
     print("Building player records...")
     records = []
+
+    season_cut = pd.Timestamp(f"{CURRENT_SEASON}-07-01")
 
     for player_id in active_ids:
         player_id = int(player_id)
@@ -426,20 +425,17 @@ def main():
             (injuries["start_date"] >= pd.Timestamp(f"{CURRENT_SEASON - 1}-07-01"))
         ]
 
-        # Risk trend — 38 slots always labeled GW1–GW38.
-        # Current season fills GW1 onwards; previous season backfills the tail.
-        team_id_int = safe_int(prof.get("team_id"))
-        season_cut  = pd.Timestamp(f"{CURRENT_SEASON}-07-01")
-
+        # ── Risk trend ────────────────────────────────────────────────────────
+        # 38 slots labeled GW1–GW38.
+        # Current season fixtures fill GW1 onwards; previous season backfills tail.
+        team_id_int   = safe_int(prof.get("team_id"))
         curr_fixtures = [fx for fx in (team_to_fixtures.get(team_id_int) or [])
                          if pd.Timestamp(fx["fixture"]["date"][:10]) >= season_cut]
         prev_fixtures = [fx for fx in (team_to_fixtures.get(team_id_int) or [])
                          if pd.Timestamp(fx["fixture"]["date"][:10]) < season_cut]
 
-        n_current = len(curr_fixtures)                        # e.g. 32
-        n_prev    = max(0, TREND_MATCHES - n_current)         # e.g. 6
-        # Take the last n_prev fixtures from previous season
-        ordered_fixtures = prev_fixtures[-n_prev:] + curr_fixtures  # prev tail → curr
+        n_prev           = max(0, TREND_MATCHES - len(curr_fixtures))
+        ordered_fixtures = prev_fixtures[-n_prev:] + curr_fixtures
 
         # Player's feature rows keyed by fixture_id
         player_fid_map = (
@@ -449,7 +445,6 @@ def main():
             .set_index("fixture_id")
         )
 
-        # Batch-predict all fixtures where player has a feature row
         played_fids = [fx["fixture"]["id"] for fx in ordered_fixtures
                        if fx["fixture"]["id"] in player_fid_map.index]
         if played_fids:
@@ -459,15 +454,16 @@ def main():
         else:
             fid_to_score = {}
 
-        trend     = {}
+        trend     = []
         last_risk = None
 
         for slot, fx in enumerate(ordered_fixtures, start=1):
             fid     = fx["fixture"]["id"]
             fx_date = pd.Timestamp(fx["fixture"]["date"][:10])
             gw_key  = f"GW{slot}"
+            # Determine season for this fixture
+            fx_season = CURRENT_SEASON if fx_date >= season_cut else CURRENT_SEASON - 1
 
-            # Was the player injured on this date?
             injured = False
             for _, inj in player_injuries.iterrows():
                 if pd.isna(inj["start_date"]):
@@ -485,7 +481,7 @@ def main():
             else:
                 risk_val = last_risk if last_risk is not None else round(injury_risk, 4)
 
-            trend[gw_key] = risk_val
+            trend.append({"gw": gw_key, "season": fx_season, "risk": risk_val})
 
         # Season stats — all available seasons, newest first
         all_season_stats = get_all_season_stats(season_stats, player_id)
@@ -521,6 +517,8 @@ def main():
             "lastname":    safe_str(prof.get("lastname"))    or "",
             "photo":       safe_str(prof.get("photo"))       or "",
             "team":        safe_str(prof.get("current_team")) or "",
+            "team_id":     safe_int(prof.get("team_id")),
+            "team_short":  TEAM_ABBREVIATIONS.get(safe_str(prof.get("current_team")) or "", ""),
             "team_logo":   safe_str(prof.get("team_logo"))   or "",
             "position":    safe_str(prof.get("position"))    or "",
             "age":         safe_int(prof.get("age")),
@@ -529,18 +527,19 @@ def main():
             "nationality": safe_str(prof.get("nationality")) or "",
             "kit_number":  safe_int(prof.get("kit_number")),
 
-            "injury_risk":       round(injury_risk, 4),
-            "risk_level":        get_risk_level(injury_risk),
-            "risk_factor_1":     factors[0] if len(factors) > 0 else None,
-            "risk_factor_2":     factors[1] if len(factors) > 1 else None,
-            "risk_factor_3":     factors[2] if len(factors) > 2 else None,
-            "injury_risk_trend": trend,   # {"GW1": 0.35, "GW2": "Injured", ...}
+            "injury_risk":    round(injury_risk, 4),
+            "risk_level":     get_risk_level(injury_risk),
+            "risk_factor_1":  factors[0] if len(factors) > 0 else None,
+            "risk_factor_2":  factors[1] if len(factors) > 1 else None,
+            "risk_factor_3":  factors[2] if len(factors) > 2 else None,
 
-            "season_stats": all_season_stats,
-            "workload":              workload,
-            "injury_summary":        injury_summary,
-            "injury_history":        injury_history,
-            "next_match":            next_match,
+            "injury_risk_trend": trend,
+
+            "season_stats":   all_season_stats,
+            "workload":       workload,
+            "injury_summary": injury_summary,
+            "injury_history": injury_history,
+            "next_match":     next_match,
         })
 
     records.sort(key=lambda x: x["injury_risk"], reverse=True)
@@ -556,14 +555,9 @@ def main():
     pred_path    = OUTPUT_DIR / "predictions.json"
     matches_path = OUTPUT_DIR / "matches.json"
 
-    output = {
-        "current_gameweek": current_gameweek,
-        "current_season":   CURRENT_SEASON,
-        "generated_at":     datetime.now(timezone.utc).isoformat(),
-        "players":          records,
-    }
+    # Output as a flat list of players (same format as existing predictions.json)
     with open(pred_path, "w") as f:
-        json.dump(output, f, indent=2, default=str)
+        json.dump(records, f, indent=2, default=str)
     with open(matches_path, "w") as f:
         json.dump(matches, f, indent=2, default=str)
 
@@ -571,6 +565,7 @@ def main():
     print(f"Players:  {pred_path}  ({len(records)} players)")
     print(f"Matches:  {matches_path}")
     print(f"SHAP:     {'enabled' if SHAP_AVAILABLE else 'disabled (pip install shap)'}")
+    print(f"GW:       {current_gameweek}")
 
     print(f"\nTop 10 highest-risk players:")
     print(f"  {'Name':<25} {'Team':<22} {'Risk':>6}  Level")
