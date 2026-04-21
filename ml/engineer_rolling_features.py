@@ -9,7 +9,7 @@ Output: data/rolling_features.csv — one row per player per match
 
 import numpy as np
 import pandas as pd
-from config import MATCH_STATS_CSV, DATA_DIR
+from config import MATCH_STATS_CSV, DATA_DIR, INTL_BREAK_WINDOWS
 
 
 OUTPUT_FILE = DATA_DIR / "rolling_features.csv"
@@ -32,6 +32,29 @@ def last_n_matches(df_player, ref_date, n):
     """Most recent n matches strictly before ref_date."""
     past = df_player[df_player["date"] < ref_date].sort_values("date", ascending=False)
     return past.head(n)
+
+
+def days_since_last_break_end(ref_date):
+    """Days since the most recent international break ended before ref_date.
+    Returns 365 if no break has occurred yet in the calendar."""
+    past_ends = [
+        pd.Timestamp(end)
+        for (_, end) in INTL_BREAK_WINDOWS
+        if pd.Timestamp(end) < ref_date
+    ]
+    if not past_ends:
+        return 365
+    return (ref_date - max(past_ends)).days
+
+
+def in_recent_intl_break(ref_date, lookback_days=14):
+    """Returns 1 if any break window ended within lookback_days before ref_date."""
+    window_start = ref_date - pd.Timedelta(days=lookback_days)
+    for (_, end) in INTL_BREAK_WINDOWS:
+        end_ts = pd.Timestamp(end)
+        if window_start <= end_ts < ref_date:
+            return 1
+    return 0
 
 
 def compute_features(df_player, ref_date):
@@ -119,6 +142,14 @@ def compute_features(df_player, ref_date):
     # ── Match density 14d ────────────────────────────────────────────────────
     match_density_14d = matches_14d
 
+    # ── International break features ─────────────────────────────────────────
+    # Players returning from international duty have elevated injury risk.
+    # PL data has no international minutes, so we use the break calendar.
+    days_since_break  = days_since_last_break_end(ref_date)
+    in_break_window   = in_recent_intl_break(ref_date, lookback_days=14)
+    # Long gap (12+ days) between PL fixtures implies a break, rotation, or illness
+    long_gap_before   = 1 if (days_since_last is not None and days_since_last >= 12) else 0
+
     return {
         "minutes_last_7d":             int(minutes_7d),
         "minutes_last_14d":            int(minutes_14d),
@@ -139,6 +170,9 @@ def compute_features(df_player, ref_date):
         "rating_trend":                rating_trend,
         "consecutive_90min_starts":    consecutive_90,
         "yellow_cards_last_30d":       int(yellow_30d),
+        "days_since_intl_break":       days_since_break,
+        "in_intl_break_window":        in_break_window,
+        "long_gap_before_match":       long_gap_before,
     }
 
 

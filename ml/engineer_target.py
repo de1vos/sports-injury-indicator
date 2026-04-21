@@ -138,6 +138,18 @@ def main():
               f"(max injury date: {max_injury_date.date()}, cutoff: {label_cutoff.date()})"
               f" — current season rows kept regardless")
 
+    # ── Mark rows with a fully closed 90-day observation window ───────────────
+    # label_complete=True  → historical row within cutoff → safe for training
+    # label_complete=False → current season row (window not yet closed) → inference only
+    df["label_complete"] = (
+        (df["season"] != CURRENT_SEASON) &
+        (df["date"] <= label_cutoff)
+    )
+    n_complete = df["label_complete"].sum()
+    n_inference = (~df["label_complete"]).sum()
+    print(f"  label_complete: {n_complete} training-safe rows, "
+          f"{n_inference} inference-only rows (current season)")
+
     # ── Drop rows with no target (shouldn't happen, but safety check) ─────────
     before = len(df)
     df = df.dropna(subset=["injured_next_90d"])
