@@ -1,11 +1,12 @@
 import { apiFetch } from './client';
-import type { Team } from '../data/mockData';
+import type { ApiTeamOverview } from './types';
+import { mapTeamOverview } from './mappers';
 
-/** GET /teams/overview — all teams, without the full players array */
-export type TeamOverviewItem = Omit<Team, 'players'>;
+export type { TeamOverviewItem } from './mappers';
 
 export const teamsApi = {
-  /** All teams overview — used in TeamsPage / HomePage */
-  getOverview: () =>
-    apiFetch<TeamOverviewItem[]>('/teams/overview'),
+  getOverview: async () => {
+    const data = await apiFetch<ApiTeamOverview[]>('/teams/overview');
+    return data.map(mapTeamOverview);
+  },
 };

@@ -1,0 +1,133 @@
+/**
+ * Raw backend response shapes — match exactly what the API returns.
+ * All risk values are 0–1 decimals from the backend; multiply by 100 for display.
+ */
+
+export interface ApiTeamOverview {
+  team_id: number;
+  team_name: string;
+  team_logo: string;
+  amount_of_players: number;
+  average_risk_of_injury: number; // 0–1
+  total_season_injuries: number;
+}
+
+export interface ApiTeamPlayer {
+  player_id: number;
+  player_first_name: string;
+  player_last_name: string;
+  player_injury_risk: number; // 0–1
+}
+
+export interface ApiPlayerCard {
+  player_id?: number;
+  player_first_name: string;
+  player_last_name: string;
+  player_age: number;
+  player_weight: string;
+  player_height: string;
+  player_photo: string;
+  player_position: string;
+  player_kit_number: number;
+  nation_name: string;
+  player_injury_risk: number;    // 0–1
+  player_injury_status: string;  // 'available' | 'injured' | etc.
+  player_injury_trend: number;
+  player_season_injuries: number;
+  player_season_minutes: number;
+  player_season_missed_games: number;
+}
+
+/** Dynamic keys: gw_1 … gw_38 (values 0–1 or null), plus metadata */
+export type ApiPlayerGraph = Record<string, number | string | null>;
+
+export interface ApiPlayerSeason {
+  player_season_year: number;
+  player_season_appearances: number;
+  player_season_minutes: number;
+  player_season_fouls_drawn: number;
+  player_season_fouls_commited: number; // note: intentional spelling from backend
+  player_season_duels_total: number;
+  player_season_tackles: number;
+  player_season_yellow_cards: number;
+  player_season_red_cards: number;
+  player_season_goals: number;
+  player_season_assists: number;
+  player_season_dribbles_attempts: number;
+}
+
+export interface ApiInjuryRecord {
+  player_injury_type: string;
+  player_injury_region: string;
+  player_injury_start: string;  // YYYY-MM-DD
+  player_injury_end: string;    // YYYY-MM-DD
+  player_injury_severity: string;
+}
+
+export interface ApiInjuryAnalysis {
+  player_total_injuries: number;
+  player_season_injuries: number;
+  player_total_games_missed: number;
+  player_days_since_injury: number;
+  player_average_games_played: number;
+}
+
+export interface ApiDashboardMatch {
+  home_team_name: string;
+  away_team_name: string;
+  home_team_logo: string;
+  away_team_logo: string;
+  home_team_goals: number | null;
+  away_team_goals: number | null;
+  home_average_injury_risk: number; // 0–1
+  away_average_injury_risk: number; // 0–1
+  match_time: string;   // "17:30:00"
+  match_date: string;   // "2026-04-25"
+  match_is_played: boolean;
+}
+
+export interface ApiHighRiskPlayer {
+  player_id?: number;
+  player_first_name: string;
+  player_last_name: string;
+  player_photo: string;
+  team_name: string;
+  player_position: string;
+  player_injury_risk: number; // 0–1
+  player_seasonal_injuries: number;
+}
+
+export interface ApiTrendingRiskPlayer {
+  player_id?: number;
+  player_first_name: string;
+  player_last_name: string;
+  player_photo: string;
+  team_name: string;
+  player_position: string;
+  player_injury_trend: number;
+  player_seasonal_injuries: number;
+}
+
+export interface ApiMyPlayer {
+  player_id?: number;
+  player_first_name: string;
+  player_last_name: string;
+  player_photo: string;
+  team_name: string;
+  player_position: string;
+  player_injury_trend: number;
+  player_seasonal_injuries: number;
+}
+
+export interface ApiReportedInjury {
+  injury_date_start: string;
+  injury_date_end: string;
+  player_first_name: string;
+  player_last_name: string;
+  team_name: string;
+  player_injury_diagnosis: string;
+  player_injury_region: string;
+  player_injury_severity: string;
+  player_position: string;
+  player_injury_days_out: number;
+}

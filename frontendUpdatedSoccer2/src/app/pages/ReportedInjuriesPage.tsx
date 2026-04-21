@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router';
-import { teams } from '../data/mockData';
+import { useReportedInjuries } from '../hooks/useApi';
 
-type SortField = 'date' | 'endDate' | 'lastName' | 'firstName' | 'team' | 'diagnosis' | 'region' | 'severity';
+type SortField = 'startDate' | 'endDate' | 'lastName' | 'firstName' | 'team' | 'diagnosis' | 'region' | 'severity';
 type SortDirection = 'asc' | 'desc';
 
 const SEVERITY_ORDER: Record<string, number> = {
@@ -12,26 +11,13 @@ const SEVERITY_ORDER: Record<string, number> = {
 };
 
 export function ReportedInjuriesPage() {
-  const [sortField, setSortField] = useState<SortField>('date');
+  const { data: injuriesData, loading, error } = useReportedInjuries();
+  const [sortField, setSortField] = useState<SortField>('startDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterRegion, setFilterRegion] = useState('all');
 
-  const allInjuriesRaw = useMemo(() =>
-    teams.flatMap(team =>
-      team.players.flatMap(player =>
-        player.injuryHistory.map(injury => ({
-          ...injury,
-          playerId: player.id,
-          playerFirstName: player.firstName,
-          playerLastName: player.lastName,
-          teamId: team.id,
-          teamName: team.name,
-          position: player.position,
-        }))
-      )
-    ),
-  []);
+  const allInjuriesRaw = injuriesData ?? [];
 
   const uniqueTeams = useMemo(() =>
     [...new Set(allInjuriesRaw.map(i => i.teamName))].sort(),
@@ -49,10 +35,10 @@ export function ReportedInjuriesPage() {
     return [...filtered].sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
-        case 'date':       comparison = a.from.localeCompare(b.from); break;
-        case 'endDate':    comparison = a.until.localeCompare(b.until); break;
-        case 'lastName':   comparison = a.playerLastName.localeCompare(b.playerLastName); break;
-        case 'firstName':  comparison = a.playerFirstName.localeCompare(b.playerFirstName); break;
+        case 'startDate':  comparison = a.startDate.localeCompare(b.startDate); break;
+        case 'endDate':    comparison = a.endDate.localeCompare(b.endDate); break;
+        case 'lastName':   comparison = a.lastName.localeCompare(b.lastName); break;
+        case 'firstName':  comparison = a.firstName.localeCompare(b.firstName); break;
         case 'team':       comparison = a.teamName.localeCompare(b.teamName); break;
         case 'diagnosis':  comparison = a.diagnosis.localeCompare(b.diagnosis); break;
         case 'region':     comparison = a.region.localeCompare(b.region); break;
@@ -89,6 +75,31 @@ export function ReportedInjuriesPage() {
 
   const selectClass = "px-4 py-2 bg-[#F5F6FA] border border-transparent rounded-xl text-sm text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#1A56DB] transition-all";
   const thClass = "text-left py-4 px-6 text-sm font-semibold text-[#6B7280] cursor-pointer hover:bg-[#E5E7EB] transition-colors";
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <svg className="w-10 h-10 text-[#1A56DB] animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+          <p className="text-[#6B7280] text-sm">Loading injuries…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <p className="text-red-700 font-semibold mb-2">Failed to load injuries</p>
+          <p className="text-red-500 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
@@ -132,37 +143,28 @@ export function ReportedInjuriesPage() {
           <table className="w-full">
             <thead className="bg-[#F5F6FA]">
               <tr>
-                {/* Start Date */}
-                <th className={thClass} onClick={() => handleSort('date')}>
-                  <div className="flex items-center gap-2">Start Date<SortIcon field="date" /></div>
+                <th className={thClass} onClick={() => handleSort('startDate')}>
+                  <div className="flex items-center gap-2">Start Date<SortIcon field="startDate" /></div>
                 </th>
-                {/* End Date */}
                 <th className={thClass} onClick={() => handleSort('endDate')}>
                   <div className="flex items-center gap-2">End Date<SortIcon field="endDate" /></div>
                 </th>
-                {/* Last Name */}
                 <th className={thClass} onClick={() => handleSort('lastName')}>
                   <div className="flex items-center gap-2">Last Name<SortIcon field="lastName" /></div>
                 </th>
-                {/* First Name */}
                 <th className={thClass} onClick={() => handleSort('firstName')}>
                   <div className="flex items-center gap-2">First Name<SortIcon field="firstName" /></div>
                 </th>
-                {/* Position — not sortable */}
                 <th className="text-left py-4 px-6 text-sm font-semibold text-[#6B7280]">Position</th>
-                {/* Team */}
                 <th className={thClass} onClick={() => handleSort('team')}>
                   <div className="flex items-center gap-2">Team<SortIcon field="team" /></div>
                 </th>
-                {/* Diagnosis */}
                 <th className={thClass} onClick={() => handleSort('diagnosis')}>
                   <div className="flex items-center gap-2">Diagnosis<SortIcon field="diagnosis" /></div>
                 </th>
-                {/* Region */}
                 <th className={thClass} onClick={() => handleSort('region')}>
                   <div className="flex items-center gap-2">Region<SortIcon field="region" /></div>
                 </th>
-                {/* Severity */}
                 <th className={thClass} onClick={() => handleSort('severity')}>
                   <div className="flex items-center gap-2">Severity<SortIcon field="severity" /></div>
                 </th>
@@ -183,50 +185,34 @@ export function ReportedInjuriesPage() {
 
                 return (
                   <tr key={index} className="hover:bg-[#F5F6FA] transition-colors">
-                    {/* Start Date */}
                     <td className="py-4 px-6">
                       <span className="text-sm text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {injury.from}
+                        {injury.startDate}
                       </span>
                     </td>
-                    {/* End Date */}
                     <td className="py-4 px-6">
                       <span className="text-sm text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {injury.until}
+                        {injury.endDate}
                       </span>
                     </td>
-                    {/* Last Name — with link */}
                     <td className="py-4 px-6">
-                      <Link
-                        to={`/team/${injury.teamId}?player=${injury.playerId}`}
-                        className="font-semibold text-[#1A56DB] hover:underline"
-                      >
-                        {injury.playerLastName}
-                      </Link>
+                      <span className="font-semibold text-[#1A1A2E]">{injury.lastName}</span>
                     </td>
-                    {/* First Name */}
                     <td className="py-4 px-6">
-                      <span className="text-sm text-[#1A1A2E]">{injury.playerFirstName}</span>
+                      <span className="text-sm text-[#1A1A2E]">{injury.firstName}</span>
                     </td>
-                    {/* Position */}
                     <td className="py-4 px-6">
                       <span className="text-sm text-[#6B7280]">{injury.position}</span>
                     </td>
-                    {/* Team */}
                     <td className="py-4 px-6">
-                      <Link to={`/team/${injury.teamId}`} className="text-sm text-[#1A56DB] hover:underline">
-                        {injury.teamName}
-                      </Link>
+                      <span className="text-sm text-[#1A1A2E]">{injury.teamName}</span>
                     </td>
-                    {/* Diagnosis */}
                     <td className="py-4 px-6">
                       <span className="text-sm text-[#1A1A2E] font-medium">{injury.diagnosis}</span>
                     </td>
-                    {/* Region */}
                     <td className="py-4 px-6">
                       <span className="text-sm text-[#6B7280]">{injury.region}</span>
                     </td>
-                    {/* Severity */}
                     <td className="py-4 px-6">
                       {severityEl}
                     </td>
@@ -240,4 +226,3 @@ export function ReportedInjuriesPage() {
     </div>
   );
 }
-

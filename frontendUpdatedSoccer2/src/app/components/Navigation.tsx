@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router';
 import { matches, teams, getRiskColor, getAllPlayers } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
+import logo from '../../assets/logo.png';
 
 type SearchResult = { type: 'Match' | 'Team' | 'Player'; name: string; path: string; subtitle?: string; risk?: number };
 
@@ -100,12 +101,8 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link
-            to="/"
-            className="text-2xl font-bold text-[#1A56DB] hover:opacity-80 transition-opacity -ml-2"
-            style={{ fontFamily: 'var(--font-sans)' }}
-          >
-            SI2
+          <Link to="/" className="hover:opacity-80 transition-opacity -ml-2">
+            <img src={logo} alt="2to3Weeks" className="h-8 w-auto" />
           </Link>
 
           {/* Navigation Links - Desktop */}

@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import { ApiError } from '../api/client';
+import { playersApi } from '../api/players';
+import { teamsApi } from '../api/teams';
+import { dashboardApi } from '../api/dashboard';
+import { myPlayersApi } from '../api/myPlayers';
+import { reportedInjuriesApi } from '../api/reportedInjuries';
 
 export interface ApiState<T> {
   data: T | null;
@@ -9,14 +14,7 @@ export interface ApiState<T> {
 
 /**
  * Generic hook for a single API call.
- * Re-fetches whenever `key` changes (pass the URL or a unique string derived
- * from params so React knows when to re-run).
- *
- * Usage:
- *   const { data, loading, error } = useApi(
- *     () => playersApi.getCard(playerId),
- *     playerId            // re-fetch when playerId changes
- *   );
+ * Re-fetches whenever `key` changes. Pass null/undefined to skip fetching.
  */
 export function useApi<T>(
   fetcher: () => Promise<T>,
@@ -29,7 +27,10 @@ export function useApi<T>(
   });
 
   useEffect(() => {
-    if (key === null || key === undefined) return;
+    if (key === null || key === undefined) {
+      setState({ data: null, loading: false, error: null });
+      return;
+    }
 
     let cancelled = false;
     setState({ data: null, loading: true, error: null });
@@ -54,13 +55,12 @@ export function useApi<T>(
   return state;
 }
 
-// ── Convenience hooks (one per endpoint) ─────────────────────────────────────
-
-import { playersApi } from '../api/players';
-import { teamsApi } from '../api/teams';
+// ── Teams ────────────────────────────────────────────────────────────────────
 
 export const useTeamsOverview = () =>
   useApi(() => teamsApi.getOverview(), 'teams-overview');
+
+// ── Players ──────────────────────────────────────────────────────────────────
 
 export const useTeamPlayers = (teamId: string | undefined) =>
   useApi(() => playersApi.getByTeam(teamId!), teamId);
@@ -75,7 +75,32 @@ export const usePlayerSeasons = (playerId: string | undefined) =>
   useApi(() => playersApi.getSeasons(playerId!), playerId ? `seasons-${playerId}` : undefined);
 
 export const usePlayerInjuryHistory = (playerId: string | undefined) =>
-  useApi(() => playersApi.getInjuryHistory(playerId!), playerId ? `injuries-${playerId}` : undefined);
+  useApi(() => playersApi.getInjuryHistory(playerId!), playerId ? `inj-history-${playerId}` : undefined);
 
 export const usePlayerInjuryAnalysis = (playerId: string | undefined) =>
-  useApi(() => playersApi.getInjuryAnalysis(playerId!), playerId ? `analysis-${playerId}` : undefined);
+  useApi(() => playersApi.getInjuryAnalysis(playerId!), playerId ? `inj-analysis-${playerId}` : undefined);
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
+
+export const useDashboardMatches = (gameweek?: string) =>
+  useApi(() => dashboardApi.getMatches(gameweek), `matches-${gameweek ?? 'current'}`);
+
+/**
+ * userId = undefined  → global (all players)
+ * userId = '1'        → watchlist for that user
+ */
+export const useHighRiskPlayers = (userId?: string) =>
+  useApi(() => dashboardApi.getHighRiskPlayers(userId), `high-risk-${userId ?? 'global'}`);
+
+export const useTrendingPlayers = (userId?: string) =>
+  useApi(() => dashboardApi.getTrendingPlayers(userId), `trending-${userId ?? 'global'}`);
+
+// ── My Players ───────────────────────────────────────────────────────────────
+
+export const useMyPlayers = (userId: string | undefined) =>
+  useApi(() => myPlayersApi.getMyPlayers(userId!), userId ? `my-players-${userId}` : undefined);
+
+// ── Reported Injuries ────────────────────────────────────────────────────────
+
+export const useReportedInjuries = () =>
+  useApi(() => reportedInjuriesApi.getAll(), 'reported-injuries');
