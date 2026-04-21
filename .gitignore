@@ -30,12 +30,15 @@ output/
 *.h5
 
 # Node.js (Frontend)
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.env
 frontend/.next/
 frontend/.svelte-kit/
 frontend/build/
+frontendUpdatedSoccer2/node_modules/
+frontendUpdatedSoccer2/dist/
 
 # IDEs & Editors
 .vscode/
