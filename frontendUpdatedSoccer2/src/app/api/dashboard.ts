@@ -20,6 +20,7 @@ export interface DashboardMatch {
 
 export interface DashboardHighRiskPlayer {
   id?: string;
+  teamId?: string;
   firstName: string;
   lastName: string;
   photo: string;
@@ -31,6 +32,7 @@ export interface DashboardHighRiskPlayer {
 
 export interface DashboardTrendingPlayer {
   id?: string;
+  teamId?: string;
   firstName: string;
   lastName: string;
   photo: string;
@@ -59,6 +61,7 @@ const mapMatch = (m: ApiDashboardMatch, idx: number): DashboardMatch => ({
 
 const mapHighRisk = (p: ApiHighRiskPlayer): DashboardHighRiskPlayer => ({
   id: p.player_id != null ? String(p.player_id) : undefined,
+  teamId: p.team_id != null ? String(p.team_id) : undefined,
   firstName: p.player_first_name,
   lastName: p.player_last_name,
   photo: p.player_photo,
@@ -70,6 +73,7 @@ const mapHighRisk = (p: ApiHighRiskPlayer): DashboardHighRiskPlayer => ({
 
 const mapTrending = (p: ApiTrendingRiskPlayer): DashboardTrendingPlayer => ({
   id: p.player_id != null ? String(p.player_id) : undefined,
+  teamId: p.team_id != null ? String(p.team_id) : undefined,
   firstName: p.player_first_name,
   lastName: p.player_last_name,
   photo: p.player_photo,

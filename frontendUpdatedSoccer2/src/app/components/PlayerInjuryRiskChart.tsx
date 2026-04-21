@@ -25,7 +25,7 @@ function generateGWData(player: Player): ChartPoint[] {
 
     const isInjured = player.injuryHistory.some(inj => {
       const from = new Date(inj.from);
-      const until = new Date(inj.until);
+      const until = inj.until ? new Date(inj.until) : new Date('9999-12-31');
       return from < gwEnd && until >= gwStart;
     });
 
@@ -50,7 +50,7 @@ function buildTrendData(player: Player): ChartPoint[] {
   const entries = player.injuryRiskTrend.slice(-20);
   return entries.map(e => ({
     week: e.gw,
-    risk: e.risk === 'Injured' ? null : Math.round(e.risk * 100 * 10) / 10,
+    risk: e.risk === 'Injured' ? null : Math.round(e.risk * 10) / 10,
     injured: e.risk === 'Injured' ? true : undefined,
   }));
 }

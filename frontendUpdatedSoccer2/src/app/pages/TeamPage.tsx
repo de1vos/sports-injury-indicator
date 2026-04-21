@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router';
+import { useParams, useSearchParams, useLocation, Link } from 'react-router';
+import type { TeamOverviewItem } from '../api/mappers';
 import { getRiskColor, MATCH_DURATION, type Player, type SeasonStat } from '../data/mockData';
 import {
   useTeamsOverview,
@@ -133,7 +134,12 @@ function InjuryHistoryTable({ player }: { player: Player }) {
                     <td className="py-3 px-2 text-[#1A1A2E] font-medium">{injury.diagnosis}</td>
                     <td className="py-3 px-2 text-[#6B7280]">{injury.region}</td>
                     <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.from}</td>
-                    <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.until}</td>
+                    <td className="py-3 px-2 whitespace-nowrap font-mono text-xs">
+                      {injury.until
+                        ? <span className="text-[#1A1A2E]">{injury.until}</span>
+                        : <span className="text-[#0D9488] font-semibold">Ongoing</span>
+                      }
+                    </td>
                     <td className="py-3 px-2 text-center">
                       {injury.severity ? (
                         <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${SEVERITY_STYLES[injury.severity] ?? 'bg-[#F5F6FA] text-[#6B7280]'}`}>
@@ -176,16 +182,19 @@ const SORT_OPTIONS = [
 export function TeamPage() {
   const { teamId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [sortBy, setSortBy] = useState('risk');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
   const { toggleFavorite, isFavorite } = useFavorites();
 
-  // All hooks unconditional — early returns come AFTER
-  const { data: teamsOverview, loading: teamsLoading } = useTeamsOverview();
+  // Use team passed via router state (from TeamsPage / HomePage) to avoid
+  // a redundant GET /teams/overview call. Fall back to fetching if navigating directly.
+  const teamFromState = (location.state as { team?: TeamOverviewItem } | null)?.team;
+  const { data: teamsOverview, loading: teamsLoading } = useTeamsOverview(!!teamFromState);
   const { data: playerList, loading: playersLoading } = useTeamPlayers(teamId);
 
-  const team = teamsOverview?.find(t => t.id === teamId) ?? null;
+  const team = teamFromState ?? teamsOverview?.find(t => t.id === teamId) ?? null;
 
   const sortedPlayers = useMemo(() =>
     [...(playerList ?? [])].sort((a, b) => {
@@ -423,7 +432,7 @@ export function TeamPage() {
                 {/* Group B — Predictor core */}
                 {(() => {
                   const todayStr = new Date().toISOString().split('T')[0];
-                  const isInjured = (currentPlayer.injuryHistory ?? []).some(entry => entry.until >= todayStr);
+                  const isInjured = (currentPlayer.injuryHistory ?? []).some(entry => !entry.until || entry.until >= todayStr);
                   return (
                     <div className="flex items-center gap-4 p-4 bg-[#F5F6FA] rounded-2xl mb-5">
                       <div>

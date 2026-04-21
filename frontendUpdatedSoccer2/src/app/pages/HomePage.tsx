@@ -232,9 +232,12 @@ export function HomePage() {
                   </div>
                 ) : (
                   (highRiskData ?? []).map((player) => {
+                    const href = player.id && player.teamId
+                      ? `/team/${player.teamId}?player=${player.id}`
+                      : null;
+
                     const inner = (
                       <div className="flex items-center gap-3">
-                        {/* Photo or grey circle fallback */}
                         {player.photo ? (
                           <img
                             src={player.photo}
@@ -244,18 +247,14 @@ export function HomePage() {
                         ) : (
                           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300" />
                         )}
-
-                        {/* Player Info */}
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-[#1A1A2E]">
-                            {player.lastName} {player.firstName}
+                            {player.firstName} {player.lastName}
                           </h4>
                           <p className="text-sm text-[#6B7280]">
                             {player.teamName} · {player.position}
                           </p>
                         </div>
-
-                        {/* Risk Badge + injuries */}
                         <div className="flex-shrink-0 text-right">
                           <span
                             className="px-3 py-1 rounded-xl font-bold text-white text-sm"
@@ -273,10 +272,10 @@ export function HomePage() {
                       </div>
                     );
 
-                    return player.id ? (
+                    return href ? (
                       <Link
                         key={player.id}
-                        to={`/team/${player.id}`}
+                        to={href}
                         className="block p-4 hover:bg-[#F5F6FA] transition-colors"
                       >
                         {inner}
@@ -333,9 +332,12 @@ export function HomePage() {
                     </div>
                   ) : (
                     (trendingData ?? []).map((player) => {
+                      const href = player.id && player.teamId
+                        ? `/team/${player.teamId}?player=${player.id}`
+                        : null;
+
                       const inner = (
                         <div className="flex items-center gap-3">
-                          {/* Photo or grey circle fallback */}
                           {player.photo ? (
                             <img
                               src={player.photo}
@@ -345,11 +347,9 @@ export function HomePage() {
                           ) : (
                             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300" />
                           )}
-
-                          {/* Player Info */}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-[#1A1A2E]">
-                              {player.lastName} {player.firstName}
+                              {player.firstName} {player.lastName}
                             </h4>
                             <p className="text-sm text-[#6B7280]">
                               {player.teamName} · {player.position}
@@ -358,8 +358,6 @@ export function HomePage() {
                               {player.seasonalInjuries} inj. this season
                             </p>
                           </div>
-
-                          {/* Spike Badge */}
                           <div className="flex-shrink-0">
                             <span
                               className="px-3 py-1 rounded-xl font-bold text-white text-sm"
@@ -371,10 +369,10 @@ export function HomePage() {
                         </div>
                       );
 
-                      return player.id ? (
+                      return href ? (
                         <Link
                           key={player.id}
-                          to={`/team/${player.id}`}
+                          to={href}
                           className="block p-4 hover:bg-[#F5F6FA] transition-colors"
                         >
                           {inner}

@@ -57,6 +57,7 @@ export function TeamsPage() {
                 <Link
                   key={team.id}
                   to={`/team/${team.id}`}
+                  state={{ team }}
                   className="block bg-gradient-to-r from-white to-[#F5F6FA] rounded-2xl p-5 border-2 border-[rgba(0,0,0,0.06)] hover:border-[#1A56DB] hover:shadow-md transition-all"
                 >
                   {/* Mobile View - Logo and Name only */}

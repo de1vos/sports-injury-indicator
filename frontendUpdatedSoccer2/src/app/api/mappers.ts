@@ -95,7 +95,7 @@ export const mapGraph = (data: ApiPlayerGraph): RiskTrendEntry[] =>
       season: 2025,
       risk: value === null || value === undefined
         ? ('Injured' as const)
-        : Math.round((value as number) * 100 * 10) / 10,
+        : Math.round((value as number) * 10) / 10,
     }))
     .sort((a, b) =>
       parseInt(a.gw.replace('GW', '')) - parseInt(b.gw.replace('GW', ''))
@@ -132,7 +132,7 @@ export const mapInjuryHistory = (data: ApiInjuryRecord[]): InjuryRecord[] =>
     from: i.player_injury_start,
     until: i.player_injury_end,
     severity: i.player_injury_severity,
-    daysOut: undefined,
+    daysOut: i.player_injury_days_out ?? undefined,
   }));
 
 // ── Injury analysis ──────────────────────────────────────────────────────────

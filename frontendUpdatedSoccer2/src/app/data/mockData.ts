@@ -39,7 +39,7 @@ export interface InjuryRecord {
   diagnosis: string;
   region: string;
   from: string;
-  until: string;
+  until: string | null;
   severity?: string;
   daysOut?: number;
 }

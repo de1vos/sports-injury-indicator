@@ -59,9 +59,10 @@ export interface ApiPlayerSeason {
 export interface ApiInjuryRecord {
   player_injury_type: string;
   player_injury_region: string;
-  player_injury_start: string;  // YYYY-MM-DD
-  player_injury_end: string;    // YYYY-MM-DD
+  player_injury_start: string;        // YYYY-MM-DD
+  player_injury_end: string | null;   // null = ongoing
   player_injury_severity: string;
+  player_injury_days_out: number | null;
 }
 
 export interface ApiInjuryAnalysis {
@@ -91,6 +92,7 @@ export interface ApiHighRiskPlayer {
   player_first_name: string;
   player_last_name: string;
   player_photo: string;
+  team_id?: number;
   team_name: string;
   player_position: string;
   player_injury_risk: number; // 0–1
@@ -102,6 +104,7 @@ export interface ApiTrendingRiskPlayer {
   player_first_name: string;
   player_last_name: string;
   player_photo: string;
+  team_id?: number;
   team_name: string;
   player_position: string;
   player_injury_trend: number;

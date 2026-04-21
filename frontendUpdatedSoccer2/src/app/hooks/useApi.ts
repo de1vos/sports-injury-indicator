@@ -57,8 +57,8 @@ export function useApi<T>(
 
 // ── Teams ────────────────────────────────────────────────────────────────────
 
-export const useTeamsOverview = () =>
-  useApi(() => teamsApi.getOverview(), 'teams-overview');
+export const useTeamsOverview = (skip = false) =>
+  useApi(() => teamsApi.getOverview(), skip ? null : 'teams-overview');
 
 // ── Players ──────────────────────────────────────────────────────────────────
 
