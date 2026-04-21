@@ -4,10 +4,14 @@ Phase 4 — Model Training
 Trains an XGBoost classifier on ml_features.csv to predict
 whether a player gets injured in the next 90 days.
 
-Split:
-  Training:   seasons 2022/23, 2023/24, 2024/25 (season-level features)
-  Validation: 2025/26 GW1-55% (tune threshold)
-  Test:       2025/26 GW55%+  (final evaluation)
+Split strategy (uses label_complete column from engineer_target.py):
+  Training:   all historical rows with label_complete=True (seasons 2022-2024)
+  Validation: first 60% of labeled rows (chronological fallback)
+  Test:       last 40% of labeled rows
+
+Current-season (2025/26) rows always have label_complete=False — their 90-day
+observation window hasn't closed yet, so they are excluded from all splits
+and used only for inference in predict_players.py.
 
 Output: models/injury_predictor.pkl
         models/feature_importance.csv
@@ -21,7 +25,7 @@ from sklearn.metrics import (
     classification_report, average_precision_score,
 )
 from xgboost import XGBClassifier
-from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV
+from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR
 from model_utils import SigmoidCalibrator
 
 
@@ -29,9 +33,10 @@ from model_utils import SigmoidCalibrator
 NON_FEATURE_COLS = [
     "player_id", "fixture_id", "date", "team",
     "injured_next_90d", "season",
-    "recurring_injury_type",    # string — not used directly
-    "position",                 # encoded version used instead
-    "nationality",              # too many categories for now
+    "label_complete",            # split gate — not a predictive feature
+    "recurring_injury_type",     # string — not used directly
+    "position",                  # encoded version used instead
+    "nationality",               # too many categories for now
     "minutes_played_this_match",
 ]
 
@@ -42,41 +47,42 @@ def load_and_split(path):
     print(f"  {len(df)} rows, {df['player_id'].nunique()} players")
     print(f"  Date range: {df['date'].min().date()} → {df['date'].max().date()}")
 
-    # Label cutoff: rows beyond (max_injury_date - 90d) have incomplete labels.
-    # Keep them in ml_features.csv for prediction, but exclude from val/test.
-    injuries        = pd.read_csv(INJURIES_CSV, parse_dates=["start_date"])
-    max_injury_date = injuries["start_date"].max()
-    label_cutoff    = max_injury_date - pd.Timedelta(days=90)
-    print(f"  Label cutoff: {label_cutoff.date()}  (max injury date: {max_injury_date.date()})")
+    if "label_complete" not in df.columns:
+        raise ValueError(
+            "Column 'label_complete' not found in ml_features.csv. "
+            "Re-run engineer_target.py to regenerate the feature matrix."
+        )
 
-    # Season-based split: train on 2022-2024, validate+test on 2025/26
-    train   = df[df["season"].isin([2022, 2023, 2024])]
-    current = df[(df["season"] == 2025) & (df["date"] <= label_cutoff)].sort_values("date")
+    # Only rows whose 90-day observation window has fully closed are used for
+    # training/val/test. Current-season rows (label_complete=False) are excluded
+    # — they are used for inference only in predict_players.py.
+    labeled = df[df["label_complete"] == True].copy()
+    n_inference = (df["label_complete"] == False).sum()
+    print(f"  Labeled (training-safe): {len(labeled)}  |  Inference-only: {n_inference}")
 
-    if len(current) == 0:
-        # Injury data not yet refreshed — all 2025/26 rows were cut by the
-        # incomplete-window filter in engineer_target.py.
-        # Fall back: chronological split within historical data.
-        print("\n  ⚠  No 2025/26 rows found — injury data needs refreshing.")
-        print("     Run: make refresh-injuries && make refeature")
-        print("     Falling back to 60/20/20 chronological split within 2022-2024 data.\n")
-        dates     = train["date"].sort_values()
-        cut_train = dates.quantile(0.60)
-        cut_val   = dates.quantile(0.80)
-        val   = train[(train["date"] > cut_train) & (train["date"] <= cut_val)]
-        test  = train[train["date"] > cut_val]
-        train = train[train["date"] <= cut_train]
-        mode  = "fallback chronological"
-    else:
-        val_cut = current["date"].quantile(0.50)
-        val     = current[current["date"] <= val_cut]
-        test    = current[current["date"] >  val_cut]
-        mode    = "season-based"
+    if len(labeled) == 0:
+        raise ValueError("No rows with label_complete=True found. Re-run engineer_target.py.")
 
-    print(f"Split ({mode}):")
-    print(f"  Train:      {len(train):6d} rows  ({train['injured_next_90d'].mean():.1%} positive)")
-    print(f"  Validation: {len(val):6d} rows  ({val['injured_next_90d'].mean():.1%} positive)")
-    print(f"  Test:       {len(test):6d} rows  ({test['injured_next_90d'].mean():.1%} positive)")
+    # Chronological 60/20/20 split within labeled historical data
+    labeled = labeled.sort_values("date")
+    dates     = labeled["date"]
+    cut_train = dates.quantile(0.60)
+    cut_val   = dates.quantile(0.80)
+
+    train = labeled[labeled["date"] <= cut_train]
+    val   = labeled[(labeled["date"] > cut_train) & (labeled["date"] <= cut_val)]
+    test  = labeled[labeled["date"] > cut_val]
+
+    print(f"\nSplit (chronological 60/20/20 on labeled rows):")
+    print(f"  Train:      {len(train):6d} rows  "
+          f"({train['date'].min().date()} → {train['date'].max().date()})  "
+          f"({train['injured_next_90d'].mean():.1%} positive)")
+    print(f"  Validation: {len(val):6d} rows  "
+          f"({val['date'].min().date()} → {val['date'].max().date()})  "
+          f"({val['injured_next_90d'].mean():.1%} positive)")
+    print(f"  Test:       {len(test):6d} rows  "
+          f"({test['date'].min().date()} → {test['date'].max().date()})  "
+          f"({test['injured_next_90d'].mean():.1%} positive)")
 
     return train, val, test
 
@@ -95,12 +101,12 @@ def train(X_train, y_train, scale_pos_weight):
     print(f"\nTraining XGBoost (scale_pos_weight={scale_pos_weight:.1f})...")
 
     model = XGBClassifier(
-        n_estimators=500,
-        max_depth=5,
+        n_estimators=200,       # fewer trees → less overfitting (was 500)
+        max_depth=3,            # shallower trees → better generalisation (was 5)
         learning_rate=0.05,
-        subsample=0.8,
+        subsample=0.6,          # more aggressive row sampling (was 0.8)
         colsample_bytree=0.8,
-        min_child_weight=3,
+        min_child_weight=5,     # higher leaf weight → more conservative (was 3)
         scale_pos_weight=scale_pos_weight,
         eval_metric="aucpr",
         random_state=42,

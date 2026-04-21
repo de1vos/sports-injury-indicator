@@ -73,6 +73,34 @@ SEVERITY_THRESHOLDS = {
     "Long-term": (91, 99999),
 }
 
+# FIFA/UEFA international break windows (player release → return)
+# Hardcoded from official FIFA match calendar + UEFA competition schedules.
+# Used in engineer_rolling_features.py to flag post-break injury risk.
+INTL_BREAK_WINDOWS = [
+    # 2022/23
+    ("2022-09-19", "2022-09-27"),   # UEFA NL GW5-6
+    ("2022-10-10", "2022-10-18"),   # UEFA NL GW6 + friendlies
+    ("2022-11-14", "2022-11-29"),   # World Cup window start
+    ("2023-03-20", "2023-03-28"),   # UEFA qualifiers GW1-2
+    ("2023-06-12", "2023-06-20"),   # UEFA qualifiers GW5-6
+    # 2023/24
+    ("2023-09-04", "2023-09-12"),   # UEFA qualifiers GW7-8
+    ("2023-10-09", "2023-10-17"),   # UEFA qualifiers GW9-10
+    ("2024-03-18", "2024-03-26"),   # UEFA qualifiers play-offs
+    ("2024-06-03", "2024-06-11"),   # Friendlies / NL finals
+    # 2024/25
+    ("2024-09-02", "2024-09-10"),   # UEFA NL GW1-2
+    ("2024-10-07", "2024-10-15"),   # UEFA NL GW3-4
+    ("2024-11-11", "2024-11-19"),   # UEFA NL GW5-6
+    ("2025-03-17", "2025-03-25"),   # UEFA WCQ GW1-2
+    ("2025-06-02", "2025-06-10"),   # UEFA NL finals
+    # 2025/26
+    ("2025-09-01", "2025-09-09"),   # UEFA WCQ GW3-4
+    ("2025-10-06", "2025-10-14"),   # UEFA WCQ GW5-6
+    ("2025-11-10", "2025-11-18"),   # UEFA WCQ GW7-8
+    ("2026-03-23", "2026-03-31"),   # UEFA WCQ GW9-10
+]
+
 # Body region mapping (substring → region)
 BODY_REGION_MAP = {
     "hamstring": "Thigh",
