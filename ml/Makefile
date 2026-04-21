@@ -1,7 +1,7 @@
 PYTHON = python3.14
 
 # ── Run full pipeline from scratch ───────────────────────────────────────────
-.PHONY: all collect refresh-injuries build features train rebuild refeature help
+.PHONY: all collect refresh-injuries build features train predict rebuild refeature refresh-current full-update help
 
 all: collect build features train
 
@@ -46,6 +46,32 @@ train:
 	@echo "\n══ Step 5: Training model ══"
 	$(PYTHON) train_model.py
 
+# ── 5. Generate predictions ───────────────────────────────────────────────────
+predict:
+	@echo "\n══ Step 6: Generating predictions ══"
+	$(PYTHON) predict_players.py
+
+# ── Refresh current-season data + predict (weekly use) ───────────────────────
+refresh-current:
+	@echo "\n══ Refreshing current-season fixtures + match stats ══"
+	$(PYTHON) collect_fixtures.py
+	$(PYTHON) collect_match_stats.py
+	@echo "\n══ Rebuilding CSVs ══"
+	$(PYTHON) build_match_stats.py
+	@echo "\n══ Re-running feature engineering ══"
+	$(PYTHON) engineer_rolling_features.py
+	$(PYTHON) engineer_season_features.py
+	$(PYTHON) engineer_injury_features.py
+	$(PYTHON) engineer_profile_features.py
+	$(PYTHON) engineer_target.py
+	@echo "\n══ Retraining model ══"
+	$(PYTHON) train_model.py
+	@echo "\n══ Generating predictions ══"
+	$(PYTHON) predict_players.py
+
+# Full weekly update: refresh injuries + current data + predict
+full-update: refresh-injuries refresh-current
+
 # ── Partial runs ──────────────────────────────────────────────────────────────
 # Skip collection (data already fetched) and only rebuild + retrain
 rebuild: build features train
@@ -66,4 +92,7 @@ help:
 	@echo "  make train             — retrain the model"
 	@echo "  make rebuild           — build + features + train (skip API calls)"
 	@echo "  make refeature         — features + train only (match_stats.csv unchanged)"
+	@echo "  make predict           — generate predictions (model must exist)"
+	@echo "  make refresh-current   — fetch new fixtures/stats + retrain + predict"
+	@echo "  make full-update       — refresh-injuries + refresh-current (full weekly update)"
 	@echo ""
