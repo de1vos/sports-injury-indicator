@@ -53,23 +53,24 @@ SEASON_STATS_COLS = [
 ]
 
 TEAM_ABBREVIATIONS = {
+    # 2025/26 Premier League sides
     "Arsenal":           "ARS",
     "Aston Villa":       "AVL",
     "Bournemouth":       "BOU",
     "Brentford":         "BRE",
     "Brighton":          "BHA",
+    "Burnley":           "BUR",
     "Chelsea":           "CHE",
     "Crystal Palace":    "CRY",
     "Everton":           "EVE",
     "Fulham":            "FUL",
-    "Ipswich":           "IPS",
-    "Leicester":         "LEI",
+    "Leeds":             "LEE",
     "Liverpool":         "LIV",
     "Manchester City":   "MCI",
     "Manchester United": "MUN",
     "Newcastle":         "NEW",
     "Nottingham Forest": "NFO",
-    "Southampton":       "SOU",
+    "Sunderland":        "SUN",
     "Tottenham":         "TOT",
     "West Ham":          "WHU",
     "Wolves":            "WOL",
