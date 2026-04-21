@@ -8,7 +8,13 @@
           "player_id": 1,
           "player_first_name": "Alexander",
           "player_last_name": "Isak",
-          "player_injury_risk": 0.5
+          "player_injury_risk": "injured"
+        },
+        {
+          "player_id": 5,
+          "player_first_name": "Harry",
+          "player_last_name": "Kane",
+          "player_injury_risk": 0.75
         }
       ]
     },
@@ -39,7 +45,8 @@
       "example_response": {
         "gw_1": 0.73,
         "gw_2": 0.14,
-        "gw_38": 0.48,
+        "gw_21": "injured",
+        "gw_38": "injured",
         "graph_data_current_gw": "GW29",
         "player_injury_trend": 42.3
       }
@@ -156,7 +163,8 @@
           "team_logo": "link.to.liverpool.badge.com",
           "amount_of_players": 4,
           "average_risk_of_injury": 0.57,
-          "total_season_injuries": 1
+          "active_injuries": 1,
+          "percent_of_squad_injured": 0.25
         }
       ]
     }
