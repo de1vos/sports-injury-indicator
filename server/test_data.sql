@@ -51,48 +51,48 @@ VALUES (4, 3, 'Christopher', 'Nkunku', 'Forward', 26, '175 cm', '68 kg', 'link.t
 
 -- Player seasons (season year 2025 = 2025/2026 season)
 -- player_id 1 = Isak
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (1, 2025, 30, 1800, 62, 20, 90, 28, 3, 0, 15, 8, 228, 5);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (1, 2025, 30, 1800, 62, 20, 90, 28, 3, 0, 15, 8, 228, 5, 7.80);
 
 -- player_id 2 = Zlatan
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (2, 2025, 20, 1500, 35, 18, 60, 12, 4, 0, 10, 5, 80, 8);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (2, 2025, 20, 1500, 35, 18, 60, 12, 4, 0, 10, 5, 80, 8, 6.90);
 
 -- player_id 3 = van Dijk
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (3, 2025, 32, 2880, 20, 30, 120, 55, 2, 0, 3, 1, 10, 2);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (3, 2025, 32, 2880, 20, 30, 120, 55, 2, 0, 3, 1, 10, 2, 7.60);
 
 -- player_id 4 = TAA
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (4, 2025, 28, 2100, 30, 22, 80, 40, 5, 0, 4, 12, 60, 4);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (4, 2025, 28, 2100, 30, 22, 80, 40, 5, 0, 4, 12, 60, 4, 7.40);
 
 -- player_id 5 = Kane
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (5, 2025, 28, 2100, 40, 25, 75, 15, 5, 1, 22, 10, 90, 3);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (5, 2025, 28, 2100, 40, 25, 75, 15, 5, 1, 22, 10, 90, 3, 8.20);
 
 -- player_id 6 = Haaland
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (6, 2025, 25, 2000, 38, 15, 70, 10, 3, 0, 25, 6, 55, 5);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (6, 2025, 25, 2000, 38, 15, 70, 10, 3, 0, 25, 6, 55, 5, 8.50);
 
 -- player_id 7 = Lloris
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (7, 2025, 30, 2700, 5, 8, 20, 5, 1, 0, 0, 0, 2, 3);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (7, 2025, 30, 2700, 5, 8, 20, 5, 1, 0, 0, 0, 2, 3, 7.10);
 
 -- player_id 8 = Martinelli
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (8, 2025, 26, 1900, 55, 18, 85, 20, 4, 0, 12, 9, 140, 6);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (8, 2025, 26, 1900, 55, 18, 85, 20, 4, 0, 12, 9, 140, 6, 7.30);
 
 -- player_id 9 = Saka
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (9, 2025, 33, 2850, 70, 22, 95, 35, 6, 0, 14, 16, 200, 2);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (9, 2025, 33, 2850, 70, 22, 95, 35, 6, 0, 14, 16, 200, 2, 8.00);
 
 -- player_id 10 = Reece James
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (10, 2025, 15, 1100, 18, 20, 65, 30, 3, 0, 2, 5, 40, 14);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (10, 2025, 15, 1100, 18, 20, 65, 30, 3, 0, 2, 5, 40, 14, 6.50);
 
 -- player_id 11 = Nkunku
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (11, 2025, 22, 1700, 42, 16, 72, 18, 4, 0, 11, 7, 110, 7);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (11, 2025, 22, 1700, 42, 16, 72, 18, 4, 0, 11, 7, 110, 7, 7.20);
 
 -- Player injuries (FK is player_season_id)
 -- Isak (player_season_id=1): ACL tear
@@ -230,38 +230,38 @@ VALUES (3, 4, '2026-05-24'::date, '16:00:00', 4008, 'gw38', 'Emirates Stadium', 
 
 -- Player seasons 2024 (season year 2024 = 2024/2025 season)
 -- player_season_id 12–22
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (1, 2024, 34, 2900, 58, 18, 88, 25, 2, 0, 18, 10, 210, 3);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (1, 2024, 34, 2900, 58, 18, 88, 25, 2, 0, 18, 10, 210, 3, 8.10);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (2, 2024, 25, 1800, 30, 15, 55, 10, 5, 1, 8, 4, 70, 10);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (2, 2024, 25, 1800, 30, 15, 55, 10, 5, 1, 8, 4, 70, 10, 6.80);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (3, 2024, 35, 3150, 18, 28, 130, 60, 1, 0, 4, 2, 8, 1);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (3, 2024, 35, 3150, 18, 28, 130, 60, 1, 0, 4, 2, 8, 1, 7.90);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (4, 2024, 30, 2400, 28, 20, 75, 38, 4, 0, 5, 14, 65, 5);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (4, 2024, 30, 2400, 28, 20, 75, 38, 4, 0, 5, 14, 65, 5, 7.50);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (5, 2024, 32, 2700, 44, 22, 80, 18, 6, 0, 26, 12, 95, 4);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (5, 2024, 32, 2700, 44, 22, 80, 18, 6, 0, 26, 12, 95, 4, 8.40);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (6, 2024, 30, 2500, 35, 12, 68, 9, 2, 0, 30, 5, 50, 6);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (6, 2024, 30, 2500, 35, 12, 68, 9, 2, 0, 30, 5, 50, 6, 8.70);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (7, 2024, 33, 2970, 4, 7, 18, 4, 0, 0, 0, 0, 1, 2);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (7, 2024, 33, 2970, 4, 7, 18, 4, 0, 0, 0, 0, 1, 2, 7.30);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (8, 2024, 30, 2200, 60, 20, 90, 22, 5, 0, 15, 11, 160, 5);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (8, 2024, 30, 2200, 60, 20, 90, 22, 5, 0, 15, 11, 160, 5, 7.60);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (9, 2024, 36, 3100, 75, 24, 100, 38, 7, 0, 16, 18, 215, 1);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (9, 2024, 36, 3100, 75, 24, 100, 38, 7, 0, 16, 18, 215, 1, 8.20);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (10, 2024, 10, 750, 12, 14, 40, 20, 2, 0, 1, 3, 25, 18);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (10, 2024, 10, 750, 12, 14, 40, 20, 2, 0, 1, 3, 25, 18, 5.90);
 
-INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed)
-VALUES (11, 2024, 28, 2100, 38, 14, 68, 16, 3, 0, 13, 9, 120, 6);
+INSERT INTO player_season (player_id, player_season_year, player_season_appearences, player_season_minutes, player_season_fouls_drawn, player_season_fouls_commited, player_season_duels_total, player_season_tackles, player_season_yellow_cards, player_season_red_cards, player_season_goals, player_season_assists, player_season_dribbles_attempts, player_season_games_missed, player_season_rating)
+VALUES (11, 2024, 28, 2100, 38, 14, 68, 16, 3, 0, 13, 9, 120, 6, 7.40);
 
 -- Injuries for 2024 seasons (player_season_id 12–22)
 -- Isak 2024 (ps_id=12): hamstring

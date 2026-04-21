@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from database import get_session
-import models.player_page as player_page
+import integration.player_page as player_page
 
 router = APIRouter(prefix="/players", tags=["players"])
 

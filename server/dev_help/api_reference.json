@@ -14,7 +14,7 @@
           "player_id": 5,
           "player_first_name": "Harry",
           "player_last_name": "Kane",
-          "player_injury_risk": 0.75
+          "player_injury_risk": 75
         }
       ]
     },
@@ -31,9 +31,9 @@
         "player_position": "Forward",
         "player_kit_number": 14,
         "nation_name": "Sweden",
-        "player_injury_risk": 0.5,
+        "player_injury_risk": 50,
         "player_injury_status": "available",
-        "player_injury_trend": 42.3,
+        "player_injury_trend": 42,
         "player_season_injuries": 1,
         "player_season_minutes": 1800,
         "player_season_missed_games": 5
@@ -43,12 +43,12 @@
       "description": "Gameweek injury risk graph data",
       "test_call": "GET /players/1/graph",
       "example_response": {
-        "gw_1": 0.73,
-        "gw_2": 0.14,
+        "gw_1": 73,
+        "gw_2": 14,
         "gw_21": "injured",
         "gw_38": "injured",
         "graph_data_current_gw": "GW29",
-        "player_injury_trend": 42.3
+        "player_injury_trend": 42
       }
     },
     "GET /players/{player_id}/seasons": {
@@ -67,7 +67,8 @@
           "player_season_red_cards": 0,
           "player_season_goals": 15,
           "player_season_assists": 8,
-          "player_season_dribbles_attempts": 228
+          "player_season_dribbles_attempts": 228,
+          "player_season_rating": 7.80
         }
       ]
     },
@@ -109,8 +110,8 @@
           "away_team_logo": "link.to.tottenham.badge.com",
           "home_team_goals": null,
           "away_team_goals": null,
-          "home_average_injury_risk": 0.51,
-          "away_average_injury_risk": 0.75,
+          "home_average_injury_risk": 51,
+          "away_average_injury_risk": 75,
           "match_time": "17:30:00",
           "match_date": "2026-04-25",
           "match_is_played": false
@@ -129,7 +130,7 @@
           "team_id": 4,
           "team_name": "Chelsea",
           "player_position": "Defender",
-          "player_injury_risk": 0.88,
+          "player_injury_risk": 88,
           "player_seasonal_injuries": 1
         }
       ]
@@ -146,7 +147,7 @@
           "team_id": 4,
           "team_name": "Chelsea",
           "player_position": "Defender",
-          "player_injury_trend": 742.15,
+          "player_injury_trend": 742,
           "player_seasonal_injuries": 1
         }
       ]
@@ -162,9 +163,9 @@
           "team_name": "Liverpool",
           "team_logo": "link.to.liverpool.badge.com",
           "amount_of_players": 4,
-          "average_risk_of_injury": 0.57,
+          "average_risk_of_injury": 57,
           "active_injuries": 1,
-          "percent_of_squad_injured": 0.25
+          "percent_of_squad_injured": 25
         }
       ]
     }
@@ -182,7 +183,7 @@
           "team_id": 1,
           "team_name": "Liverpool",
           "player_position": "Forward",
-          "player_injury_trend": 42.3,
+          "player_injury_trend": 42,
           "player_seasonal_injuries": 1
         }
       ]

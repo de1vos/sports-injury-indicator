@@ -155,6 +155,7 @@ class PlayerSeason(SQLModel, table=True):
     player_season_assists: int
     player_season_dribbles_attempts: int
     player_season_games_missed: int
+    player_season_rating: Decimal = Field(sa_column=Column(Numeric(4, 2), nullable=False))
 
     player: Optional["Player"] = Relationship(back_populates="seasons")
     injuries: List["PlayerInjury"] = Relationship(back_populates="season")

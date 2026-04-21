@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 from database import get_session
-import models.dashboard as dashboard
+import integration.dashboard as dashboard
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 

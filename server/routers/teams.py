@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
 from database import get_session
-import models.teams as teams
+import integration.teams as teams
 
 router = APIRouter(prefix="/teams", tags=["teams"])
 

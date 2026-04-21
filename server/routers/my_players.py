@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
 from database import get_session
-import models.my_players as my_players_model
+import integration.my_players as my_players_model
 
 router = APIRouter(prefix="/my-players", tags=["my-players"])
 
