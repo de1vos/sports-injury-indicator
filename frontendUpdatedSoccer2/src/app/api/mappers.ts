@@ -1,6 +1,6 @@
 /**
  * Mapper functions: raw backend API types → internal frontend types.
- * All percentage values: backend sends 0–1, frontend shows 0–100.
+ * All percentage values are already 0–100 integers from the backend — no conversion needed.
  */
 
 import type { Player, InjuryRecord, RiskTrendEntry, SeasonStat, InjurySummaryData, Team } from '../data/mockData';
@@ -20,9 +20,9 @@ export const mapTeamOverview = (t: ApiTeamOverview): TeamOverviewItem => ({
   accentColor: '#1A56DB',
   logo: t.team_logo,
   squadSize: t.amount_of_players,
-  avgRisk: Math.round(t.average_risk_of_injury * 100),
+  avgRisk: Math.round(t.average_risk_of_injury),
   totalInjuries: t.active_injuries,
-  percentInjured: Math.round(t.percent_of_squad_injured * 100),
+  percentInjured: Math.round(t.percent_of_squad_injured),
   totalMinutesLost: 0,
 });
 
@@ -38,12 +38,12 @@ export const mapTeamPlayer = (p: ApiTeamPlayer): TeamPlayerListItem => ({
   id: String(p.player_id),
   firstName: p.player_first_name,
   lastName: p.player_last_name,
-  injuryRisk: Math.round(p.player_injury_risk * 100),
+  injuryRisk: typeof p.player_injury_risk === 'number' ? p.player_injury_risk : 0,
+  riskLevel: p.player_injury_risk === 'injured' ? 'Injured' : undefined,
   position: '',
   kitNumber: 0,
   age: 0,
   nationality: '',
-  riskLevel: undefined,
   photo: undefined,
 });
 
@@ -61,7 +61,7 @@ export const mapPlayerCard = (p: ApiPlayerCard, playerId?: string): Player => ({
   position: p.player_position,
   kitNumber: p.player_kit_number,
   nationality: p.nation_name,
-  injuryRisk: Math.round(p.player_injury_risk * 100),
+  injuryRisk: p.player_injury_risk,
   riskLevel: p.player_injury_status === 'available' ? 'Fit' : 'Injured',
   riskTrend: p.player_injury_trend ?? 0,
   injuries: p.player_season_injuries,
@@ -94,7 +94,8 @@ export const mapGraph = (data: ApiPlayerGraph): RiskTrendEntry[] =>
     .map(([key, value]) => ({
       gw: `GW${key.replace('gw_', '')}`,
       season: 2025,
-      risk: value === null || value === undefined
+      // "injured" string or null/undefined → mark as injured; otherwise use value as-is
+      risk: value === 'injured' || value === null || value === undefined
         ? ('Injured' as const)
         : Math.round((value as number) * 10) / 10,
     }))
@@ -109,7 +110,7 @@ export const mapSeasons = (data: ApiPlayerSeason[]): SeasonStat[] =>
     season: s.player_season_year,
     appearances: s.player_season_appearances,
     minutes: s.player_season_minutes,
-    rating: 0,
+    rating: s.player_season_rating,
     goals: s.player_season_goals,
     assists: s.player_season_assists,
     tackles: s.player_season_tackles,

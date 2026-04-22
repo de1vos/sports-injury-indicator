@@ -52,8 +52,8 @@ const mapMatch = (m: ApiDashboardMatch, idx: number): DashboardMatch => ({
   awayTeamLogo: m.away_team_logo,
   homeGoals: m.home_team_goals,
   awayGoals: m.away_team_goals,
-  homeAvgRisk: Math.round(m.home_average_injury_risk * 100),
-  awayAvgRisk: Math.round(m.away_average_injury_risk * 100),
+  homeAvgRisk: Math.round(m.home_average_injury_risk),
+  awayAvgRisk: Math.round(m.away_average_injury_risk),
   time: m.match_time.slice(0, 5),
   date: m.match_date,
   isPlayed: m.match_is_played,
@@ -67,7 +67,7 @@ const mapHighRisk = (p: ApiHighRiskPlayer): DashboardHighRiskPlayer => ({
   photo: p.player_photo,
   teamName: p.team_name,
   position: p.player_position,
-  injuryRisk: Math.round(p.player_injury_risk * 100),
+  injuryRisk: Math.round(p.player_injury_risk),
   seasonalInjuries: p.player_seasonal_injuries,
 });
 

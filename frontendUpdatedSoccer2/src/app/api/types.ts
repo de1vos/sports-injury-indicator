@@ -1,6 +1,6 @@
 /**
  * Raw backend response shapes — match exactly what the API returns.
- * All risk values are 0–1 decimals from the backend; multiply by 100 for display.
+ * All risk/percentage values are integers 0–100 (no conversion needed).
  */
 
 export interface ApiTeamOverview {
@@ -8,16 +8,16 @@ export interface ApiTeamOverview {
   team_name: string;
   team_logo: string;
   amount_of_players: number;
-  average_risk_of_injury: number;   // 0–1
+  average_risk_of_injury: number;   // 0–100 integer
   active_injuries: number;
-  percent_of_squad_injured: number; // 0–1
+  percent_of_squad_injured: number; // 0–100 integer
 }
 
 export interface ApiTeamPlayer {
   player_id: number;
   player_first_name: string;
   player_last_name: string;
-  player_injury_risk: number; // 0–1
+  player_injury_risk: number | 'injured'; // integer 0–100, or "injured" string
 }
 
 export interface ApiPlayerCard {
@@ -31,15 +31,15 @@ export interface ApiPlayerCard {
   player_position: string;
   player_kit_number: number;
   nation_name: string;
-  player_injury_risk: number;    // 0–1
-  player_injury_status: string;  // 'available' | 'injured' | etc.
+  player_injury_risk: number;       // 0–100 integer
+  player_injury_status: string;     // 'available' | 'injured' | etc.
   player_injury_trend: number;
   player_season_injuries: number;
   player_season_minutes: number;
   player_season_missed_games: number;
 }
 
-/** Dynamic keys: gw_1 … gw_38 (values 0–1 or null), plus metadata */
+/** Dynamic keys: gw_1 … gw_38 (integer 0–100 or "injured" string), plus metadata */
 export type ApiPlayerGraph = Record<string, number | string | null>;
 
 export interface ApiPlayerSeason {
@@ -55,6 +55,7 @@ export interface ApiPlayerSeason {
   player_season_goals: number;
   player_season_assists: number;
   player_season_dribbles_attempts: number;
+  player_season_rating: number;
 }
 
 export interface ApiInjuryRecord {
@@ -81,8 +82,8 @@ export interface ApiDashboardMatch {
   away_team_logo: string;
   home_team_goals: number | null;
   away_team_goals: number | null;
-  home_average_injury_risk: number; // 0–1
-  away_average_injury_risk: number; // 0–1
+  home_average_injury_risk: number; // 0–100 integer
+  away_average_injury_risk: number; // 0–100 integer
   match_time: string;   // "17:30:00"
   match_date: string;   // "2026-04-25"
   match_is_played: boolean;
@@ -96,7 +97,7 @@ export interface ApiHighRiskPlayer {
   team_id?: number;
   team_name: string;
   player_position: string;
-  player_injury_risk: number; // 0–1
+  player_injury_risk: number; // 0–100 integer
   player_seasonal_injuries: number;
 }
 
