@@ -1,14 +1,22 @@
 """
 Step 2.3 — Build match_stats.csv
 
-Reads match stats for all 4 seasons and combines into one CSV.
-One row per player per match, with a 'season' column.
+Reads match stats for all seasons (PL + cup/Euro competitions) and combines
+into one CSV. One row per player per match, with 'season' and 'competition' columns.
+
+PL source files:   data/raw/match_stats_{season}.json
+Cup source files:  data/raw/match_stats_{league}_{season}.json
+
 Output: data/match_stats.csv
 """
 
 import json
+from pathlib import Path
 import pandas as pd
-from config import ALL_SEASONS, MATCH_STATS_CSV, match_stats_file
+from config import (
+    ALL_SEASONS, MATCH_STATS_CSV,
+    match_stats_file, CUP_LEAGUES, cup_match_stats_file,
+)
 
 
 def safe(val, cast=None):
@@ -20,16 +28,16 @@ def safe(val, cast=None):
         return None
 
 
-def parse_season(season: int) -> list[dict]:
-    path = match_stats_file(season)
+def parse_season_from_path(path: Path, season: int, competition: str = "PL") -> list[dict]:
+    """Parse a match_stats JSON file into rows. Works for both PL and cup files."""
     if not path.exists():
-        print(f"  Season {season}: file not found, skipping.")
+        print(f"  {competition} {season}: file not found, skipping.")
         return []
 
     with open(path) as f:
         raw = json.load(f)
 
-    print(f"  Season {season}: {len(raw)} fixtures ...", end=" ", flush=True)
+    print(f"  {competition} {season}: {len(raw)} fixtures ...", end=" ", flush=True)
     rows = []
 
     for fixture_id, fixture in raw.items():
@@ -66,6 +74,7 @@ def parse_season(season: int) -> list[dict]:
                     "player_name":       p.get("name"),
                     "fixture_id":        int(fixture_id),
                     "season":            season,
+                    "competition":       competition,
                     "date":              date,
                     "round":             round_,
                     "team":              team_name,
@@ -107,11 +116,29 @@ def parse_season(season: int) -> list[dict]:
 
 
 def main():
-    print("Building match_stats.csv from all seasons...\n")
+    print("Building match_stats.csv from all seasons + competitions...\n")
 
     all_rows = []
+
+    # ── Premier League ────────────────────────────────────────────────────────
+    print("Premier League:")
     for season in ALL_SEASONS:
-        all_rows.extend(parse_season(season))
+        all_rows.extend(parse_season_from_path(match_stats_file(season), season, "PL"))
+
+    # ── Cup + European competitions ───────────────────────────────────────────
+    cup_files_found = sum(
+        1 for league_id in CUP_LEAGUES for season in ALL_SEASONS
+        if cup_match_stats_file(league_id, season).exists()
+    )
+
+    if cup_files_found == 0:
+        print("\nNo cup/Euro files found — skipping. Run collect_match_stats_cups.py first.")
+    else:
+        print(f"\nCup / European competitions ({cup_files_found} files found):")
+        for league_id, league_name in CUP_LEAGUES.items():
+            for season in ALL_SEASONS:
+                path = cup_match_stats_file(league_id, season)
+                all_rows.extend(parse_season_from_path(path, season, league_name))
 
     df = pd.DataFrame(all_rows)
     df["date"] = pd.to_datetime(df["date"])
@@ -130,12 +157,17 @@ def main():
 
     print(f"\n{'─'*50}")
     print(f"Total rows:        {len(df)}")
-    print(f"Rows per season:")
+    print(f"\nRows per season:")
     for season, count in df.groupby("season").size().items():
         print(f"  {int(season)}: {count}")
-    print(f"Unique fixtures:   {df['fixture_id'].nunique()}")
+    if "competition" in df.columns:
+        print(f"\nRows per competition:")
+        for comp, count in df.groupby("competition").size().sort_values(ascending=False).items():
+            print(f"  {comp}: {count}")
+    print(f"\nUnique fixtures:   {df['fixture_id'].nunique()}")
     print(f"Unique players:    {df['player_id'].nunique()}")
-    print(f"Avg players/match: {len(df) / df['fixture_id'].nunique():.1f}")
+    print(f"Avg matches/player/season: "
+          f"{df.groupby(['player_id','season']).size().mean():.1f}")
     print(f"Date range:        {df['date'].min().date()} → {df['date'].max().date()}")
     print(f"\nSaved: {MATCH_STATS_CSV}")
 

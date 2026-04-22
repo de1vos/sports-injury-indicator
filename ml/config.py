@@ -39,12 +39,27 @@ MATCH_STATS_FILE       = ROOT / "data" / "raw" / "match_stats_2025.json"
 SQUADS_FILE            = ROOT / "data" / "raw" / "squads.json"
 SIDELINED_FILE         = ROOT / "data" / "raw" / "sidelined.json"
 
-# Per-season file helpers
+# Per-season file helpers (Premier League)
 def fixtures_file(season: int) -> Path:
     return RAW_DIR / f"fixtures_{season}.json"
 
 def match_stats_file(season: int) -> Path:
     return RAW_DIR / f"match_stats_{season}.json"
+
+# Cup / European competition helpers
+CUP_LEAGUES = {
+    45:  "FA Cup",
+    48:  "EFL Cup",
+    2:   "UCL",
+    3:   "UEL",
+    848: "UECL",
+}
+
+def cup_fixtures_file(league: int, season: int) -> Path:
+    return RAW_DIR / f"fixtures_{league}_{season}.json"
+
+def cup_match_stats_file(league: int, season: int) -> Path:
+    return RAW_DIR / f"match_stats_{league}_{season}.json"
 
 
 PLAYERS_CSV      = ROOT / "data" / "players.csv"
