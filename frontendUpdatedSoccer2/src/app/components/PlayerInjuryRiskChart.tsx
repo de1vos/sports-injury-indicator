@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 import { Player } from '../data/mockData';
 
-interface ChartPoint { week: string; risk: number | null; injured?: boolean; }
+interface ChartPoint { week: string; risk: number | null; injuredLine: number | null; injured?: boolean; }
 
 // GW1 of 2025/26 season started ~Aug 16 2025
 const SEASON_START = new Date('2025-08-16');
@@ -18,7 +18,7 @@ function gwToDateRange(gw: number): [Date, Date] {
 function generateGWData(player: Player): ChartPoint[] {
   const startGW = 13;
   const endGW = 32;
-  const data: ChartPoint[] = [];
+  const raw: Omit<ChartPoint, 'injuredLine'>[] = [];
 
   for (let gw = startGW; gw <= endGW; gw++) {
     const [gwStart, gwEnd] = gwToDateRange(gw);
@@ -30,29 +30,44 @@ function generateGWData(player: Player): ChartPoint[] {
     });
 
     if (isInjured) {
-      data.push({ week: `GW${gw}`, risk: null, injured: true });
+      raw.push({ week: `GW${gw}`, risk: null, injured: true });
     } else {
       const progress = (gw - startGW) / (endGW - startGW);
       const baseRisk = player.injuryRisk - player.riskTrend * (1 - progress);
       const variation = (Math.random() - 0.5) * 4;
-      data.push({
+      raw.push({
         week: `GW${gw}`,
         risk: Math.round(Math.max(0, Math.min(100, baseRisk + variation)) * 10) / 10,
       });
     }
   }
 
-  return data;
+  return addInjuredLine(raw);
 }
 
 function buildTrendData(player: Player): ChartPoint[] {
   if (!player.injuryRiskTrend?.length) return generateGWData(player);
   const entries = player.injuryRiskTrend.slice(-20);
-  return entries.map(e => ({
+  const raw: Omit<ChartPoint, 'injuredLine'>[] = entries.map(e => ({
     week: e.gw,
     risk: e.risk === 'Injured' ? null : Math.round(e.risk * 10) / 10,
     injured: e.risk === 'Injured' ? true : undefined,
   }));
+  return addInjuredLine(raw);
+}
+
+function addInjuredLine(data: Omit<ChartPoint, 'injuredLine'>[]): ChartPoint[] {
+  const result: ChartPoint[] = data.map(d => ({ ...d, injuredLine: null }));
+  for (let i = 0; i < result.length; i++) {
+    if (result[i].injured) {
+      result[i].injuredLine = 100;
+      if (i > 0 && !result[i - 1].injured && result[i - 1].risk !== null)
+        result[i - 1].injuredLine = result[i - 1].risk;
+    } else if (i > 0 && result[i - 1].injured && result[i].risk !== null) {
+      result[i].injuredLine = result[i].risk;
+    }
+  }
+  return result;
 }
 
 function getInjurySpans(data: ChartPoint[]): Array<{ x1: string; x2: string }> {
@@ -85,20 +100,34 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
 
   const gwsMissed = hasGaps ? chartData.filter(d => d.risk === null).length : 0;
 
+  const [displayRisk, setDisplayRisk] = useState(0);
+  useEffect(() => {
+    const target = player.injuryRisk;
+    const duration = 1400;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayRisk(Math.round(eased * target));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [player.injuryRisk]);
+
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
       <div className="mb-6">
         <h3 className="text-xl font-bold text-[#1A1A2E] mb-2">Injury Risk Trend</h3>
         <p className="text-sm text-[#6B7280]">
-          Risk per gameweek — gaps indicate injury absence
+          Risk per gameweek — shaded regions indicate injury absence
         </p>
       </div>
 
       <div className="flex items-center justify-between mb-6 p-4 bg-[#F5F6FA] rounded-2xl">
         <div>
           <div className="text-xs uppercase text-[#6B7280] mb-1">Current Risk</div>
-          <div className="text-4xl font-bold" style={{ fontFamily: 'var(--font-mono)', color }}>
-            {player.injuryRisk}%
+          <div className="text-4xl font-bold" style={{ fontFamily: 'var(--font-mono)', color: player.riskLevel === 'Injured' ? '#DC2626' : color }}>
+            {player.riskLevel === 'Injured' ? 'INJURED' : `${displayRisk}%`}
           </div>
         </div>
         {hasGaps ? (
@@ -124,6 +153,12 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="injuredGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#6B7280" stopOpacity={0.28} />
+                <stop offset="100%" stopColor="#6B7280" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
             <XAxis
               dataKey="week"
@@ -149,19 +184,38 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
               formatter={(value: number | null) => value === null ? ['Injured', ''] : [`${value}%`, 'Risk']}
             />
             {getInjurySpans(chartData).map(({ x1, x2 }, i) => (
-              <ReferenceArea key={i} x1={x1} x2={x2} fill="#DC2626" fillOpacity={0.12} stroke="#DC2626" strokeOpacity={0.3} />
+              <ReferenceArea key={i} x1={x1} x2={x2} fill="url(#injuredGradient)" fillOpacity={1} stroke="none" />
             ))}
             <ReferenceLine y={50} stroke="#DC2626" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={35} stroke="#EA580C" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={20} stroke="#0D9488" strokeDasharray="3 3" strokeOpacity={0.3} />
             <Line
               type="monotone"
+              dataKey="injuredLine"
+              stroke="#6B7280"
+              strokeWidth={2}
+              strokeDasharray="5 3"
+              dot={{ fill: '#6B7280', r: 3, strokeWidth: 0 }}
+              activeDot={false}
+              connectNulls={false}
+              tooltipType="none"
+              isAnimationActive={true}
+              animationBegin={0}
+              animationDuration={1400}
+              animationEasing="ease-out"
+            />
+            <Line
+              type="monotone"
               dataKey="risk"
               stroke={color}
               strokeWidth={3}
-              dot={{ fill: color, r: 3 }}
+              dot={{ fill: color, r: 3, strokeWidth: 0 }}
               activeDot={{ r: 6 }}
               connectNulls={false}
+              isAnimationActive={true}
+              animationBegin={0}
+              animationDuration={1400}
+              animationEasing="ease-out"
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -179,10 +233,6 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
             <span className="text-[#6B7280]">{label}</span>
           </div>
         ))}
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#6B7280]" />
-          <span className="text-[#6B7280]">Shaded = Injured</span>
-        </div>
       </div>
     </div>
   );

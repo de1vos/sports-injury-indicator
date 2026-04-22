@@ -1,37 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { useMyPlayers } from '../hooks/useApi';
+import { useFavorites } from '../hooks/useFavorites';
 
 export function MyPlayersPage() {
-  const { data, loading, error } = useMyPlayers('1');
+  const { favoritePlayers: players, toggleFavorite } = useFavorites();
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
-
-  const players = data ?? [];
-
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <svg className="w-10 h-10 text-[#1A56DB] animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-          <p className="text-[#6B7280] text-sm">Loading your players…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
-          <p className="text-red-700 font-semibold mb-2">Failed to load players</p>
-          <p className="text-red-500 text-sm">{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
@@ -121,6 +94,13 @@ export function MyPlayersPage() {
                 <span className="text-xs text-[#6B7280] flex-shrink-0 hidden sm:block">
                   {player.seasonalInjuries} inj.
                 </span>
+                <button
+                  onClick={e => { e.preventDefault(); toggleFavorite(player.id); }}
+                  className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F5F6FA] transition-colors text-[#F59E0B]"
+                  title="Remove from watchlist"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                </button>
               </>
             );
             return (

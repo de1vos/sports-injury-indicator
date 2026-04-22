@@ -260,10 +260,10 @@ export function HomePage() {
                             className="px-3 py-1 rounded-xl font-bold text-white text-sm"
                             style={{
                               fontFamily: 'var(--font-mono)',
-                              backgroundColor: getRiskColor(player.injuryRisk),
+                              backgroundColor: player.injuryRisk === 0 ? '#DC2626' : getRiskColor(player.injuryRisk),
                             }}
                           >
-                            {player.injuryRisk}%
+                            {player.injuryRisk === 0 ? 'INJURED' : `${player.injuryRisk}%`}
                           </span>
                           <div className="text-xs text-[#6B7280] mt-1">
                             {player.seasonalInjuries} inj. this season
@@ -354,17 +354,17 @@ export function HomePage() {
                             <p className="text-sm text-[#6B7280]">
                               {player.teamName} · {player.position}
                             </p>
-                            <p className="text-xs text-[#6B7280] mt-0.5">
-                              {player.seasonalInjuries} inj. this season
-                            </p>
                           </div>
-                          <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 text-right">
                             <span
                               className="px-3 py-1 rounded-xl font-bold text-white text-sm"
                               style={{ fontFamily: 'var(--font-mono)', backgroundColor: '#DC2626' }}
                             >
                               +{player.injuryTrend.toFixed(1)}%
                             </span>
+                            <div className="text-xs text-[#6B7280] mt-1">
+                              {player.seasonalInjuries} inj. this season
+                            </div>
                           </div>
                         </div>
                       );

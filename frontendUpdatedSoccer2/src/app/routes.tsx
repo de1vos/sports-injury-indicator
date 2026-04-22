@@ -1,5 +1,7 @@
+import React from 'react';
 import { createBrowserRouter, Outlet } from 'react-router';
 import { Navigation } from './components/Navigation';
+import { FavoritesContext, useFavoritesState } from './hooks/useFavorites';
 import { HomePage } from './pages/HomePage';
 import { MatchPage } from './pages/MatchPage';
 import { MyPlayersPage } from './pages/MyPlayersPage';
@@ -9,14 +11,21 @@ import { ReportedInjuriesPage } from './pages/ReportedInjuriesPage';
 import { StatisticsPage } from './pages/StatisticsPage';
 import { LoginPage } from './pages/LoginPage';
 
+function FavoritesProvider({ children }: { children: React.ReactNode }) {
+  const value = useFavoritesState();
+  return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;
+}
+
 function RootLayout() {
   return (
-    <div className="min-h-screen bg-[#F5F6FA]">
-      <Navigation />
-      <main className="pt-16">
-        <Outlet />
-      </main>
-    </div>
+    <FavoritesProvider>
+      <div className="min-h-screen bg-[#F5F6FA]">
+        <Navigation />
+        <main className="pt-16">
+          <Outlet />
+        </main>
+      </div>
+    </FavoritesProvider>
   );
 }
 
