@@ -11,9 +11,24 @@ Output: data/injury_features.csv — one row per player per reference date
 import numpy as np
 import pandas as pd
 from scipy import stats as scipy_stats
-from config import INJURIES_CSV, MATCH_STATS_CSV, DATA_DIR
+from config import INJURIES_CSV, MATCH_STATS_CSV, DATA_DIR, BODY_REGION_MAP
 
 OUTPUT_FILE = DATA_DIR / "injury_features.csv"
+
+MUSCLE_REGIONS = {"Thigh", "Calf", "Groin"}   # hamstring, quad, calf, adductor
+KNEE_REGIONS   = {"Knee"}
+ANKLE_REGIONS  = {"Ankle"}
+
+
+def get_body_region(injury_type: str) -> str | None:
+    """Map a raw injury type string to a body region using BODY_REGION_MAP."""
+    if not injury_type or pd.isna(injury_type):
+        return None
+    lower = str(injury_type).lower()
+    for keyword, region in BODY_REGION_MAP.items():
+        if keyword in lower:
+            return region
+    return "Other"
 
 
 def compute_injury_features(df_player_injuries, ref_date):
@@ -32,22 +47,29 @@ def compute_injury_features(df_player_injuries, ref_date):
 
     if past.empty:
         return {
-            "career_total_injuries":      0,
-            "injuries_last_12_months":    0,
-            "injuries_last_24_months":    0,
-            "days_missed_last_12_months": 0,
-            "days_missed_last_24_months": 0,
-            "days_since_last_injury":     None,
-            "is_recently_returned":       0,
-            "recurring_injury_flag":      0,
-            "recurring_injury_type":      None,
-            "avg_recovery_days":          None,
-            "recovery_trend":             None,
-            "longest_injury_days":        None,
-            "matches_missed_career":      0,
-            "matches_missed_this_season": 0,
-            "minutes_missed_this_season": 0,
-            "injuries_this_season":       0,
+            "career_total_injuries":        0,
+            "injuries_last_12_months":      0,
+            "injuries_last_24_months":      0,
+            "days_missed_last_12_months":   0,
+            "days_missed_last_24_months":   0,
+            "days_since_last_injury":       None,
+            "is_recently_returned":         0,
+            "recurring_injury_flag":        0,
+            "recurring_injury_type":        None,
+            "avg_recovery_days":            None,
+            "recovery_trend":               None,
+            "longest_injury_days":          None,
+            "matches_missed_career":        0,
+            "matches_missed_this_season":   0,
+            "minutes_missed_this_season":   0,
+            "injuries_this_season":         0,
+            # Body-region features
+            "muscle_injuries_last_24m":     0,
+            "knee_injuries_last_24m":       0,
+            "ankle_injuries_last_24m":      0,
+            "days_since_last_muscle_injury": None,
+            "days_since_last_knee_injury":   None,
+            "same_region_recurrence_flag":   0,
         }
 
     # ── Counts ────────────────────────────────────────────────────────────────
@@ -103,23 +125,59 @@ def compute_injury_features(df_player_injuries, ref_date):
     matches_missed_season  = int(this_season["days_out"].fillna(0).sum() / 7 * matches_per_week)
     minutes_missed_season  = matches_missed_season * 90
 
+    # ── Body-region injury counts ─────────────────────────────────────────────
+    if "body_region" in past.columns:
+        last_24m_regions = last_24m["body_region"]
+        muscle_24m = int(last_24m_regions.isin(MUSCLE_REGIONS).sum())
+        knee_24m   = int(last_24m_regions.isin(KNEE_REGIONS).sum())
+        ankle_24m  = int(last_24m_regions.isin(ANKLE_REGIONS).sum())
+
+        # Days since last muscle / knee injury ended
+        muscle_past = past[
+            past["body_region"].isin(MUSCLE_REGIONS) &
+            past["end_date"].notna() &
+            (past["end_date"] < ref_date)
+        ]
+        knee_past = past[
+            past["body_region"].isin(KNEE_REGIONS) &
+            past["end_date"].notna() &
+            (past["end_date"] < ref_date)
+        ]
+        days_since_muscle = int((ref_date - muscle_past["end_date"].max()).days) if not muscle_past.empty else None
+        days_since_knee   = int((ref_date - knee_past["end_date"].max()).days)   if not knee_past.empty   else None
+
+        # Same region recurrence: 2+ injuries to same region in last 24m
+        region_counts = last_24m_regions.value_counts()
+        same_region_recurrence = int((region_counts >= 2).any())
+    else:
+        muscle_24m = knee_24m = ankle_24m = 0
+        days_since_muscle = days_since_knee = None
+        same_region_recurrence = 0
+
     return {
-        "career_total_injuries":      career_total,
-        "injuries_last_12_months":    len(last_12m),
-        "injuries_last_24_months":    len(last_24m),
-        "days_missed_last_12_months": int(days_missed_12m),
-        "days_missed_last_24_months": int(days_missed_24m),
-        "days_since_last_injury":     days_since_last,
-        "is_recently_returned":       is_recently_returned,
-        "recurring_injury_flag":      recurring_flag,
-        "recurring_injury_type":      recurring_type,
-        "avg_recovery_days":          avg_recovery,
-        "recovery_trend":             recovery_trend,
-        "longest_injury_days":        longest_injury,
-        "matches_missed_career":      matches_missed_career,
-        "matches_missed_this_season": matches_missed_season,
-        "minutes_missed_this_season": minutes_missed_season,
-        "injuries_this_season":       len(this_season),
+        "career_total_injuries":         career_total,
+        "injuries_last_12_months":       len(last_12m),
+        "injuries_last_24_months":       len(last_24m),
+        "days_missed_last_12_months":    int(days_missed_12m),
+        "days_missed_last_24_months":    int(days_missed_24m),
+        "days_since_last_injury":        days_since_last,
+        "is_recently_returned":          is_recently_returned,
+        "recurring_injury_flag":         recurring_flag,
+        "recurring_injury_type":         recurring_type,
+        "avg_recovery_days":             avg_recovery,
+        "recovery_trend":                recovery_trend,
+        "longest_injury_days":           longest_injury,
+        "matches_missed_career":         matches_missed_career,
+        "matches_missed_this_season":    matches_missed_season,
+        "minutes_missed_this_season":    minutes_missed_season,
+        "injuries_this_season":          len(this_season),
+        # Body-region features
+        "muscle_injuries_last_24m":      muscle_24m,
+        "knee_injuries_last_24m":        knee_24m,
+        "ankle_injuries_last_24m":       ankle_24m,
+        "days_since_last_muscle_injury": days_since_muscle,
+        "days_since_last_knee_injury":   days_since_knee,
+        "same_region_recurrence_flag":   same_region_recurrence,
     }
 
 
@@ -127,6 +185,11 @@ def main():
     print("Loading injuries.csv...")
     injuries = pd.read_csv(INJURIES_CSV, parse_dates=["start_date", "end_date"])
     print(f"  {len(injuries)} injury records, {injuries['player_id'].nunique()} players")
+
+    # Add body region for each injury (used for per-region feature computation)
+    injuries["body_region"] = injuries["injury_type"].apply(get_body_region)
+    region_counts = injuries["body_region"].value_counts()
+    print(f"  Body regions: {region_counts.head(6).to_dict()}")
 
     print("Loading match_stats.csv for reference dates...")
     matches = pd.read_csv(MATCH_STATS_CSV, parse_dates=["date"])

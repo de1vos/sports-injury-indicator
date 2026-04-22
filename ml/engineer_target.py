@@ -72,6 +72,7 @@ def main():
           f"({before_filter - len(rolling)} non-PL rows removed, "
           f"{len(pl_player_ids)} unique PL players kept)")
 
+
     # ── Compute target variable ───────────────────────────────────────────────
     print("\nComputing target variable (injured_next_90d)...")
 
