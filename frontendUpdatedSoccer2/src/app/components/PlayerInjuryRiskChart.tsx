@@ -153,6 +153,10 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
                 <stop offset="0%" stopColor={color} stopOpacity={0.8} />
                 <stop offset="100%" stopColor={color} stopOpacity={0.1} />
               </linearGradient>
+              <linearGradient id={`injury-gradient-${player.id}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#DC2626" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="#DC2626" stopOpacity={0.1} />
+              </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
             <XAxis
@@ -184,7 +188,7 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
               }}
             />
             {getInjurySpans(chartData).map(({ x1, x2 }, i) => (
-              <ReferenceArea key={i} x1={x1} x2={x2} fill="#DC2626" fillOpacity={0.4} stroke="#DC2626" strokeOpacity={0.5} />
+              <ReferenceArea key={i} x1={x1} x2={x2} fill={`url(#injury-gradient-${player.id})`} stroke="#DC2626" strokeOpacity={0.5} />
             ))}
             <ReferenceLine y={50} stroke="#DC2626" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={35} stroke="#EA580C" strokeDasharray="3 3" strokeOpacity={0.3} />

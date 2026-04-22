@@ -1,5 +1,6 @@
 import { Player, getRiskColor } from '../data/mockData';
 import { StarIcon } from './StarIcon';
+import { useState } from 'react';
 
 interface PlayerCardProps {
   player: Player;
@@ -29,6 +30,8 @@ function lightenColor(color: string, percent: number): string {
 }
 
 export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFavorite }: PlayerCardProps) {
+  const [transform, setTransform] = useState('');
+
   const trendColor = player.riskTrend > 0 ? '#DC2626' : '#0D9488';
   const trendArrow = player.riskTrend > 0 ? '↑' : '↓';
 
@@ -38,10 +41,27 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
   const lighterColor = lightenColor(teamColor, 20);
   const gradient = `linear-gradient(135deg, ${teamColor} 0%, ${lighterColor} 100%)`;
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = (y - centerY) / centerY * -15; // Max 15 degrees
+    const rotateY = (x - centerX) / centerX * 15; // Max 15 degrees
+    setTransform(`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`);
+  };
+
+  const handleMouseLeave = () => {
+    setTransform('');
+  };
+
   return (
     <div
       className="relative w-[320px] h-[450px] rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.25)] transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-      style={{ background: gradient }}
+      style={{ background: gradient, transform, transformStyle: 'preserve-3d' }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Favorite Star */}
       {onToggleFavorite && (
@@ -61,7 +81,8 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
         {/* Player Name - Top Left */}
         <div className="mb-2">
           <h2 className="text-xl font-bold leading-tight">{player.lastName.toUpperCase()}</h2>
-          <div className="text-[11px] opacity-80 mt-0.5">{player.position} · {player.kitNumber}</div>
+          <div className="text-[11px] opacity-80 mt-0.5">{player.position} · {player.kitNumber} · {player.nationality}</div>
+          <div className="text-[11px] opacity-80 mt-0.5">Age: {player.age}</div>
         </div>
 
         {/* Player Image - Center */}
@@ -98,13 +119,19 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-x-3 gap-y-2 mb-3">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-1">
           <div>
             <div className="text-[10px] uppercase opacity-70 mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              AGE
+              TREND
             </div>
-            <div className="text-base font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
-              {player.age}
+            <div
+              className="text-base font-bold"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: player.riskTrend > 0 ? '#FCA5A5' : '#6EE7B7'
+              }}
+            >
+              {trendArrow}{Math.abs(player.riskTrend)}%
             </div>
           </div>
           <div>
@@ -137,28 +164,11 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
               {player.injuries}
             </div>
           </div>
-          <div>
-            <div className="text-[10px] uppercase opacity-70 mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              TREND
-            </div>
-            <div
-              className="text-base font-bold"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                color: player.riskTrend > 0 ? '#FCA5A5' : '#6EE7B7'
-              }}
-            >
-              {trendArrow}{Math.abs(player.riskTrend)}%
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
         <div className="pt-3 border-t border-white/20 flex justify-between items-end">
-          <div className="text-2xl opacity-90">
-            {player.nationality}
-          </div>
-          <div className="text-[8px] opacity-60 text-right">
+          <div className="text-[10px] opacity-60 text-right w-full">
             * Data based on this season
           </div>
         </div>

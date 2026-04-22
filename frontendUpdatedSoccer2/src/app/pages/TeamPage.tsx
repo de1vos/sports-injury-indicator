@@ -128,24 +128,35 @@ function InjuryHistoryTable({ player }: { player: Player }) {
                 </tr>
               </thead>
               <tbody>
-                {visible.map((injury, index) => (
-                  <tr key={index} className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
-                    <td className="py-3 px-2 text-[#1A1A2E] font-medium">{injury.diagnosis}</td>
-                    <td className="py-3 px-2 text-[#6B7280]">{injury.region}</td>
-                    <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.from}</td>
-                    <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.until}</td>
-                    <td className="py-3 px-2 text-center">
-                      {injury.severity ? (
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${SEVERITY_STYLES[injury.severity] ?? 'bg-[#F5F6FA] text-[#6B7280]'}`}>
-                          {injury.severity}
-                        </span>
-                      ) : <span className="text-[#6B7280]">-</span>}
-                    </td>
-                    <td className="py-3 px-2 text-center font-mono text-[#1A1A2E]">
-                      {injury.daysOut ?? '-'}
-                    </td>
-                  </tr>
-                ))}
+                {visible.map((injury, index) => {
+                  const isOngoing = injury.until == null;
+                  return (
+                    <tr key={index} className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
+                      <td className="py-3 px-2 text-[#1A1A2E] font-medium">{injury.diagnosis}</td>
+                      <td className="py-3 px-2 text-[#6B7280]">{injury.region}</td>
+                      <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.from}</td>
+                      <td className="py-3 px-2 whitespace-nowrap">
+                        {isOngoing ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#0D9488] text-white">
+                            Ongoing
+                          </span>
+                        ) : (
+                          <span className="font-mono text-xs text-[#1A1A2E]">{injury.until}</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-2 text-center">
+                        {injury.severity ? (
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${SEVERITY_STYLES[injury.severity] ?? 'bg-[#F5F6FA] text-[#6B7280]'}`}>
+                            {injury.severity}
+                          </span>
+                        ) : <span className="text-[#6B7280]">-</span>}
+                      </td>
+                      <td className="py-3 px-2 text-center font-mono text-[#1A1A2E]">
+                        {injury.daysOut ?? '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
