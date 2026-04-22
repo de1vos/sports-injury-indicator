@@ -127,7 +127,7 @@ export interface ApiMyPlayer {
 
 export interface ApiReportedInjury {
   injury_date_start: string;
-  injury_date_end: string;
+  injury_date_end: string | null;  // null = ongoing
   player_first_name: string;
   player_last_name: string;
   team_name: string;

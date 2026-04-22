@@ -36,7 +36,13 @@ export function ReportedInjuriesPage() {
       let comparison = 0;
       switch (sortField) {
         case 'startDate':  comparison = a.startDate.localeCompare(b.startDate); break;
-        case 'endDate':    comparison = a.endDate.localeCompare(b.endDate); break;
+        case 'endDate': {
+          // null (ongoing) sorts after all real dates
+          const aEnd = a.endDate ?? '9999-99-99';
+          const bEnd = b.endDate ?? '9999-99-99';
+          comparison = aEnd.localeCompare(bEnd);
+          break;
+        }
         case 'lastName':   comparison = a.lastName.localeCompare(b.lastName); break;
         case 'firstName':  comparison = a.firstName.localeCompare(b.firstName); break;
         case 'team':       comparison = a.teamName.localeCompare(b.teamName); break;
@@ -172,16 +178,19 @@ export function ReportedInjuriesPage() {
             </thead>
             <tbody className="divide-y divide-[rgba(0,0,0,0.06)]">
               {allInjuries.map((injury, index) => {
-                let severityEl: React.ReactNode;
-                if (injury.severity === 'Long-term') {
-                  severityEl = <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">Long-term</span>;
-                } else if (injury.severity === 'Moderate') {
-                  severityEl = <span className="text-xs font-semibold px-2 py-1 rounded-full bg-orange-100 text-orange-700">Moderate</span>;
-                } else if (injury.severity === 'Minor') {
-                  severityEl = <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">Minor</span>;
-                } else {
-                  severityEl = <span className="text-sm text-[#6B7280]">—</span>;
-                }
+                const SEVERITY_STYLES: Record<string, string> = {
+                  'Severe':    'bg-red-100 text-red-700',
+                  'Long-term': 'bg-red-100 text-red-700',
+                  'Moderate':  'bg-orange-100 text-orange-700',
+                  'Minor':     'bg-yellow-100 text-yellow-700',
+                };
+                const severityStyle = SEVERITY_STYLES[injury.severity]
+                  ?? 'bg-[#F5F6FA] text-[#6B7280]';
+                const severityEl = (
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${severityStyle}`}>
+                    {injury.severity}
+                  </span>
+                );
 
                 return (
                   <tr key={index} className="hover:bg-[#F5F6FA] transition-colors">
@@ -191,9 +200,13 @@ export function ReportedInjuriesPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {injury.endDate}
-                      </span>
+                      {injury.endDate ? (
+                        <span className="text-sm text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                          {injury.endDate}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-semibold text-[#0D9488]">Ongoing</span>
+                      )}
                     </td>
                     <td className="py-4 px-6">
                       <span className="font-semibold text-[#1A1A2E]">{injury.lastName}</span>

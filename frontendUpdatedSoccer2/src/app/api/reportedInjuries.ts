@@ -3,7 +3,7 @@ import type { ApiReportedInjury } from './types';
 
 export interface ReportedInjuryItem {
   startDate: string;
-  endDate: string;
+  endDate: string | null;  // null = ongoing
   firstName: string;
   lastName: string;
   teamName: string;
