@@ -73,11 +73,26 @@ function addInjuredLine(data: Omit<ChartPoint, 'injuredLine'>[]): ChartPoint[] {
 function getInjurySpans(data: ChartPoint[]): Array<{ x1: string; x2: string }> {
   const spans: Array<{ x1: string; x2: string }> = [];
   let start: string | null = null;
+  let lastInjuredWeek: string | null = null;
+
   for (const d of data) {
-    if (d.injured && !start) start = d.week;
-    if (!d.injured && start) { spans.push({ x1: start, x2: d.week }); start = null; }
+    if (d.injured) {
+      if (!start) start = d.week;
+      lastInjuredWeek = d.week;
+    } else if (start && lastInjuredWeek) {
+      // End at the LAST injured week (not the first non-injured week) so the
+      // right-side gap mirrors the left-side gap — both bridge dots sit outside the shade.
+      spans.push({ x1: start, x2: lastInjuredWeek });
+      start = null;
+      lastInjuredWeek = null;
+    }
   }
-  if (start) spans.push({ x1: start, x2: data[data.length - 1].week });
+
+  // Trailing (open-ended) injury: shade all the way to the last dot
+  if (start && lastInjuredWeek) {
+    spans.push({ x1: start, x2: lastInjuredWeek });
+  }
+
   return spans;
 }
 
@@ -88,31 +103,47 @@ const getRiskZoneColor = (risk: number) => {
   return '#1A56DB';
 };
 
+const ANIM_DURATION = 1400;
+
 export function PlayerInjuryRiskChart({ player }: { player: Player }) {
   const chartData = useMemo(
     () => buildTrendData(player),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [player.id, player.injuryRisk, player.riskTrend, player.injuryRiskTrend],
   );
-  const color = getRiskZoneColor(player.injuryRisk);
-  const isRealData = !!player.injuryRiskTrend?.length;
-  const hasGaps = chartData.some(d => d.risk === null);
 
+  const color = getRiskZoneColor(player.injuryRisk);
+  const hasGaps = chartData.some(d => d.risk === null);
   const gwsMissed = hasGaps ? chartData.filter(d => d.risk === null).length : 0;
 
+  // Injured check: mirrors TeamPage Injury Analysis — null/missing 'until' means still injured
+  const today = new Date().toISOString().split('T')[0];
+  const isCurrentlyInjured =
+    player.riskLevel === 'Injured' ||
+    (player.injuryHistory ?? []).some(entry => !entry.until || entry.until >= today);
+
+  // ── Counter animation (0 → risk%) — skipped when injured ──────────────────
   const [displayRisk, setDisplayRisk] = useState(0);
   useEffect(() => {
+    if (isCurrentlyInjured) { setDisplayRisk(0); return; }
     const target = player.injuryRisk;
-    const duration = 1400;
     const start = performance.now();
     const tick = (now: number) => {
-      const t = Math.min((now - start) / duration, 1);
+      const t = Math.min((now - start) / ANIM_DURATION, 1);
       const eased = 1 - Math.pow(1 - t, 3);
       setDisplayRisk(Math.round(eased * target));
       if (t < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  }, [player.injuryRisk]);
+  }, [player.id, player.injuryRisk, isCurrentlyInjured]);
+
+  // ── Stats box fade — same duration as the chart lines ─────────────────────
+  const [statsVisible, setStatsVisible] = useState(false);
+  useEffect(() => {
+    setStatsVisible(false);
+    const t = setTimeout(() => setStatsVisible(true), 30);
+    return () => clearTimeout(t);
+  }, [player.id]);
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
@@ -123,14 +154,33 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
         </p>
       </div>
 
-      <div className="flex items-center justify-between mb-6 p-4 bg-[#F5F6FA] rounded-2xl">
+      {/* Stats box — fades in together with the chart lines */}
+      <div
+        className="flex items-center justify-between mb-6 p-4 bg-[#F5F6FA] rounded-2xl"
+        style={{
+          opacity: statsVisible ? 1 : 0,
+          transform: statsVisible ? 'translateY(0)' : 'translateY(4px)',
+          transition: `opacity ${ANIM_DURATION}ms cubic-bezier(0.22,1,0.36,1), transform ${ANIM_DURATION}ms cubic-bezier(0.22,1,0.36,1)`,
+        }}
+      >
         <div>
           <div className="text-xs uppercase text-[#6B7280] mb-1">Current Risk</div>
-          <div className="text-4xl font-bold" style={{ fontFamily: 'var(--font-mono)', color: player.riskLevel === 'Injured' ? '#DC2626' : color }}>
-            {player.riskLevel === 'Injured' ? 'INJURED' : `${displayRisk}%`}
+          <div
+            className="text-4xl font-bold"
+            style={{ fontFamily: 'var(--font-mono)', color: isCurrentlyInjured ? '#DC2626' : color }}
+          >
+            {isCurrentlyInjured ? 'INJURED' : `${displayRisk}%`}
           </div>
         </div>
-        {hasGaps ? (
+
+        {isCurrentlyInjured ? (
+          <div className="text-right">
+            <div className="text-xs uppercase text-[#6B7280] mb-1">GWs Missed</div>
+            <div className="text-2xl font-bold text-[#DC2626]" style={{ fontFamily: 'var(--font-mono)' }}>
+              {gwsMissed}
+            </div>
+          </div>
+        ) : hasGaps ? (
           <div className="text-right">
             <div className="text-xs uppercase text-[#6B7280] mb-1">GWs Missed</div>
             <div className="text-2xl font-bold text-[#DC2626]" style={{ fontFamily: 'var(--font-mono)' }}>
@@ -189,6 +239,7 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
             <ReferenceLine y={50} stroke="#DC2626" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={35} stroke="#EA580C" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={20} stroke="#0D9488" strokeDasharray="3 3" strokeOpacity={0.3} />
+            {/* Grey injured line — renders below the red line */}
             <Line
               type="monotone"
               dataKey="injuredLine"
@@ -201,9 +252,10 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
               tooltipType="none"
               isAnimationActive={true}
               animationBegin={0}
-              animationDuration={1400}
+              animationDuration={ANIM_DURATION}
               animationEasing="ease-out"
             />
+            {/* Red risk line — renders on top */}
             <Line
               type="monotone"
               dataKey="risk"
@@ -214,7 +266,7 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
               connectNulls={false}
               isAnimationActive={true}
               animationBegin={0}
-              animationDuration={1400}
+              animationDuration={ANIM_DURATION}
               animationEasing="ease-out"
             />
           </ComposedChart>
@@ -233,6 +285,12 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
             <span className="text-[#6B7280]">{label}</span>
           </div>
         ))}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
+            <div className="w-3 h-3 rounded-full bg-[#6B7280]" />
+          </div>
+          <span className="text-[#6B7280]">Injured</span>
+        </div>
       </div>
     </div>
   );

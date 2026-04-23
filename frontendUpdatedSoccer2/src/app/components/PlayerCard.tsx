@@ -100,7 +100,10 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
 
         <div className="flex flex-col px-5 pt-5 pb-4 text-white">
           {/* Header */}
-          <div className="mb-3 pr-10">
+          <div className="mb-2 pr-10">
+            <div className="text-[10px] font-semibold opacity-60 tracking-[0.18em] uppercase leading-none mb-1">
+              {player.firstName}
+            </div>
             <h2 className="text-2xl font-bold leading-tight tracking-wide">
               {player.lastName.toUpperCase()}
             </h2>
