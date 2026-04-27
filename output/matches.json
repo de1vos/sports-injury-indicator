@@ -1,0 +1,346 @@
+{
+  "completed": [
+    {
+      "fixture_id": 1379285,
+      "date": "2026-04-13T19:00:00+00:00",
+      "round": "Regular Season - 32",
+      "home_team_id": 33,
+      "away_team_id": 63,
+      "home_team": {
+        "name": "Manchester United",
+        "logo": "https://media.api-sports.io/football/teams/33.png"
+      },
+      "away_team": {
+        "name": "Leeds",
+        "logo": "https://media.api-sports.io/football/teams/63.png"
+      },
+      "venue": "Old Trafford",
+      "score": {
+        "home": 1,
+        "away": 2
+      }
+    }
+  ],
+  "upcoming": [
+    {
+      "fixture_id": 1379305,
+      "date": "2026-04-27T19:00:00+00:00",
+      "round": "Regular Season - 34",
+      "home_team_id": 33,
+      "away_team_id": 55,
+      "home_team": {
+        "name": "Manchester United",
+        "logo": "https://media.api-sports.io/football/teams/33.png"
+      },
+      "away_team": {
+        "name": "Brentford",
+        "logo": "https://media.api-sports.io/football/teams/55.png"
+      },
+      "venue": "Old Trafford"
+    },
+    {
+      "fixture_id": 1379315,
+      "date": "2026-05-01T19:00:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 63,
+      "away_team_id": 44,
+      "home_team": {
+        "name": "Leeds",
+        "logo": "https://media.api-sports.io/football/teams/63.png"
+      },
+      "away_team": {
+        "name": "Burnley",
+        "logo": "https://media.api-sports.io/football/teams/44.png"
+      },
+      "venue": "Elland Road"
+    },
+    {
+      "fixture_id": 1379310,
+      "date": "2026-05-02T11:30:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 66,
+      "away_team_id": 47,
+      "home_team": {
+        "name": "Aston Villa",
+        "logo": "https://media.api-sports.io/football/teams/66.png"
+      },
+      "away_team": {
+        "name": "Tottenham",
+        "logo": "https://media.api-sports.io/football/teams/47.png"
+      },
+      "venue": "Villa Park"
+    },
+    {
+      "fixture_id": 1379317,
+      "date": "2026-05-02T14:00:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 34,
+      "away_team_id": 51,
+      "home_team": {
+        "name": "Newcastle",
+        "logo": "https://media.api-sports.io/football/teams/34.png"
+      },
+      "away_team": {
+        "name": "Brighton",
+        "logo": "https://media.api-sports.io/football/teams/51.png"
+      },
+      "venue": "St. James' Park"
+    },
+    {
+      "fixture_id": 1379311,
+      "date": "2026-05-02T14:00:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 35,
+      "away_team_id": 52,
+      "home_team": {
+        "name": "Bournemouth",
+        "logo": "https://media.api-sports.io/football/teams/35.png"
+      },
+      "away_team": {
+        "name": "Crystal Palace",
+        "logo": "https://media.api-sports.io/football/teams/52.png"
+      },
+      "venue": "Vitality Stadium"
+    },
+    {
+      "fixture_id": 1379318,
+      "date": "2026-05-02T14:00:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 39,
+      "away_team_id": 746,
+      "home_team": {
+        "name": "Wolves",
+        "logo": "https://media.api-sports.io/football/teams/39.png"
+      },
+      "away_team": {
+        "name": "Sunderland",
+        "logo": "https://media.api-sports.io/football/teams/746.png"
+      },
+      "venue": "Molineux Stadium"
+    },
+    {
+      "fixture_id": 1379312,
+      "date": "2026-05-02T14:00:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 55,
+      "away_team_id": 48,
+      "home_team": {
+        "name": "Brentford",
+        "logo": "https://media.api-sports.io/football/teams/55.png"
+      },
+      "away_team": {
+        "name": "West Ham",
+        "logo": "https://media.api-sports.io/football/teams/48.png"
+      },
+      "venue": "Brentford Community Stadium"
+    },
+    {
+      "fixture_id": 1379309,
+      "date": "2026-05-02T16:30:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 42,
+      "away_team_id": 36,
+      "home_team": {
+        "name": "Arsenal",
+        "logo": "https://media.api-sports.io/football/teams/42.png"
+      },
+      "away_team": {
+        "name": "Fulham",
+        "logo": "https://media.api-sports.io/football/teams/36.png"
+      },
+      "venue": "Emirates Stadium"
+    },
+    {
+      "fixture_id": 1379316,
+      "date": "2026-05-03T14:30:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 33,
+      "away_team_id": 40,
+      "home_team": {
+        "name": "Manchester United",
+        "logo": "https://media.api-sports.io/football/teams/33.png"
+      },
+      "away_team": {
+        "name": "Liverpool",
+        "logo": "https://media.api-sports.io/football/teams/40.png"
+      },
+      "venue": "Old Trafford"
+    },
+    {
+      "fixture_id": 1379313,
+      "date": "2026-05-04T14:00:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 49,
+      "away_team_id": 65,
+      "home_team": {
+        "name": "Chelsea",
+        "logo": "https://media.api-sports.io/football/teams/49.png"
+      },
+      "away_team": {
+        "name": "Nottingham Forest",
+        "logo": "https://media.api-sports.io/football/teams/65.png"
+      },
+      "venue": "Stamford Bridge"
+    },
+    {
+      "fixture_id": 1379314,
+      "date": "2026-05-04T19:00:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 45,
+      "away_team_id": 50,
+      "home_team": {
+        "name": "Everton",
+        "logo": "https://media.api-sports.io/football/teams/45.png"
+      },
+      "away_team": {
+        "name": "Manchester City",
+        "logo": "https://media.api-sports.io/football/teams/50.png"
+      },
+      "venue": "Hill Dickinson Stadium"
+    },
+    {
+      "fixture_id": 1379323,
+      "date": "2026-05-09T11:30:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 40,
+      "away_team_id": 49,
+      "home_team": {
+        "name": "Liverpool",
+        "logo": "https://media.api-sports.io/football/teams/40.png"
+      },
+      "away_team": {
+        "name": "Chelsea",
+        "logo": "https://media.api-sports.io/football/teams/49.png"
+      },
+      "venue": "Anfield"
+    },
+    {
+      "fixture_id": 1379322,
+      "date": "2026-05-09T14:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 36,
+      "away_team_id": 35,
+      "home_team": {
+        "name": "Fulham",
+        "logo": "https://media.api-sports.io/football/teams/36.png"
+      },
+      "away_team": {
+        "name": "Bournemouth",
+        "logo": "https://media.api-sports.io/football/teams/35.png"
+      },
+      "venue": "Craven Cottage"
+    },
+    {
+      "fixture_id": 1379320,
+      "date": "2026-05-09T14:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 44,
+      "away_team_id": 66,
+      "home_team": {
+        "name": "Burnley",
+        "logo": "https://media.api-sports.io/football/teams/44.png"
+      },
+      "away_team": {
+        "name": "Aston Villa",
+        "logo": "https://media.api-sports.io/football/teams/66.png"
+      },
+      "venue": "Turf Moor"
+    },
+    {
+      "fixture_id": 1379319,
+      "date": "2026-05-09T14:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 51,
+      "away_team_id": 39,
+      "home_team": {
+        "name": "Brighton",
+        "logo": "https://media.api-sports.io/football/teams/51.png"
+      },
+      "away_team": {
+        "name": "Wolves",
+        "logo": "https://media.api-sports.io/football/teams/39.png"
+      },
+      "venue": "Amex Stadium"
+    },
+    {
+      "fixture_id": 1379321,
+      "date": "2026-05-09T14:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 52,
+      "away_team_id": 45,
+      "home_team": {
+        "name": "Crystal Palace",
+        "logo": "https://media.api-sports.io/football/teams/52.png"
+      },
+      "away_team": {
+        "name": "Everton",
+        "logo": "https://media.api-sports.io/football/teams/45.png"
+      },
+      "venue": "Selhurst Park"
+    },
+    {
+      "fixture_id": 1379326,
+      "date": "2026-05-09T14:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 746,
+      "away_team_id": 33,
+      "home_team": {
+        "name": "Sunderland",
+        "logo": "https://media.api-sports.io/football/teams/746.png"
+      },
+      "away_team": {
+        "name": "Manchester United",
+        "logo": "https://media.api-sports.io/football/teams/33.png"
+      },
+      "venue": "Stadium of Light"
+    },
+    {
+      "fixture_id": 1379324,
+      "date": "2026-05-09T16:30:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 50,
+      "away_team_id": 55,
+      "home_team": {
+        "name": "Manchester City",
+        "logo": "https://media.api-sports.io/football/teams/50.png"
+      },
+      "away_team": {
+        "name": "Brentford",
+        "logo": "https://media.api-sports.io/football/teams/55.png"
+      },
+      "venue": "Etihad Stadium"
+    },
+    {
+      "fixture_id": 1379325,
+      "date": "2026-05-10T13:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 65,
+      "away_team_id": 34,
+      "home_team": {
+        "name": "Nottingham Forest",
+        "logo": "https://media.api-sports.io/football/teams/65.png"
+      },
+      "away_team": {
+        "name": "Newcastle",
+        "logo": "https://media.api-sports.io/football/teams/34.png"
+      },
+      "venue": "City Ground"
+    },
+    {
+      "fixture_id": 1379328,
+      "date": "2026-05-10T15:30:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 48,
+      "away_team_id": 42,
+      "home_team": {
+        "name": "West Ham",
+        "logo": "https://media.api-sports.io/football/teams/48.png"
+      },
+      "away_team": {
+        "name": "Arsenal",
+        "logo": "https://media.api-sports.io/football/teams/42.png"
+      },
+      "venue": "London Stadium"
+    }
+  ]
+}
