@@ -192,6 +192,7 @@ def get_trending_risk_players(session: Session, user_id: int | None = None) -> L
         .join(Team, Player.team_id == Team.team_id)
         .join(GraphData, GraphData.player_id == Player.player_id)
         .outerjoin(inj_sq, inj_sq.c.player_id == Player.player_id)
+        .where(GraphData.player_injury_trend > 30)  # type: ignore[arg-type]
         .order_by(GraphData.player_injury_trend.desc())  # type: ignore[attr-defined]
     )
 
