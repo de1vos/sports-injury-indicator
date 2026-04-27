@@ -5,6 +5,22 @@ from sqlmodel import Session, select
 from database_init import Player, PlayerSeason, GraphData, Nation, PlayerInjury
 
 
+def _current_season_year() -> int:
+    today = date.today()
+    return today.year if today.month >= 8 else today.year - 1
+
+
+def _active_player_ids_sq():
+    """Players whose latest player_season row is the current PL season."""
+    yr = _current_season_year()
+    return (
+        sa_select(PlayerSeason.player_id)  # type: ignore[arg-type]
+        .group_by(PlayerSeason.player_id)
+        .having(func.max(PlayerSeason.player_season_year) == yr)
+        .subquery("active_players")
+    )
+
+
 class TeamPlayerList(TypedDict):
     player_id: int | None
     player_first_name: str
@@ -107,13 +123,16 @@ class InjuryAnalysis(TypedDict):
 
 
 def get_team_player_list(team_id: int, session: Session) -> List[TeamPlayerList]:
+    active_sq = _active_player_ids_sq()
     rows = session.execute(
         sa_select(  # type: ignore[call-overload, arg-type]
             Player.player_id,  # type: ignore[arg-type]
             Player.player_first_name,  # type: ignore[arg-type]
             Player.player_last_name,  # type: ignore[arg-type]
             Player.player_injury_risk,  # type: ignore[arg-type]
-        ).where(Player.team_id == team_id)  # type: ignore[arg-type]
+        )
+        .join(active_sq, active_sq.c.player_id == Player.player_id)
+        .where(Player.team_id == team_id)  # type: ignore[arg-type]
         .order_by(Player.player_last_name)  # type: ignore[attr-defined]
     ).all()
 

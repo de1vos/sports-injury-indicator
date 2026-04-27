@@ -1,8 +1,25 @@
+from datetime import date
 from typing import List, TypedDict
 from sqlalchemy import func, select as sa_select
 from sqlalchemy.orm import aliased
 from sqlmodel import Session
 from database_init import Match, Team, Player, PlayerSeason, PlayerInjury, GraphData, UserFavourite
+
+
+def _current_season_year() -> int:
+    today = date.today()
+    return today.year if today.month >= 8 else today.year - 1
+
+
+def _active_player_ids_sq():
+    """Players whose latest player_season row is the current PL season."""
+    yr = _current_season_year()
+    return (
+        sa_select(PlayerSeason.player_id)  # type: ignore[arg-type]
+        .group_by(PlayerSeason.player_id)
+        .having(func.max(PlayerSeason.player_season_year) == yr)
+        .subquery("active_players")
+    )
 
 
 class GameWeekMatches(TypedDict):
@@ -114,6 +131,7 @@ def get_game_week_matches(game_week: str, session: Session) -> List[GameWeekMatc
 
 def get_high_risk_players(session: Session, user_id: int | None = None) -> List[HighRiskPlayer]:
     inj_sq = _seasonal_injuries_sq()
+    active_sq = _active_player_ids_sq()
 
     stmt = (
         sa_select(  # type: ignore[call-overload, arg-type]
@@ -128,7 +146,9 @@ def get_high_risk_players(session: Session, user_id: int | None = None) -> List[
             func.coalesce(inj_sq.c.seasonal_injuries, 0).label("player_seasonal_injuries"),
         )
         .join(Team, Player.team_id == Team.team_id)
+        .join(active_sq, active_sq.c.player_id == Player.player_id)
         .outerjoin(inj_sq, inj_sq.c.player_id == Player.player_id)
+        .where(Player.player_injury_risk < 0.99)  # type: ignore[arg-type]
         .order_by(Player.player_injury_risk.desc())  # type: ignore[attr-defined]
     )
 
