@@ -31,27 +31,75 @@ These must be done first. Without them, ingestion either fails or produces incom
 
 ### 2.1 Schema fixes (DB side — `server/database_init.py`)
 
-> **Status update:** P0-S1 and P0-S2 are **already applied** in `server/database_init.py` (verified). The schema is ready. P0-S3 and P0-S4 are runtime conventions — no schema change needed, just enforce in the ingestor.
+> **Status update:** P0-S1, P0-S2, and P0-S5 are **done** in `server/database_init.py`. P0-S3 and P0-S4 are runtime conventions — enforce in the ingestor. **Schema is ready — recreate DB before running the ingestor.**
 
 | # | Issue | Fix | Status |
 |---|---|---|---|
 | **P0-S1** | `Player.player_risk_factor_1/2/3` was `VARCHAR(50)`. Real ML strings exceed this. | Widened to `VARCHAR(100)`. | ✅ Done — [database_init.py:108-110](server/database_init.py#L108-L110) |
 | **P0-S2** | All `NUMERIC(2,2)` risk columns capped at `0.99` and could not store `1.00`. | Changed to `NUMERIC(4,3)` with `CHECK (col BETWEEN 0 AND 1)`. Applied to `player.player_injury_risk`, `match.home_avg_injury_risk`, `match.away_avg_injury_risk`, and all 38 `graph_data.gw_N` columns (CHECK consolidated in `__table_args__`). | ✅ Done — [database_init.py:77-78, 107, 189-194, 197-234](server/database_init.py#L77) |
-| **P0-S3** | `Match.match_game_week` is `VARCHAR(10)` — values must be normalized to `"gw1"`…`"gw38"` (lowercase, no padding) since frontend hits `/dashboard/matches/gw1`. | No schema change; ingestor normalizes on write. | 🟡 Convention — enforce in ingestor (Phase 1) |
-| **P0-S4** | `GraphData.player_injury_trend` is `NUMERIC(5,2)`. Backend [integration/player_page.py:185](server/integration/player_page.py#L185) does `round(float(graph.player_injury_trend))` — **pass-through, no × 100**. Stored unit is therefore **percentage points directly** (e.g. `25.34` → frontend shows `+25%`). | No schema change; ingestor stores percentage value. Range fits `NUMERIC(5,2)` up to ±999.99. | 🟡 Convention — enforce in ingestor (Phase 1) |
+| **P0-S3** | Format mismatch end-to-end: ML emits `"Regular Season - 32"`, frontend hits `/dashboard/matches/gw32`, backend does exact string equality with no normalization. | No schema change. Ingestor transforms on write: `re.match(r"Regular Season - (\d+)", round_str)` → `f"gw{n}"`. Non-PL fixtures skipped. See P0-S3-impl below. | 🟡 Convention — enforce in ingestor (Phase 1) |
+| **P0-S4** | `GraphData.player_injury_trend` is `NUMERIC(5,2)`. Backend passes through with `round()` — no × 100. Stored unit is percentage points directly (e.g. `25.34` → frontend shows `+25%`). | No schema change; ingestor stores percentage value directly. | 🟡 Convention — enforce in ingestor (Phase 1) |
+| **P0-S5** | `Team.team_id` and `Player.player_id` both used `Identity(always=True)`. DB generated its own sequence IDs, ignoring any supplied value — impossible to insert API-Football IDs like `team_id=66` or `player_id=1904`. Entire FK graph (`player.team_id`, `match.home/away_team_id`, `graph_data.player_id`, etc.) would break. | Changed to `Identity(start=1, always=False)` on both. Ingestor can now supply explicit IDs; sequence only fires when no value is provided. All other tables keep `always=True`. See P0-S5-impl below. | ✅ Done — [database_init.py:28, 95](server/database_init.py#L28) |
+
+#### P0-S3-impl: Gameweek string normalization
+- **Source format** (verified): every entry in `output/matches.json` has `round: "Regular Season - {N}"` where `N` is `1..38`. Current snapshot contains rounds 32, 34, 35.
+- **Target format** (verified): frontend computes `gw = "gw" + ceil((today − 2025-08-16) / 7)` ([dashboard.ts:86-92](frontendUpdatedSoccer2/src/app/api/dashboard.ts#L86)) and queries `/dashboard/matches/gw{N}`. Lowercase, no zero padding (`gw5`, not `gw05` or `GW5`).
+- **Ingestor transform:**
+  ```python
+  import re
+  m = re.match(r"Regular Season - (\d+)", fixture["round"])
+  if not m:
+      continue           # skip cup / friendly / non-league fixtures
+  game_week = f"gw{int(m.group(1))}"   # int() drops any padding; lowercase prefix
+  ```
+- **Edge cases:**
+  - **Non-Premier-League fixtures (FA Cup, EFL Cup, Champions League, friendlies, internationals) — skip entirely.** They exist in upstream ML data because the model uses them for **feature engineering and training only** (workload, minutes-played history, injury context). They are *not* dashboard data: they never get inserted into the `match` table, never appear in `graph_data`, never feed the matches view. The `re.match(r"Regular Season - (\d+)", round_str)` filter is the single chokepoint that enforces this — anything that doesn't match is silently dropped at ingest time.
+  - Round number ≥ 100 → fits `VARCHAR(10)` easily (`"gw100"` = 5 chars). Not a concern.
+- **⚠️ Separate concern (not P0-S3, but caused by it):** the frontend's `currentGameweek()` is a **date-based estimate**, not real fixture data. It assumes exactly 7 days per gameweek starting Aug 16 2025 — but real fixtures don't follow that cadence (international breaks, midweek rounds). On any week where the estimate disagrees with actual fixtures the user sees an empty matches list. **Recommended follow-up (Phase 2 or sooner):** replace `currentGameweek()` with a backend lookup that returns the round of the most recent past fixture (or the next upcoming one). Out of scope for Phase 1 ingestion but log it.
+
+#### P0-S5-impl: Fix `Identity(always=True)` on `team` and `player`
+- **Root cause:** every table in [database_init.py](server/database_init.py) uses `Identity(always=True)`. For most tables this is fine — their PKs are internal. But `team_id` and `player_id` come from API-Football and are the stable identifiers the ML output uses throughout (FKs on players, matches, seasons, graph data).
+- **Tables affected:**
+  - `Team.team_id` — referenced by `player.team_id`, `match.home_team_id`, `match.away_team_id`.
+  - `Player.player_id` — referenced by `player_season.player_id`, `player_injury` (via `player_season_id`), `graph_data.player_id`, `user_favourite.player_id`.
+- **Fix** in [server/database_init.py](server/database_init.py):
+  ```python
+  # Team — before
+  team_id: Optional[int] = Field(
+      default=None,
+      primary_key=True,
+      sa_column_args=[Identity(always=True)]
+  )
+
+  # Team — after
+  team_id: Optional[int] = Field(
+      default=None,
+      primary_key=True,
+      sa_column_args=[Identity(start=1, always=False)]
+  )
+
+  # Player — same change
+  player_id: Optional[int] = Field(
+      default=None,
+      primary_key=True,
+      sa_column_args=[Identity(start=1, always=False)]
+  )
+  ```
+- **`always=False` behaviour:** if the ingestor supplies an explicit `team_id` (e.g. `66`), Postgres uses it. If no value is provided, the sequence kicks in. No other tables need this change.
+- **After the fix:** re-run `python server/database_init.py` (or `seed_db.py`) to recreate the schema before running the ingestor.
 
 ### 2.2 Missing fields from ML output (`ml/predict_players.py`, `output/matches.json`)
 
-These fields are required by the DB schema but not currently produced. Each must be added to the ML export OR explicitly dropped from the schema.
+> **Status: all P0-M items done.** Fields were added to `ml/predict_players.py` and verified via `jq` on the regenerated output files. See checklist §6 for detail.
 
-| # | Missing field | DB target | Resolution |
+| # | Missing field | DB target | Status |
 |---|---|---|---|
-| **P0-M1** | `nation_flag_image` (URL per nation) | `nation.nation_flag_image` | Add to ML export. **Source: hardcoded flagcdn.com URLs** (`https://flagcdn.com/w320/{iso2}.png`) so every flag has identical style/aspect ratio — no API key, deterministic, no rate limits. Build a static `nation_name → iso2` map in `ml/nation_flags.py`, dedupe all `nationality` values across players, and emit `output/nations.json` of the form `[{"nation_name": "France", "nation_flag_image": "https://flagcdn.com/w320/fr.png"}]`. The ingestor loads this list directly into the `nation` table. See P0-M1-impl below. |
-| **P0-M2** | `team_color` (hex) | `team.team_color` | Not in API-Football. **Resolved: hardcoded static map** in `ml/team_colors.py` keyed by team name (or team_id). See P0-M2-impl below. Stored as `"#RRGGBB"` (7 chars, fits `VARCHAR(10)`). |
-| **P0-M3** | `home_team_id` / `away_team_id` in `output/matches.json` | `match.home_team_id`, `match.away_team_id` (FK) | API-Football fixture payload already has both IDs. Update `ml/predict_players.py` to include them alongside `name`/`logo` in `completed[]` and `upcoming[]` entries. **Without this, matches cannot FK-resolve and `match` rows cannot be inserted.** |
-| **P0-M4** | `player_injury_trend` (single percentage delta per player) | `graph_data.player_injury_trend` | **Relative percent change, current week vs. previous week.** Formula: `injury_trend = (current_gw_risk − previous_gw_risk) / previous_gw_risk × 100`. Example: previous = 0.20, current = 0.25 → `(0.25−0.20)/0.20 × 100 = +25` → frontend renders `+25%`. Stored as a percentage (e.g. `25.00`), backend passes through. Drives the trending-risk dashboard. **Compute on the ML side.** See P0-M4-impl below. |
-| **P0-M5** | `current_gameweek` (e.g. `"GW15"`) | `graph_data.graph_data_current_gw` | Compute from today's date vs. 2025-08-16 season start. Single global value — produce once in ingestor. |
-| **P0-M6** | `games_missed` per **past** season inside `season_stats[]` | `player_season.player_season_games_missed` | Today the ML only exposes `matches_missed_this_season` at the summary level — no per-past-season breakdown. Add a `games_missed` field to each `season_stats[]` element by intersecting injury date ranges with each season's fixtures. (Acceptable interim: zero out for past seasons and flag.) |
+| **P0-M1** | `nation_flag_image` per nation | `nation.nation_flag_image` | ✅ **Done** — [ml/nation_flags.py](ml/nation_flags.py) built with 74-nation `NATION_TO_ISO2` map; `output/nations.json` emitted (73 entries, flagcdn.com URLs). |
+| **P0-M2** | `team_color` hex per team | `team.team_color` | ✅ **Done** — [ml/team_colors.py](ml/team_colors.py) with all 25 clubs; `team_color` field in every player record; 0 fallback hits on last run. |
+| **P0-M3** | `home_team_id` / `away_team_id` in `output/matches.json` | `match.home_team_id`, `match.away_team_id` (FK) | ✅ **Done** — added to `fmt()` in [ml/predict_players.py](ml/predict_players.py); verified via `jq` (e.g. Man Utd → `33`, Leeds → `63`). |
+| **P0-M4** | `injury_trend` (week-over-week %) | `graph_data.player_injury_trend` | ✅ **Done** — `compute_injury_trend()` in [ml/predict_players.py](ml/predict_players.py); 453/925 players have non-zero trend on last run. |
+| **P0-M5** | `current_gw` (e.g. `"gw32"`) | `graph_data.graph_data_current_gw` | ✅ **Done** — emitted as `current_gw` field on every player record from the already-computed `current_gameweek` int (currently `"gw32"`). |
+| **P0-M6** | `games_missed` per season in `season_stats[]` | `player_season.player_season_games_missed` | ✅ **Done** — `get_games_missed()` in [ml/predict_players.py](ml/predict_players.py), computed by intersecting injury date ranges with PL fixtures per season. |
 
 #### P0-M1-impl: Hardcoded flag URLs (flagcdn.com)
 - **Where:** new module `ml/nation_flags.py`, called at the end of the export step in `ml/predict_players.py`.
@@ -63,17 +111,35 @@ These fields are required by the DB schema but not currently produced. Each must
   - Unsplash (the original suggestion) returned mixed-quality results — sometimes a flag, sometimes a landscape photo of the country.
 - **URL pattern:** `https://flagcdn.com/w320/{iso2_lowercase}.png` (PNG, 320px wide). Use `w160` for smaller cards if the frontend needs it. SVG variant available at `https://flagcdn.com/{iso2}.svg`.
 - **Steps:**
-  1. Maintain a static `NATION_TO_ISO2` dict in `ml/nation_flags.py`. Bootstrap by pulling unique `nationality` values from current `output/predictions.json` and mapping each manually (~50–60 nations across PL squads — one-time work). Examples:
+  1. Maintain a static `NATION_TO_ISO2` dict in `ml/nation_flags.py`. There are **74 unique nationality strings** in the current `output/predictions.json` (verified via `jq`). Notable edge cases:
+     - `"Czech Republic"` **and** `"Czechia"` both appear → both map to `"cz"`.
+     - `"Türkiye"` (API uses the new official name, not `"Turkey"`) → `"tr"`.
+     - `"Korea Republic"` → `"kr"`.
+     - `"Congo DR"` → `"cd"`.
+     - `"Republic of Ireland"` → `"ie"`.
+     - `"Côte d'Ivoire"` → `"ci"` (watch the accented character — must match exactly).
      ```python
      NATION_TO_ISO2 = {
-         "France": "fr",
-         "England": "gb-eng",   # flagcdn supports the four UK constituent flags
-         "Scotland": "gb-sct",
-         "Wales": "gb-wls",
-         "Northern Ireland": "gb-nir",
-         "Brazil": "br",
-         "Côte d'Ivoire": "ci",
-         # ...
+         "Albania": "al", "Algeria": "dz", "Argentina": "ar", "Australia": "au",
+         "Austria": "at", "Belgium": "be", "Bosnia and Herzegovina": "ba",
+         "Brazil": "br", "Bulgaria": "bg", "Burkina Faso": "bf", "Cameroon": "cm",
+         "Canada": "ca", "Chile": "cl", "Colombia": "co", "Congo DR": "cd",
+         "Croatia": "hr", "Czech Republic": "cz", "Czechia": "cz",
+         "Côte d'Ivoire": "ci", "Denmark": "dk", "Ecuador": "ec", "Egypt": "eg",
+         "England": "gb-eng", "France": "fr", "Gabon": "ga", "Gambia": "gm",
+         "Georgia": "ge", "Germany": "de", "Ghana": "gh", "Greece": "gr",
+         "Guinea": "gn", "Hungary": "hu", "Iceland": "is", "Iraq": "iq",
+         "Israel": "il", "Italy": "it", "Jamaica": "jm", "Japan": "jp",
+         "Korea Republic": "kr", "Lithuania": "lt", "Mali": "ml", "Mexico": "mx",
+         "Morocco": "ma", "Mozambique": "mz", "Netherlands": "nl",
+         "New Zealand": "nz", "Nigeria": "ng", "Northern Ireland": "gb-nir",
+         "Norway": "no", "Paraguay": "py", "Poland": "pl", "Portugal": "pt",
+         "Republic of Ireland": "ie", "Romania": "ro", "Scotland": "gb-sct",
+         "Senegal": "sn", "Serbia": "rs", "Slovakia": "sk", "Slovenia": "si",
+         "South Africa": "za", "Spain": "es", "Sweden": "se", "Switzerland": "ch",
+         "Tunisia": "tn", "Türkiye": "tr", "USA": "us", "Ukraine": "ua",
+         "Uruguay": "uy", "Uzbekistan": "uz", "Venezuela": "ve", "Wales": "gb-wls",
+         "Zambia": "zm", "Zimbabwe": "zw",
      }
      ```
   2. At export time: `unique_nations = sorted(set(p["nationality"] for p in predictions if p.get("nationality")))`.
@@ -166,7 +232,8 @@ These fields are required by the DB schema but not currently produced. Each must
 - [ ] P0-S1, P0-S2 applied to `server/database_init.py` and DB recreated.
 - [ ] P0-M1, P0-M2 resolved (added to ML or dropped from schema).
 - [ ] P0-M3 added to `output/matches.json` — every entry has `home_team_id` and `away_team_id`.
-- [ ] P0-M4, P0-M5 — decided where computed and confirmed produced.
+- [ ] P0-M4 — ML computes `injury_trend` (week-over-week %) — currently emits `null`.
+- [ ] P0-M5 — Ingestor computes `graph_data_current_gw` from highest completed round in `matches.json`.
 - [ ] P0-M6 added to `season_stats[]` (or accepted as zero for past seasons with explicit note).
 - [ ] `output/predictions.json` and `output/matches.json` regenerated with all of the above.
 
@@ -256,6 +323,8 @@ One row per player. Source: `predictions[].injury_risk_trend[]` (38 entries, gw_
 ### 3.7 `match` table
 Source: `output/matches.json` (`completed[]` + `upcoming[]`).
 
+> **Premier League fixtures only.** Non-PL matches (cups, friendlies, internationals) are present in upstream ML data because the model uses them for **feature engineering and training**, but they do not belong in this table. Filter them out at ingest time by accepting only fixtures whose `round` matches `^Regular Season - \d+$` (see P0-S3-impl). They have no place in `graph_data` or the dashboard matches view either.
+
 | DB column | Source | Notes |
 |---|---|---|
 | `match_fixture_id` | `fixture_id` | |
@@ -337,13 +406,14 @@ Add `tests/test_ingestion.py` that runs the ingest against a temp DB and asserts
 **Phase 0 (blockers):**
 - [x] ~~P0-S1 — Widen `Player.player_risk_factor_1/2/3` to `VARCHAR(100)`.~~ **Done** in `server/database_init.py`.
 - [x] ~~P0-S2 — All risk columns → `NUMERIC(4,3) CHECK (col BETWEEN 0 AND 1)`.~~ **Done** in `server/database_init.py` (player, match, graph_data).
-- [ ] P0-M1 — Build static `NATION_TO_ISO2` map in `ml/nation_flags.py`; emit `output/nations.json` with hardcoded `https://flagcdn.com/w320/{iso2}.png` URLs.
-- [ ] P0-M2 — Add `TEAM_COLORS` dict in `ml/team_colors.py` (20 PL teams, hex `#RRGGBB`); emit `team_color` per team in ML output.
-- [ ] P0-M3 — Add `home_team_id` / `away_team_id` to every `output/matches.json` entry.
-- [ ] P0-M4 — Produce `injury_trend` per player in ML output: `(current_gw − previous_gw) / previous_gw × 100`, week-over-week, skip "Injured" weeks, clamp to ±999.99.
-- [ ] P0-M5 — Produce `current_gameweek`.
-- [ ] P0-M6 — Add `games_missed` per past season to `season_stats[]`.
-- [ ] Regenerate `output/predictions.json`, `output/matches.json`, `output/nations.json`.
+- [x] ~~**P0-S5** — Change `Identity(always=True)` → `Identity(start=1, always=False)` on `Team.team_id` and `Player.player_id`.~~ **Done** — [database_init.py:28, 95](server/database_init.py#L28). Recreate schema before running ingestor.
+- [x] ~~P0-M1 — Build static `NATION_TO_ISO2` map in `ml/nation_flags.py`; emit `output/nations.json`.~~ **Done** — [ml/nation_flags.py](ml/nation_flags.py), 74 nationalities mapped, `output/nations.json` generated (73 entries).
+- [x] ~~P0-M2 — Add `TEAM_COLORS` dict in `ml/team_colors.py`; emit `team_color` per player record.~~ **Done** — [ml/team_colors.py](ml/team_colors.py), all 25 clubs mapped, 0 fallback hits.
+- [x] ~~P0-M3 — Add `home_team_id` / `away_team_id` to every `output/matches.json` entry.~~ **Done** — added to `fmt()` in [ml/predict_players.py:278-279](ml/predict_players.py#L278).
+- [x] ~~P0-M4 — Produce `injury_trend` per player.~~ **Done** — `compute_injury_trend()` in [ml/predict_players.py](ml/predict_players.py), 453/925 players have non-zero trend.
+- [x] ~~P0-M5 — Produce `current_gw` per player.~~ **Done** — `current_gw` field emitted from already-computed `current_gameweek` int (currently `"gw32"`).
+- [x] ~~P0-M6 — Add `games_missed` per past season to `season_stats[]`.~~ **Done** — `get_games_missed()` in [ml/predict_players.py](ml/predict_players.py), computed by intersecting injury dates with PL fixtures per season.
+- [x] ~~Regenerate `output/predictions.json`, `output/matches.json`, `output/nations.json`.~~ **Done** — all three files regenerated and verified via `jq`.
 
 **Phase 1 (build):**
 - [ ] P1-D1 — Write `server/ingest_predictions.py`.

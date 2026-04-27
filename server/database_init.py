@@ -25,7 +25,7 @@ class Team(SQLModel, table=True):
     team_id: Optional[int] = Field(
         default=None,
         primary_key=True,
-        sa_column_args=[Identity(always=True)]
+        sa_column_args=[Identity(start=1, always=False)]
     )
     team_name: str = Field(max_length=200)
     team_logo: str = Field(max_length=500)
@@ -92,7 +92,7 @@ class Player(SQLModel, table=True):
     player_id: Optional[int] = Field(
         default=None,
         primary_key=True,
-        sa_column_args=[Identity(always=True)]
+        sa_column_args=[Identity(start=1, always=False)]
     )
     team_id: int = Field(foreign_key="team.team_id")
     nation_id: int = Field(foreign_key="nation.nation_id")
