@@ -22,7 +22,7 @@ from sklearn.metrics import (
 )
 from xgboost import XGBClassifier
 from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV
-from sklearn.calibration import CalibratedClassifierCV
+from model_utils import IsotonicCalibratedModel
 
 LOOKAHEAD_DAYS = 28
 TARGET_COL = f"injured_next_{LOOKAHEAD_DAYS}d"
@@ -115,10 +115,12 @@ def train(X_train, y_train, scale_pos_weight):
 
 
 def calibrate(model, X_val, y_val):
+    from sklearn.isotonic import IsotonicRegression
     print("\nCalibrating probabilities on validation set (isotonic)...")
-    calibrated = CalibratedClassifierCV(estimator=model, method="isotonic", cv="prefit")
-    calibrated.fit(X_val, y_val)
-    return calibrated
+    raw_probs = model.predict_proba(X_val)[:, 1]
+    iso = IsotonicRegression(out_of_bounds="clip")
+    iso.fit(raw_probs, y_val)
+    return IsotonicCalibratedModel(model, iso)
 
 
 def find_best_threshold(model, X_val, y_val):

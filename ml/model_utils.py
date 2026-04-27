@@ -1,12 +1,31 @@
 """
 Shared model utilities — imported by both train_model.py and predict_players.py.
 
-SigmoidCalibrator must live in a stable module (not __main__) so that
+Calibrator classes must live in a stable module (not __main__) so that
 pickle can find the class definition when loading the model bundle.
 """
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.isotonic import IsotonicRegression
+
+
+class IsotonicCalibratedModel:
+    """Wraps an XGBoost model with isotonic regression calibration."""
+
+    def __init__(self, base_model, iso: IsotonicRegression):
+        self._base  = base_model
+        self._iso   = iso
+        self.feature_importances_ = base_model.feature_importances_
+
+    def predict_proba(self, X):
+        raw = self._base.predict_proba(X)[:, 1]
+        cal = self._iso.predict(raw)
+        cal = np.clip(cal, 0, 1)
+        return np.column_stack([1 - cal, cal])
+
+    def predict(self, X):
+        return (self.predict_proba(X)[:, 1] >= 0.5).astype(int)
 
 
 class SigmoidCalibrator:
