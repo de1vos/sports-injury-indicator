@@ -28,17 +28,10 @@ def main():
     out = pd.DataFrame()
 
     out["player_id"]        = df["player_id"]
-    out["age"]              = df["age"]
     out["age_squared"]      = df["age"] ** 2
-    out["height"]           = df["height"]
-    out["weight"]           = df["weight"]
     out["position"]         = df["position"]
     out["position_encoded"] = df["position"].map(POSITION_ENCODING)
     out["nationality"]      = df["nationality"]
-
-    # One-hot encode position
-    for pos, code in POSITION_ENCODING.items():
-        out[f"is_{pos.lower()}"] = (df["position"] == pos).astype(int)
 
     out = out.sort_values("player_id").reset_index(drop=True)
 
@@ -47,11 +40,10 @@ def main():
 
     print(f"\n{'─'*50}")
     print(f"Players:            {len(out)}")
-    print(f"Age range:          {out['age'].min():.0f} – {out['age'].max():.0f}")
-    print(f"Avg age:            {out['age'].mean():.1f}")
+    print(f"Age range:          {df['age'].min():.0f} – {df['age'].max():.0f}")
+    print(f"Avg age:            {df['age'].mean():.1f}")
     print(f"Position breakdown: {df['position'].value_counts().to_dict()}")
     print(f"Missing position:   {out['position_encoded'].isna().sum()}")
-    print(f"Missing age:        {out['age'].isna().sum()}")
     print(f"\nSaved: {OUTPUT_FILE}")
 
 

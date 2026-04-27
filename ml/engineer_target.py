@@ -19,8 +19,8 @@ SEASON_FILE   = DATA_DIR / "season_features.csv"
 INJURY_FILE   = DATA_DIR / "injury_features.csv"
 PROFILE_FILE  = DATA_DIR / "profile_features.csv"
 
-LOOKAHEAD_DAYS = 90
-
+LOOKAHEAD_DAYS = 28
+TARGET_COL = f"injured_next_{LOOKAHEAD_DAYS}d"
 
 def compute_target(player_injuries, ref_date):
     """
@@ -46,35 +46,20 @@ def main():
     injury_f = pd.read_csv(INJURY_FILE,   parse_dates=["date"])
     profile  = pd.read_csv(PROFILE_FILE)
     injuries = pd.read_csv(INJURIES_CSV,  parse_dates=["start_date", "end_date"])
-    matches  = pd.read_csv(MATCH_STATS_CSV, parse_dates=["date"])
+    matches  = pd.read_csv(MATCH_STATS_CSV, parse_dates=["date"], encoding='latin1')
+
+    # Force IDs to numeric so the merge doesn't crash
+    for df_temp in [rolling, matches]:
+        df_temp['player_id'] = pd.to_numeric(df_temp['player_id'], errors='coerce')
+        df_temp['fixture_id'] = pd.to_numeric(df_temp['fixture_id'], errors='coerce')
 
     print(f"  Rolling features:  {len(rolling)} rows")
     print(f"  Season features:   {len(season)} rows")
     print(f"  Injury features:   {len(injury_f)} rows")
     print(f"  Profile features:  {len(profile)} rows")
 
-    # ── Filter to PL players only ─────────────────────────────────────────────
-    # rolling_features contains rows for ALL players who appeared in any fixture
-    # we collected (PL + cup/Euro opponents). Non-PL players have no injury data
-    # so they're systematically labelled 0 — label noise. Keep only players who
-    # appeared in at least one Premier League (competition="PL") fixture.
-    if "competition" in matches.columns:
-        pl_player_ids = set(
-            matches[matches["competition"] == "PL"]["player_id"].unique()
-        )
-    else:
-        # Fallback for older match_stats.csv without competition column
-        pl_player_ids = set(matches["player_id"].unique())
-
-    before_filter = len(rolling)
-    rolling = rolling[rolling["player_id"].isin(pl_player_ids)].copy()
-    print(f"\n  PL player filter: {before_filter} → {len(rolling)} rows "
-          f"({before_filter - len(rolling)} non-PL rows removed, "
-          f"{len(pl_player_ids)} unique PL players kept)")
-
-
     # ── Compute target variable ───────────────────────────────────────────────
-    print("\nComputing target variable (injured_next_90d)...")
+    print(f"\nComputing target variable ({TARGET_COL})...")
 
     targets = []
     total   = rolling["player_id"].nunique()
@@ -92,13 +77,13 @@ def main():
                 "player_id":  player_id,
                 "fixture_id": row["fixture_id"],
                 "date":       row["date"],
-                "injured_next_90d": target,
+                TARGET_COL: target,
             })
 
     target_df = pd.DataFrame(targets)
 
-    positive_rate = target_df["injured_next_90d"].mean()
-    print(f"  Target positive rate: {positive_rate:.1%}  ({target_df['injured_next_90d'].sum()} / {len(target_df)})")
+    positive_rate = target_df[TARGET_COL].mean()
+    print(f"  Target positive rate: {positive_rate:.1%}  ({target_df[TARGET_COL].sum()} / {len(target_df)})")
 
     # ── Join all features ─────────────────────────────────────────────────────
     print("\nJoining all features...")
@@ -122,18 +107,15 @@ def main():
     ]
     df = df.merge(season[season_cols], on="player_id", how="left")
 
-    # Join profile features (on player_id)
     profile_cols = [
-        "player_id", "age", "age_squared",
-        "height", "weight",
+        "player_id", "age_squared",
         "position_encoded",
-        "is_goalkeeper", "is_defender", "is_midfielder", "is_attacker",
     ]
     df = df.merge(profile[profile_cols], on="player_id", how="left")
 
     # Join target
     df = df.merge(
-        target_df[["player_id", "fixture_id", "injured_next_90d"]],
+        target_df[["player_id", "fixture_id", TARGET_COL]],
         on=["player_id", "fixture_id"],
         how="left",
     )
@@ -158,21 +140,9 @@ def main():
               f"(max injury date: {max_injury_date.date()}, cutoff: {label_cutoff.date()})"
               f" — current season rows kept regardless")
 
-    # ── Mark rows with a fully closed 90-day observation window ───────────────
-    # label_complete=True  → historical row within cutoff → safe for training
-    # label_complete=False → current season row (window not yet closed) → inference only
-    df["label_complete"] = (
-        (df["season"] != CURRENT_SEASON) &
-        (df["date"] <= label_cutoff)
-    )
-    n_complete = df["label_complete"].sum()
-    n_inference = (~df["label_complete"]).sum()
-    print(f"  label_complete: {n_complete} training-safe rows, "
-          f"{n_inference} inference-only rows (current season)")
-
     # ── Drop rows with no target (shouldn't happen, but safety check) ─────────
     before = len(df)
-    df = df.dropna(subset=["injured_next_90d"])
+    df = df.dropna(subset=[TARGET_COL])
     if before != len(df):
         print(f"  Dropped {before - len(df)} rows with missing target")
 
@@ -189,7 +159,7 @@ def main():
     print(f"Features:        {df.shape[1] - 3} (excl. player_id, date, fixture_id)")
     print(f"Players:         {df['player_id'].nunique()}")
     print(f"Date range:      {df['date'].min().date()} → {df['date'].max().date()}")
-    print(f"Target rate:     {df['injured_next_90d'].mean():.1%}")
+    print(f"Target rate:     {df[TARGET_COL].mean():.1%}")
 
     print(f"\nNull counts (top 10):")
     nulls = df.isnull().sum().sort_values(ascending=False).head(10)
