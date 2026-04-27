@@ -5,6 +5,22 @@ from sqlmodel import Session
 from database_init import Team, Player, PlayerSeason, PlayerInjury
 
 
+def _current_season_year() -> int:
+    today = date.today()
+    return today.year if today.month >= 8 else today.year - 1
+
+
+def _active_player_ids_sq():
+    """Players whose latest player_season row is the current PL season."""
+    yr = _current_season_year()
+    return (
+        sa_select(PlayerSeason.player_id)  # type: ignore[arg-type]
+        .group_by(PlayerSeason.player_id)
+        .having(func.max(PlayerSeason.player_season_year) == yr)
+        .subquery("active_players")
+    )
+
+
 class TeamOverview(TypedDict):
     team_id: int
     team_name: str
@@ -16,12 +32,14 @@ class TeamOverview(TypedDict):
 
 
 def get_teams_overview(session: Session) -> List[TeamOverview]:
+    active_sq = _active_player_ids_sq()
     player_stats_sq = (
         sa_select(  # type: ignore[call-overload, arg-type]
             Player.team_id,
             func.count(Player.player_id).label("amount_of_players"),
             func.avg(Player.player_injury_risk).label("average_risk_of_injury"),
         )
+        .join(active_sq, active_sq.c.player_id == Player.player_id)
         .where(Player.player_injury_risk < 0.99)  # type: ignore[arg-type]
         .group_by(Player.team_id)
         .subquery("player_stats")
