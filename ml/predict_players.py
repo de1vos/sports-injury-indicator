@@ -30,6 +30,9 @@ from config import (
     FIXTURES_FILE, FIXTURES_UPCOMING_FILE,
     MODEL_FILE, OUTPUT_DIR, RISK_THRESHOLDS, CURRENT_SEASON,
 )
+from model_utils import SigmoidCalibrator  # required for pickle deserialization
+from nation_flags import write_nations_json
+from team_colors import team_color
 
 # Optional: SHAP for explainable risk factors
 try:
@@ -200,19 +203,81 @@ def get_risk_factors_rules(row_data: dict) -> list[str]:
     return factors[:3]
 
 
+# ── Injury trend (week-over-week relative %) ──────────────────────────────────
+
+def compute_injury_trend(trend: list[dict]) -> float:
+    """
+    (current_gw_risk - previous_gw_risk) / previous_gw_risk * 100
+
+    Skips "Injured" sentinel entries. Returns 0 if there are fewer than
+    two non-injured gameweeks or if the previous risk is zero.
+    Clamped to ±999.99 to fit NUMERIC(5,2).
+    """
+    non_injured = [e["risk"] for e in trend if e["risk"] != "Injured"]
+    if len(non_injured) < 2:
+        return 0.0
+    current_risk  = non_injured[-1]
+    previous_risk = non_injured[-2]
+    if previous_risk == 0:
+        return 0.0
+    raw = (current_risk - previous_risk) / previous_risk * 100
+    return round(max(-999.99, min(999.99, raw)), 2)
+
+
 # ── Season stats ──────────────────────────────────────────────────────────────
 
-def get_all_season_stats(season_stats_df: pd.DataFrame, player_id: int) -> list[dict]:
+def get_games_missed(
+    player_id: int,
+    season: int,
+    team_id: int,
+    injuries_df: pd.DataFrame,
+    team_to_fixtures: dict,
+) -> int:
+    """Count PL fixtures a player missed due to injury in a given season."""
+    season_start = pd.Timestamp(f"{season}-07-01")
+    season_end   = pd.Timestamp(f"{season + 1}-06-30")
+
+    team_fixtures = [
+        fx for fx in (team_to_fixtures.get(team_id) or [])
+        if season_start <= pd.Timestamp(fx["fixture"]["date"][:10]) <= season_end
+        and "Regular Season" in fx["league"].get("round", "")
+    ]
+
+    player_inj = injuries_df[injuries_df["player_id"] == player_id]
+    missed = 0
+    for fx in team_fixtures:
+        fx_date = pd.Timestamp(fx["fixture"]["date"][:10])
+        for _, inj in player_inj.iterrows():
+            if pd.isna(inj["start_date"]):
+                continue
+            end_check = inj["end_date"] if pd.notna(inj["end_date"]) else pd.Timestamp("2099-01-01")
+            if inj["start_date"] <= fx_date <= end_check:
+                missed += 1
+                break
+    return missed
+
+
+def get_all_season_stats(
+    season_stats_df: pd.DataFrame,
+    player_id: int,
+    team_id: int,
+    injuries_df: pd.DataFrame,
+    team_to_fixtures: dict,
+) -> list[dict]:
     rows = season_stats_df[season_stats_df["player_id"] == player_id].sort_values(
         "season", ascending=False
     )
     result = []
     for _, row in rows.iterrows():
-        entry = {"season": int(row["season"])}
+        season = int(row["season"])
+        entry  = {"season": season}
         for col in SEASON_STATS_COLS:
             if col not in row.index:
                 continue
             entry[col] = safe_float(row[col], 2) if col == "rating" else safe_int(row[col])
+        entry["games_missed"] = get_games_missed(
+            player_id, season, team_id, injuries_df, team_to_fixtures
+        )
         result.append(entry)
     return result
 
@@ -277,12 +342,14 @@ def build_matches_json(fixtures_2025: list, fixtures_upcoming: list) -> dict:
 
     def fmt(fx: dict, include_score: bool) -> dict:
         out = {
-            "fixture_id": fx["fixture"]["id"],
-            "date":       fx["fixture"]["date"],
-            "round":      fx["league"]["round"],
-            "home_team":  {"name": fx["teams"]["home"]["name"], "logo": fx["teams"]["home"]["logo"]},
-            "away_team":  {"name": fx["teams"]["away"]["name"], "logo": fx["teams"]["away"]["logo"]},
-            "venue":      fx["fixture"]["venue"]["name"],
+            "fixture_id":   fx["fixture"]["id"],
+            "date":         fx["fixture"]["date"],
+            "round":        fx["league"]["round"],
+            "home_team_id": fx["teams"]["home"]["id"],
+            "away_team_id": fx["teams"]["away"]["id"],
+            "home_team":    {"name": fx["teams"]["home"]["name"], "logo": fx["teams"]["home"]["logo"]},
+            "away_team":    {"name": fx["teams"]["away"]["name"], "logo": fx["teams"]["away"]["logo"]},
+            "venue":        fx["fixture"]["venue"]["name"],
         }
         if include_score:
             g = fx.get("goals", {})
@@ -488,8 +555,21 @@ def main():
 
             trend.append({"gw": gw_key, "season": fx_season, "risk": risk_val})
 
+        # Override injury_risk only if the player is injured at the current GW.
+        # "Injured" in future slots means they'll be out next week, not now.
+        current_gw_entry = next(
+            (e for e in trend if e["gw"] == f"GW{current_gameweek}"), None
+        )
+        if current_gw_entry and current_gw_entry["risk"] == "Injured":
+            injury_risk = 0.99
+
+        # Injury trend — week-over-week relative %
+        injury_trend = compute_injury_trend(trend)
+
         # Season stats — all available seasons, newest first
-        all_season_stats = get_all_season_stats(season_stats, player_id)
+        all_season_stats = get_all_season_stats(
+            season_stats, player_id, team_id_int, injuries, team_to_fixtures
+        )
 
         # Injury data
         injury_history = get_injury_history(injuries, player_id)
@@ -515,16 +595,18 @@ def main():
         # Next match
         next_match = get_next_match(team_id_int, fixtures_upcoming) if team_id_int else None
 
+        team_name = safe_str(prof.get("current_team")) or ""
         records.append({
             "player_id":   player_id,
             "name":        safe_str(prof.get("name"))        or "",
             "firstname":   safe_str(prof.get("firstname"))   or "",
             "lastname":    safe_str(prof.get("lastname"))    or "",
             "photo":       safe_str(prof.get("photo"))       or "",
-            "team":        safe_str(prof.get("current_team")) or "",
+            "team":        team_name,
             "team_id":     safe_int(prof.get("team_id")),
-            "team_short":  TEAM_ABBREVIATIONS.get(safe_str(prof.get("current_team")) or "", ""),
+            "team_short":  TEAM_ABBREVIATIONS.get(team_name, ""),
             "team_logo":   safe_str(prof.get("team_logo"))   or "",
+            "team_color":  team_color(team_name),
             "position":    safe_str(prof.get("position"))    or "",
             "age":         safe_int(prof.get("age")),
             "height":      safe_int(prof.get("height")),
@@ -537,6 +619,8 @@ def main():
             "risk_factor_1":  factors[0] if len(factors) > 0 else None,
             "risk_factor_2":  factors[1] if len(factors) > 1 else None,
             "risk_factor_3":  factors[2] if len(factors) > 2 else None,
+            "injury_trend":   injury_trend,
+            "current_gw":     f"gw{current_gameweek}",
 
             "injury_risk_trend": trend,
 
@@ -559,12 +643,15 @@ def main():
     # ── Save ──────────────────────────────────────────────────────────────────
     pred_path    = OUTPUT_DIR / "predictions.json"
     matches_path = OUTPUT_DIR / "matches.json"
+    nations_path = OUTPUT_DIR / "nations.json"
 
-    # Output as a flat list of players (same format as existing predictions.json)
     with open(pred_path, "w") as f:
         json.dump(records, f, indent=2, default=str)
     with open(matches_path, "w") as f:
         json.dump(matches, f, indent=2, default=str)
+
+    nationalities = [r["nationality"] for r in records if r.get("nationality")]
+    write_nations_json(nationalities, nations_path)
 
     print(f"\n{'─'*50}")
     print(f"Players:  {pred_path}  ({len(records)} players)")

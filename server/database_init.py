@@ -1,7 +1,7 @@
 from datetime import date, time
 from decimal import Decimal
 from typing import ClassVar, List, Optional
-from sqlalchemy import Identity, Column, Time, Numeric
+from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric
 from sqlmodel import Field, Relationship, SQLModel, create_engine
 
 
@@ -25,7 +25,7 @@ class Team(SQLModel, table=True):
     team_id: Optional[int] = Field(
         default=None,
         primary_key=True,
-        sa_column_args=[Identity(always=True)]
+        sa_column_args=[Identity(start=1, always=False)]
     )
     team_name: str = Field(max_length=200)
     team_logo: str = Field(max_length=500)
@@ -74,8 +74,8 @@ class Match(SQLModel, table=True):
     match_venue: str = Field(max_length=200)
     match_goals_home: int
     match_goals_away: int
-    home_avg_injury_risk: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    away_avg_injury_risk: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    home_avg_injury_risk: Decimal = Field(sa_column=Column(Numeric(4, 3), CheckConstraint('home_avg_injury_risk BETWEEN 0 AND 1'), nullable=False))
+    away_avg_injury_risk: Decimal = Field(sa_column=Column(Numeric(4, 3), CheckConstraint('away_avg_injury_risk BETWEEN 0 AND 1'), nullable=False))
     match_is_played: bool
 
     home_team: Optional["Team"] = Relationship(
@@ -92,7 +92,7 @@ class Player(SQLModel, table=True):
     player_id: Optional[int] = Field(
         default=None,
         primary_key=True,
-        sa_column_args=[Identity(always=True)]
+        sa_column_args=[Identity(start=1, always=False)]
     )
     team_id: int = Field(foreign_key="team.team_id")
     nation_id: int = Field(foreign_key="nation.nation_id")
@@ -104,10 +104,10 @@ class Player(SQLModel, table=True):
     player_weight: str = Field(max_length=50)
     player_photo: str = Field(max_length=500)
     player_kit_number: int
-    player_injury_risk: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    player_risk_factor_1: str = Field(max_length=50)
-    player_risk_factor_2: str = Field(max_length=50)
-    player_risk_factor_3: str = Field(max_length=50)
+    player_injury_risk: Decimal = Field(sa_column=Column(Numeric(4, 3), CheckConstraint('player_injury_risk BETWEEN 0 AND 1'), nullable=False))
+    player_risk_factor_1: str = Field(max_length=100)
+    player_risk_factor_2: str = Field(max_length=100)
+    player_risk_factor_3: str = Field(max_length=100)
 
     team: Optional["Team"] = Relationship(back_populates="players")
     nation: Optional["Nation"] = Relationship(back_populates="players")
@@ -186,45 +186,56 @@ class GraphData(SQLModel, table=True):
     player_injury_trend: Decimal = Field(sa_column=Column(Numeric(5, 2), nullable=False))
     graph_data_current_gw: str = Field(max_length=10)
 
+    __table_args__: ClassVar[tuple] = (
+        CheckConstraint(
+            ' AND '.join(f'gw_{i} BETWEEN 0 AND 1' for i in range(1, 39)),
+            name='chk_gw_risk_range'
+        ),
+        CheckConstraint(
+            "graph_data_current_gw IN (" + ', '.join(f"'gw{i}'" for i in range(1, 39)) + ")",
+            name='chk_graph_data_current_gw'
+        ),
+    )
+
     # Mapping all 38 weeks
-    gw_1: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_2: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_3: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_4: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_5: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_6: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_7: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_8: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_9: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_10: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_11: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_12: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_13: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_14: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_15: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_16: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_17: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_18: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_19: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_20: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_21: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_22: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_23: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_24: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_25: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_26: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_27: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_28: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_29: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_30: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_31: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_32: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_33: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_34: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_35: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_36: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_37: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
-    gw_38: Decimal = Field(sa_column=Column(Numeric(2, 2), nullable=False))
+    gw_1: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_2: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_3: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_4: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_5: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_6: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_7: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_8: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_9: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_10: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_11: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_12: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_13: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_14: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_15: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_16: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_17: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_18: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_19: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_20: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_21: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_22: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_23: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_24: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_25: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_26: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_27: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_28: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_29: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_30: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_31: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_32: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_33: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_34: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_35: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_36: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_37: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
+    gw_38: Decimal = Field(sa_column=Column(Numeric(4, 3), nullable=False))
 
     player: Optional["Player"] = Relationship(back_populates="graph_data")
 
