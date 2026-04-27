@@ -7,9 +7,10 @@ workload and intensity features from match_stats.csv.
 Output: data/rolling_features.csv — one row per player per match
 """
 
+import json
 import numpy as np
 import pandas as pd
-from config import MATCH_STATS_CSV, DATA_DIR, INTL_BREAK_WINDOWS
+from config import MATCH_STATS_CSV, DATA_DIR, INTL_BREAK_WINDOWS, RAW_DIR
 
 
 OUTPUT_FILE = DATA_DIR / "rolling_features.csv"
@@ -57,7 +58,34 @@ def in_recent_intl_break(ref_date, lookback_days=14):
     return 0
 
 
-def compute_features(df_player, ref_date):
+def build_team_schedule(df_matches):
+    """Builds a DataFrame of all known fixtures (team, date) from history and upcoming."""
+    hist = df_matches[["team", "date"]].drop_duplicates().copy()
+    
+    upcoming_file = RAW_DIR / "fixtures_upcoming.json"
+    upcoming_rows = []
+    if upcoming_file.exists():
+        with open(upcoming_file) as f:
+            fixtures = json.load(f)
+            for fix in fixtures:
+                date_str = fix["fixture"]["date"]
+                home = fix["teams"]["home"]["name"]
+                away = fix["teams"]["away"]["name"]
+                upcoming_rows.append({"team": home, "date": date_str})
+                upcoming_rows.append({"team": away, "date": date_str})
+    
+    if upcoming_rows:
+        up_df = pd.DataFrame(upcoming_rows)
+        up_df["date"] = pd.to_datetime(up_df["date"], utc=True).dt.tz_localize(None)
+        hist["date"] = pd.to_datetime(hist["date"]).dt.tz_localize(None)
+        sched = pd.concat([hist, up_df]).drop_duplicates()
+    else:
+        sched = hist
+        
+    return sched.sort_values(["team", "date"])
+
+
+def compute_features(df_player, ref_date, df_schedule, team):
     """Compute all rolling features for one player at one reference date."""
 
     w7   = rolling_window(df_player, ref_date, 7)
@@ -74,7 +102,6 @@ def compute_features(df_player, ref_date):
 
     # ── Minutes ──────────────────────────────────────────────────────────────
     minutes_7d  = w7["minutes"].sum()
-    minutes_14d = w14["minutes"].sum()
     minutes_30d = w30["minutes"].sum()
     minutes_60d = w60["minutes"].sum()
     prev_minutes_30d = prev30["minutes"].sum()
@@ -105,6 +132,8 @@ def compute_features(df_player, ref_date):
         acwr = minutes_7d / avg_weekly_28d
     else:
         acwr = None
+        
+    is_acwr_danger_zone = int(acwr > 1.5) if acwr is not None else 0
 
     # ── Per-90 rolling stats (last 5 matches) ────────────────────────────────
     if not last5.empty:
@@ -118,14 +147,7 @@ def compute_features(df_player, ref_date):
         duels_per_90_l5 = tackles_per_90_l5 = dribbles_per_90_l5 = None
         fouls_comm_per_90 = fouls_drawn_per_90 = None
 
-    # ── Rating trend ─────────────────────────────────────────────────────────
-    rated_l5  = last5["rating"].dropna()
-    rated_l10 = last10["rating"].dropna()
-    if len(rated_l5) >= 3 and len(rated_l10) >= 6:
-        prev5_ratings = rated_l10.iloc[5:]
-        rating_trend  = rated_l5.mean() - prev5_ratings.mean()
-    else:
-        rating_trend = None
+
 
     # ── Consecutive 90-min starts ────────────────────────────────────────────
     sorted_past = df_player[df_player["date"] < ref_date].sort_values("date", ascending=False)
@@ -136,8 +158,12 @@ def compute_features(df_player, ref_date):
         else:
             break
 
-    # ── Yellow cards last 30d ────────────────────────────────────────────────
-    yellow_30d = w30["yellow_cards"].sum()
+    # ── Upcoming matches next 14d ────────────────────────────────────────────
+    future_cutoff = ref_date + pd.Timedelta(days=14)
+    team_matches = df_schedule[(df_schedule["team"] == team) & 
+                               (df_schedule["date"] > ref_date) & 
+                               (df_schedule["date"] <= future_cutoff)]
+    upcoming_matches_next_14d = len(team_matches)
 
     # ── Match density 14d ────────────────────────────────────────────────────
     match_density_14d = matches_14d
@@ -152,24 +178,22 @@ def compute_features(df_player, ref_date):
 
     return {
         "minutes_last_7d":             int(minutes_7d),
-        "minutes_last_14d":            int(minutes_14d),
         "minutes_last_30d":            int(minutes_30d),
-        "minutes_last_60d":            int(minutes_60d),
         "matches_last_14d":            matches_14d,
         "matches_last_30d":            matches_30d,
         "days_since_last_match":       days_since_last,
         "avg_minutes_per_match_30d":   avg_min_30d,
         "workload_trend":              workload_trend,
         "acute_chronic_ratio":         acwr,
+        "is_acwr_danger_zone":         is_acwr_danger_zone,
         "match_density_14d":           match_density_14d,
+        "upcoming_matches_next_14d":   upcoming_matches_next_14d,
         "duels_per_90_rolling":        duels_per_90_l5,
         "tackles_per_90_rolling":      tackles_per_90_l5,
         "dribbles_per_90_rolling":     dribbles_per_90_l5,
         "fouls_committed_per_90_rolling": fouls_comm_per_90,
         "fouls_against_per_90_rolling":   fouls_drawn_per_90,
-        "rating_trend":                rating_trend,
         "consecutive_90min_starts":    consecutive_90,
-        "yellow_cards_last_30d":       int(yellow_30d),
         "days_since_intl_break":       days_since_break,
         "in_intl_break_window":        in_break_window,
         "long_gap_before_match":       long_gap_before,
@@ -190,6 +214,9 @@ def main():
     df[num_cols] = df[num_cols].fillna(0)
     df.loc[df["rating"] == 0, "rating"] = np.nan
 
+    print("Building team schedule...")
+    df_schedule = build_team_schedule(df)
+
     rows = []
     players = df.groupby("player_id")
     total   = df["player_id"].nunique()
@@ -205,7 +232,8 @@ def main():
         # Compute features at each match date (the moment just before that match)
         for _, match_row in df_player.iterrows():
             ref_date = match_row["date"]
-            features = compute_features(df_player, ref_date)
+            team = match_row["team"]
+            features = compute_features(df_player, ref_date, df_schedule, team)
 
             rows.append({
                 "player_id":  player_id,
