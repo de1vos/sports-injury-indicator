@@ -31,12 +31,14 @@ These must be done first. Without them, ingestion either fails or produces incom
 
 ### 2.1 Schema fixes (DB side — `server/database_init.py`)
 
-| # | Issue | Fix |
-|---|---|---|
-| **P0-S1** | `Player.player_risk_factor_1/2/3` is `VARCHAR(50)`. Real ML strings exceed this (e.g. `"Workload spike: ACWR 1.40 with 5 consecutive starts"` = 51 chars). | Widen to `VARCHAR(100)` (or `TEXT`). |
-| **P0-S2** | All `NUMERIC(2,2)` risk columns cap at `0.99` and cannot store `1.00`. Affects: `player.player_injury_risk`, `match.home_avg_injury_risk`, `match.away_avg_injury_risk`, all 38 `graph_data.gw_N` columns. | Change to `NUMERIC(4,3) CHECK (col BETWEEN 0 AND 1)`. The `CHECK` is non-optional — without it the type allows up to `9.999`. With it, behavior matches the old `NUMERIC(2,2)` but `1.000` becomes legal. |
-| **P0-S3** | `Match.match_game_week` is `VARCHAR(10)` — fine, but values must be normalized to `"gw1"`…`"gw38"` (lowercase, no padding) since frontend hits `/dashboard/matches/gw1`. | No schema change; normalize on write in the ingestor. |
-| **P0-S4** | `GraphData.player_injury_trend` is `NUMERIC(5,2)`. Backend (`integration/player_page.py:131-187`) multiplies stored value × 100 before returning. Means stored unit is **0–1 fraction**, not percentage. | Document this convention; ingestor stores 0–1 fraction. (Schema unchanged.) |
+> **Status update:** P0-S1 and P0-S2 are **already applied** in `server/database_init.py` (verified). The schema is ready. P0-S3 and P0-S4 are runtime conventions — no schema change needed, just enforce in the ingestor.
+
+| # | Issue | Fix | Status |
+|---|---|---|---|
+| **P0-S1** | `Player.player_risk_factor_1/2/3` was `VARCHAR(50)`. Real ML strings exceed this. | Widened to `VARCHAR(100)`. | ✅ Done — [database_init.py:108-110](server/database_init.py#L108-L110) |
+| **P0-S2** | All `NUMERIC(2,2)` risk columns capped at `0.99` and could not store `1.00`. | Changed to `NUMERIC(4,3)` with `CHECK (col BETWEEN 0 AND 1)`. Applied to `player.player_injury_risk`, `match.home_avg_injury_risk`, `match.away_avg_injury_risk`, and all 38 `graph_data.gw_N` columns (CHECK consolidated in `__table_args__`). | ✅ Done — [database_init.py:77-78, 107, 189-194, 197-234](server/database_init.py#L77) |
+| **P0-S3** | `Match.match_game_week` is `VARCHAR(10)` — values must be normalized to `"gw1"`…`"gw38"` (lowercase, no padding) since frontend hits `/dashboard/matches/gw1`. | No schema change; ingestor normalizes on write. | 🟡 Convention — enforce in ingestor (Phase 1) |
+| **P0-S4** | `GraphData.player_injury_trend` is `NUMERIC(5,2)`. Backend [integration/player_page.py:185](server/integration/player_page.py#L185) does `round(float(graph.player_injury_trend))` — **pass-through, no × 100**. Stored unit is therefore **percentage points directly** (e.g. `25.34` → frontend shows `+25%`). | No schema change; ingestor stores percentage value. Range fits `NUMERIC(5,2)` up to ±999.99. | 🟡 Convention — enforce in ingestor (Phase 1) |
 
 ### 2.2 Missing fields from ML output (`ml/predict_players.py`, `output/matches.json`)
 
@@ -44,30 +46,111 @@ These fields are required by the DB schema but not currently produced. Each must
 
 | # | Missing field | DB target | Resolution |
 |---|---|---|---|
-| **P0-M1** | `nation_flag_image` (URL per nation) | `nation.nation_flag_image` | Add to ML export. **Source: Unsplash API.** During the ML run, dedupe all `nationality` values across players, query Unsplash once per nation (e.g. `?query={nation}+flag&per_page=1`, take `urls.regular`), and emit a separate top-level list `nations[]` in `output/predictions.json` (or a sibling `output/nations.json`) of the form `[{"nation_name": "France", "nation_flag_image": "https://images.unsplash.com/..."}]`. The ingestor then loads this list directly into the `nation` table instead of inferring nations from player records. See P0-M1-impl below. |
-| **P0-M2** | `team_color` (hex) | `team.team_color` | Not in API-Football. Either drop the column **or** ship a static `team_id → "#hex"` map for the 20 PL teams. (Recommend: drop unless frontend uses it.) |
+| **P0-M1** | `nation_flag_image` (URL per nation) | `nation.nation_flag_image` | Add to ML export. **Source: hardcoded flagcdn.com URLs** (`https://flagcdn.com/w320/{iso2}.png`) so every flag has identical style/aspect ratio — no API key, deterministic, no rate limits. Build a static `nation_name → iso2` map in `ml/nation_flags.py`, dedupe all `nationality` values across players, and emit `output/nations.json` of the form `[{"nation_name": "France", "nation_flag_image": "https://flagcdn.com/w320/fr.png"}]`. The ingestor loads this list directly into the `nation` table. See P0-M1-impl below. |
+| **P0-M2** | `team_color` (hex) | `team.team_color` | Not in API-Football. **Resolved: hardcoded static map** in `ml/team_colors.py` keyed by team name (or team_id). See P0-M2-impl below. Stored as `"#RRGGBB"` (7 chars, fits `VARCHAR(10)`). |
 | **P0-M3** | `home_team_id` / `away_team_id` in `output/matches.json` | `match.home_team_id`, `match.away_team_id` (FK) | API-Football fixture payload already has both IDs. Update `ml/predict_players.py` to include them alongside `name`/`logo` in `completed[]` and `upcoming[]` entries. **Without this, matches cannot FK-resolve and `match` rows cannot be inserted.** |
-| **P0-M4** | `player_injury_trend` (single delta number per player) | `graph_data.player_injury_trend` | Decide where this is computed: ML side (preferred) or ingestor. Suggested formula: `last_5_gw_avg - prior_5_gw_avg`, stored as 0–1 fraction. Also drives the trending-risk dashboard. |
+| **P0-M4** | `player_injury_trend` (single percentage delta per player) | `graph_data.player_injury_trend` | **Relative percent change, current week vs. previous week.** Formula: `injury_trend = (current_gw_risk − previous_gw_risk) / previous_gw_risk × 100`. Example: previous = 0.20, current = 0.25 → `(0.25−0.20)/0.20 × 100 = +25` → frontend renders `+25%`. Stored as a percentage (e.g. `25.00`), backend passes through. Drives the trending-risk dashboard. **Compute on the ML side.** See P0-M4-impl below. |
 | **P0-M5** | `current_gameweek` (e.g. `"GW15"`) | `graph_data.graph_data_current_gw` | Compute from today's date vs. 2025-08-16 season start. Single global value — produce once in ingestor. |
 | **P0-M6** | `games_missed` per **past** season inside `season_stats[]` | `player_season.player_season_games_missed` | Today the ML only exposes `matches_missed_this_season` at the summary level — no per-past-season breakdown. Add a `games_missed` field to each `season_stats[]` element by intersecting injury date ranges with each season's fixtures. (Acceptable interim: zero out for past seasons and flag.) |
 
-#### P0-M1-impl: Unsplash flag-fetch details
-- **Where:** add to `ml/predict_players.py` near the end of the export step (or factor into a small `ml/fetch_nation_flags.py` module called from there).
+#### P0-M1-impl: Hardcoded flag URLs (flagcdn.com)
+- **Where:** new module `ml/nation_flags.py`, called at the end of the export step in `ml/predict_players.py`.
+- **Why hardcoded over an API:**
+  - Identical visual style across all flags — same source, same aspect ratio, same render style.
+  - No API key, no rate limits, no caching layer needed.
+  - Deterministic — given a nation, the URL never changes.
+  - flagcdn supports the four UK constituent flags (`gb-eng`, `gb-sct`, `gb-wls`, `gb-nir`), which matters for PL squads where most players list "England" / "Scotland" / "Wales" / "Northern Ireland", not "United Kingdom".
+  - Unsplash (the original suggestion) returned mixed-quality results — sometimes a flag, sometimes a landscape photo of the country.
+- **URL pattern:** `https://flagcdn.com/w320/{iso2_lowercase}.png` (PNG, 320px wide). Use `w160` for smaller cards if the frontend needs it. SVG variant available at `https://flagcdn.com/{iso2}.svg`.
 - **Steps:**
-  1. Collect `unique_nations = sorted(set(p["nationality"] for p in predictions if p.get("nationality")))`.
-  2. For each nation, call Unsplash search: `GET https://api.unsplash.com/search/photos?query={nation}+flag&per_page=1&orientation=landscape` with header `Authorization: Client-ID {UNSPLASH_ACCESS_KEY}`.
-  3. Extract `results[0].urls.regular` (fallback: `urls.small`; if zero results, set `null`).
-  4. Cache results in a local file (e.g. `data/raw/nation_flags.json`) so we only hit Unsplash for new nations on subsequent runs — Unsplash free tier is 50 req/hour.
-  5. Emit a top-level array in the ML output (recommend new file `output/nations.json` to keep `predictions.json` player-shaped):
+  1. Maintain a static `NATION_TO_ISO2` dict in `ml/nation_flags.py`. Bootstrap by pulling unique `nationality` values from current `output/predictions.json` and mapping each manually (~50–60 nations across PL squads — one-time work). Examples:
+     ```python
+     NATION_TO_ISO2 = {
+         "France": "fr",
+         "England": "gb-eng",   # flagcdn supports the four UK constituent flags
+         "Scotland": "gb-sct",
+         "Wales": "gb-wls",
+         "Northern Ireland": "gb-nir",
+         "Brazil": "br",
+         "Côte d'Ivoire": "ci",
+         # ...
+     }
+     ```
+  2. At export time: `unique_nations = sorted(set(p["nationality"] for p in predictions if p.get("nationality")))`.
+  3. For each, look up `iso2 = NATION_TO_ISO2.get(nation)`. If missing → log a warning and skip (or fall back to a placeholder URL). The warning surfaces new nations so the map can be extended.
+  4. Emit `output/nations.json`:
      ```json
      [
-       {"nation_name": "France", "nation_flag_image": "https://images.unsplash.com/photo-..."},
-       {"nation_name": "England", "nation_flag_image": "https://images.unsplash.com/photo-..."}
+       {"nation_name": "France",  "nation_flag_image": "https://flagcdn.com/w320/fr.png"},
+       {"nation_name": "England", "nation_flag_image": "https://flagcdn.com/w320/gb-eng.png"}
      ]
      ```
-- **Env:** `UNSPLASH_ACCESS_KEY` in `.env` (do not commit). Document in README.
-- **Caveat:** Unsplash returns generic photos tagged "{country} flag" — quality is inconsistent (sometimes a flag, sometimes a landscape). If results look poor in practice, swap source to `https://flagcdn.com/w320/{iso2}.png` (deterministic, free, no API key) — keep the same `nations[]` output shape so the ingestor doesn't change.
+- **Maintenance:** when a new nationality appears in the data, the export logs `[WARN] no flag mapping for nation: 'X'`. Add it to `NATION_TO_ISO2` and re-run. No external service to monitor.
 - **Ingestor consumption:** `ingest_predictions.py` step 4 (insert `nation`) reads `output/nations.json` instead of deriving the list from player records.
+
+#### P0-M2-impl: Static team-color map
+- **Where:** new module `ml/team_colors.py`, imported by `ml/predict_players.py` at the team-record build step.
+- **Map** (covers 2025/26 PL **plus relegated/promoted clubs that still appear in past-season data** — all 25 teams found in `output/predictions.json`):
+  ```python
+  TEAM_COLORS = {
+      "Arsenal":           "#EF0107",
+      "Aston Villa":       "#95BFE5",
+      "Bournemouth":       "#DA291C",
+      "Brentford":         "#D20000",
+      "Brighton":          "#0057B8",
+      "Burnley":           "#6C1D45",
+      "Chelsea":           "#034694",  # leading-zero corrected
+      "Crystal Palace":    "#1B458F",
+      "Everton":           "#003399",  # leading-zero corrected
+      "Fulham":            "#000000",  # leading-zero corrected
+      "Ipswich":           "#3764A4",
+      "Leeds":             "#FFCD00",
+      "Leicester":         "#003090",
+      "Liverpool":         "#C8102E",
+      "Luton":             "#F78F1E",
+      "Manchester City":   "#6CABDD",
+      "Manchester United": "#DA291C",
+      "Newcastle":         "#BBBCBC",
+      "Nottingham Forest": "#DD0000",
+      "Sheffield Utd":     "#EE2737",
+      "Southampton":       "#D71920",
+      "Sunderland":        "#EB172C",
+      "Tottenham":         "#132257",
+      "West Ham":          "#7A263A",
+      "Wolves":            "#F6B000",   # API-Football uses "Wolves", not "Wolverhampton"
+  }
+  ```
+- **Name canon verified** by running `jq -r '.[].team' output/predictions.json | sort -u` — keys above match the exact strings present in `predictions.json`. Re-run that command if the data is regenerated and a new club appears.
+- **Fallback:** if a lookup misses, log `[WARN] no color mapping for team: 'X'` and use `"#888888"` so ingestion never fails.
+- **Where it gets emitted:** include `team_color` alongside `team_id` / `team` / `team_logo` in each player record (or in a dedicated `output/teams.json` if you prefer to separate teams from player records — same pattern as `nations.json`).
+- **Ingestor consumption:** when building unique teams in `ingest_predictions.py` step 5, read the color from the player record (or `output/teams.json`) and write it to `team.team_color`.
+
+#### P0-M4-impl: `player_injury_trend` formula (relative week-over-week %)
+- **Definition:** percent change in injury risk from the **previous gameweek** to the **current gameweek**.
+  ```
+  injury_trend = (current_gw_risk − previous_gw_risk) / previous_gw_risk × 100
+  ```
+- **Worked examples:**
+  | previous | current | computed | stored | frontend display |
+  |---|---|---|---|---|
+  | 0.20 | 0.25 | +25.00 | `25.00` | `+25%` |
+  | 0.40 | 0.30 | −25.00 | `-25.00` | `-25%` |
+  | 0.10 | 0.30 | +200.00 | `200.00` | `+200%` |
+  | 0.50 | 0.50 | 0.00 | `0.00` | `0%` |
+- **Sign convention:**
+  - **positive** → risk rose week-over-week (player *trending worse*) — what the trending-risk dashboard surfaces.
+  - **negative** → risk fell (player improving).
+  - `0` → unchanged.
+- **Storage:** percentage points directly in `graph_data.player_injury_trend` (`NUMERIC(5,2)`). Backend passes through with `round(...)` — no × 100 multiplier. Column max is ±999.99 → cap on write (see edge cases).
+- **Edge cases:**
+  - **No previous gameweek** (player's first appearance, or only one historical gw available) → `injury_trend = 0`.
+  - **`previous_gw_risk == 0`** (theoretically possible at season start) → divide-by-zero. Set `injury_trend = 0` in this case.
+  - **Either week is the "Injured" sentinel (`0.99`)** → exclude that comparison and walk back to the most recent non-injured gameweek for `previous`. If current week is "Injured" → `injury_trend = 0` (player sidelined; week-over-week change is meaningless).
+  - **Result exceeds ±999** (e.g. previous = 0.001, current = 0.5 → +49,900%) → clamp to ±999.99 to fit `NUMERIC(5,2)`. In practice this only fires when previous risk is near-zero.
+  - **Round to 2 decimals** before storing so the column never overflows on a `999.999` rounding edge.
+- **Which "previous" gameweek?** The immediately prior gameweek in `injury_risk_trend[]`, skipping any "Injured" entries (see above). Don't average across multiple weeks — the user wants strict week-vs-week.
+- **Where it lives:** computed in `ml/predict_players.py` at the same point that `injury_risk_trend[]` is built. Emitted as a top-level `injury_trend` field on each player record in `predictions.json`.
+- **Ingestor mapping:** `ingest_predictions.py` step 9 reads `predictions[].injury_trend` and writes it directly to `graph_data.player_injury_trend` — no math in the ingestor.
 
 ### 2.3 Non-blocking but flagged (defer past Phase 0)
 
@@ -167,7 +250,7 @@ One row per player. Source: `predictions[].injury_risk_trend[]` (38 entries, gw_
 |---|---|---|
 | `player_id` | parent | |
 | `gw_1` … `gw_38` | `injury_risk_trend[i].risk` mapped by `gw` label | "Injured" string → `0.99` sentinel (matches `>= 0.99` check in `integration/player_page.py`) |
-| `player_injury_trend` | per P0-M4 | stored as 0–1 fraction (backend × 100 on read) |
+| `player_injury_trend` | per P0-M4 | stored as percentage directly (e.g. `25.00`); backend pass-through, no × 100 |
 | `graph_data_current_gw` | per P0-M5 | |
 
 ### 3.7 `match` table
@@ -252,12 +335,12 @@ Add `tests/test_ingestion.py` that runs the ingest against a temp DB and asserts
 ## 6. TL;DR checklist
 
 **Phase 0 (blockers):**
-- [ ] P0-S1 — Widen `Player.player_risk_factor_1/2/3` to `VARCHAR(100)`.
-- [ ] P0-S2 — All risk columns → `NUMERIC(4,3) CHECK (col BETWEEN 0 AND 1)`.
-- [ ] P0-M1 — Fetch nation flags via Unsplash; emit `output/nations.json` list of `{nation_name, nation_flag_image}`. Cache in `data/raw/nation_flags.json`. `UNSPLASH_ACCESS_KEY` in `.env`.
-- [ ] P0-M2 — Decide `team.team_color`: drop or static map.
+- [x] ~~P0-S1 — Widen `Player.player_risk_factor_1/2/3` to `VARCHAR(100)`.~~ **Done** in `server/database_init.py`.
+- [x] ~~P0-S2 — All risk columns → `NUMERIC(4,3) CHECK (col BETWEEN 0 AND 1)`.~~ **Done** in `server/database_init.py` (player, match, graph_data).
+- [ ] P0-M1 — Build static `NATION_TO_ISO2` map in `ml/nation_flags.py`; emit `output/nations.json` with hardcoded `https://flagcdn.com/w320/{iso2}.png` URLs.
+- [ ] P0-M2 — Add `TEAM_COLORS` dict in `ml/team_colors.py` (20 PL teams, hex `#RRGGBB`); emit `team_color` per team in ML output.
 - [ ] P0-M3 — Add `home_team_id` / `away_team_id` to every `output/matches.json` entry.
-- [ ] P0-M4 — Produce `player_injury_trend` (single delta per player).
+- [ ] P0-M4 — Produce `injury_trend` per player in ML output: `(current_gw − previous_gw) / previous_gw × 100`, week-over-week, skip "Injured" weeks, clamp to ±999.99.
 - [ ] P0-M5 — Produce `current_gameweek`.
 - [ ] P0-M6 — Add `games_missed` per past season to `season_stats[]`.
 - [ ] Regenerate `output/predictions.json`, `output/matches.json`, `output/nations.json`.
