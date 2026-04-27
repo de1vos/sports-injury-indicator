@@ -550,6 +550,13 @@ def main():
 
             trend.append({"gw": gw_key, "season": fx_season, "risk": risk_val})
 
+        # If the player is currently injured, override injury_risk to match
+        # the 0.99 sentinel already set in the current-season trend entry.
+        # This keeps player_injury_risk consistent with the graph display.
+        current_season_entries = [e for e in trend if e["season"] == CURRENT_SEASON]
+        if current_season_entries and current_season_entries[-1]["risk"] == "Injured":
+            injury_risk = 0.99
+
         # Injury trend — week-over-week relative %
         injury_trend = compute_injury_trend(trend)
 
