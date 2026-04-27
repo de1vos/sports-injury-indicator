@@ -375,7 +375,7 @@ def main():
                .last()
                .reset_index()
     )
-    X_current     = current_rows[feature_cols].fillna(0)
+    X_current     = current_rows[feature_cols]
     current_probs = calibrated_model.predict_proba(X_current)[:, 1]
     current_rows["_risk"] = current_probs
 
@@ -449,7 +449,7 @@ def main():
         played_fids = [fx["fixture"]["id"] for fx in ordered_fixtures
                        if fx["fixture"]["id"] in player_fid_map.index]
         if played_fids:
-            X_batch      = player_fid_map.loc[played_fids][feature_cols].fillna(0)
+            X_batch      = player_fid_map.loc[played_fids][feature_cols]
             scores       = calibrated_model.predict_proba(X_batch)[:, 1]
             fid_to_score = {fid: round(float(s), 4) for fid, s in zip(played_fids, scores)}
         else:

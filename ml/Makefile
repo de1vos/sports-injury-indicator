@@ -1,7 +1,7 @@
 PYTHON = python3.14
 
 # ── Run full pipeline from scratch ───────────────────────────────────────────
-.PHONY: all collect refresh-injuries build features train predict rebuild refeature refresh-current full-update help
+.PHONY: all collect collect-cups refresh-injuries build features train predict rebuild refeature refresh-current full-update help
 
 all: collect build features train
 
@@ -11,6 +11,15 @@ collect:
 	$(PYTHON) collect_fixtures_historical.py
 	@echo "\n══ Step 2: Collecting historical match stats (~10 min) ══"
 	$(PYTHON) collect_match_stats_historical.py
+
+# Collect cup + European fixtures involving PL clubs (one-time, ~820 calls on Pro tier, ~7 min)
+collect-cups:
+	@echo "\n══ Step 1a: Fetching cup/Euro fixture lists (~20 calls) ══"
+	$(PYTHON) collect_fixtures_cups.py
+	@echo "\n══ Step 1b: Fetching cup/Euro match stats (~800 calls) ══"
+	$(PYTHON) collect_match_stats_cups.py
+	@echo "\n══ Rebuilding match_stats.csv with cup/Euro rows ══"
+	$(PYTHON) build_match_stats.py
 
 # Refresh injury data from the API (run this periodically to get new injuries)
 # collect_injuries_season is the main source for current-season data (4 calls).
@@ -85,6 +94,7 @@ help:
 	@echo "Usage:"
 	@echo "  make all               — full pipeline (collect → build → features → train)"
 	@echo "  make collect           — fetch historical fixtures + match stats from API"
+	@echo "  make collect-cups      — fetch cup/Euro fixtures for PL clubs (~820 calls, one-time)"
 	@echo "  make refresh-injuries  — pull fresh season injury data (4 calls) + rebuild"
 	@echo "  make refresh-sidelined — full sidelined re-fetch (1,781 calls, rarely needed)"
 	@echo "  make build             — rebuild match_stats.csv from raw JSON files"

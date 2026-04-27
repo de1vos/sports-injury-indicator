@@ -53,6 +53,26 @@ def main():
     print(f"  Injury features:   {len(injury_f)} rows")
     print(f"  Profile features:  {len(profile)} rows")
 
+    # ── Filter to PL players only ─────────────────────────────────────────────
+    # rolling_features contains rows for ALL players who appeared in any fixture
+    # we collected (PL + cup/Euro opponents). Non-PL players have no injury data
+    # so they're systematically labelled 0 — label noise. Keep only players who
+    # appeared in at least one Premier League (competition="PL") fixture.
+    if "competition" in matches.columns:
+        pl_player_ids = set(
+            matches[matches["competition"] == "PL"]["player_id"].unique()
+        )
+    else:
+        # Fallback for older match_stats.csv without competition column
+        pl_player_ids = set(matches["player_id"].unique())
+
+    before_filter = len(rolling)
+    rolling = rolling[rolling["player_id"].isin(pl_player_ids)].copy()
+    print(f"\n  PL player filter: {before_filter} → {len(rolling)} rows "
+          f"({before_filter - len(rolling)} non-PL rows removed, "
+          f"{len(pl_player_ids)} unique PL players kept)")
+
+
     # ── Compute target variable ───────────────────────────────────────────────
     print("\nComputing target variable (injured_next_90d)...")
 
