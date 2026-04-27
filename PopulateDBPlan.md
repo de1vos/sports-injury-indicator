@@ -1,8 +1,11 @@
-# Database Population Plan — Phase 1
+# Database Population Plan
 
 **Goal:** populate the PostgreSQL database (defined in `server/database_init.py`) from the current ML artifacts (`output/predictions.json`, `output/matches.json`) so that the FastAPI backend serves real data to `frontendUpdatedSoccer2`.
 
-Phase 2 (daily refresh job) is out of scope here — but the ingestion script we build in Phase 1 must be re-runnable so Phase 2 only needs a scheduler.
+**Phasing:**
+- **Phase 0** — unblock the pipeline. Schema fixes + missing ML output fields. Nothing can be ingested until these are done.
+- **Phase 1** — write the one-shot ingestion script and seed the DB from current ML output.
+- **Phase 2** — schedule the script to re-run daily after `predict_players.py`. Out of scope for now, but Phase 1 is built to make this trivial.
 
 ---
 
@@ -18,29 +21,95 @@ API-Football ──► data/*.csv ──► ml/predict_players.py ──► outp
                   PostgreSQL (server/database_init.py) ──► FastAPI ──► frontend
 ```
 
-The ML side produces a complete, well-shaped JSON file. The DB side has a matching schema. **Nothing connects them.** `server/seed_db.py` only loads `test_data.sql` (static fixtures). We need an ingestion script: `output/predictions.json` + `output/matches.json` → DB rows.
+The ML side produces a complete, well-shaped JSON file. The DB side has a matching schema. **Nothing connects them.** `server/seed_db.py` only loads `test_data.sql` (static fixtures). We need an ingestion script: `output/predictions.json` + `output/matches.json` → DB rows. But before we can write that script, several upstream issues must be fixed — that's Phase 0.
 
 ---
 
-## 2. Field-level mapping: ML output → DB columns
+## 2. Phase 0 — Pre-flight fixes (BLOCKERS)
 
-Source records: each entry of `output/predictions.json` (per player) and `output/matches.json` (completed + upcoming).
+These must be done first. Without them, ingestion either fails or produces incomplete/incorrect data.
 
-### 2.1 `nation` table
+### 2.1 Schema fixes (DB side — `server/database_init.py`)
+
+| # | Issue | Fix |
+|---|---|---|
+| **P0-S1** | `Player.player_risk_factor_1/2/3` is `VARCHAR(50)`. Real ML strings exceed this (e.g. `"Workload spike: ACWR 1.40 with 5 consecutive starts"` = 51 chars). | Widen to `VARCHAR(100)` (or `TEXT`). |
+| **P0-S2** | All `NUMERIC(2,2)` risk columns cap at `0.99` and cannot store `1.00`. Affects: `player.player_injury_risk`, `match.home_avg_injury_risk`, `match.away_avg_injury_risk`, all 38 `graph_data.gw_N` columns. | Change to `NUMERIC(4,3) CHECK (col BETWEEN 0 AND 1)`. The `CHECK` is non-optional — without it the type allows up to `9.999`. With it, behavior matches the old `NUMERIC(2,2)` but `1.000` becomes legal. |
+| **P0-S3** | `Match.match_game_week` is `VARCHAR(10)` — fine, but values must be normalized to `"gw1"`…`"gw38"` (lowercase, no padding) since frontend hits `/dashboard/matches/gw1`. | No schema change; normalize on write in the ingestor. |
+| **P0-S4** | `GraphData.player_injury_trend` is `NUMERIC(5,2)`. Backend (`integration/player_page.py:131-187`) multiplies stored value × 100 before returning. Means stored unit is **0–1 fraction**, not percentage. | Document this convention; ingestor stores 0–1 fraction. (Schema unchanged.) |
+
+### 2.2 Missing fields from ML output (`ml/predict_players.py`, `output/matches.json`)
+
+These fields are required by the DB schema but not currently produced. Each must be added to the ML export OR explicitly dropped from the schema.
+
+| # | Missing field | DB target | Resolution |
+|---|---|---|---|
+| **P0-M1** | `nation_flag_image` (URL per nation) | `nation.nation_flag_image` | Add to ML export. **Source: Unsplash API.** During the ML run, dedupe all `nationality` values across players, query Unsplash once per nation (e.g. `?query={nation}+flag&per_page=1`, take `urls.regular`), and emit a separate top-level list `nations[]` in `output/predictions.json` (or a sibling `output/nations.json`) of the form `[{"nation_name": "France", "nation_flag_image": "https://images.unsplash.com/..."}]`. The ingestor then loads this list directly into the `nation` table instead of inferring nations from player records. See P0-M1-impl below. |
+| **P0-M2** | `team_color` (hex) | `team.team_color` | Not in API-Football. Either drop the column **or** ship a static `team_id → "#hex"` map for the 20 PL teams. (Recommend: drop unless frontend uses it.) |
+| **P0-M3** | `home_team_id` / `away_team_id` in `output/matches.json` | `match.home_team_id`, `match.away_team_id` (FK) | API-Football fixture payload already has both IDs. Update `ml/predict_players.py` to include them alongside `name`/`logo` in `completed[]` and `upcoming[]` entries. **Without this, matches cannot FK-resolve and `match` rows cannot be inserted.** |
+| **P0-M4** | `player_injury_trend` (single delta number per player) | `graph_data.player_injury_trend` | Decide where this is computed: ML side (preferred) or ingestor. Suggested formula: `last_5_gw_avg - prior_5_gw_avg`, stored as 0–1 fraction. Also drives the trending-risk dashboard. |
+| **P0-M5** | `current_gameweek` (e.g. `"GW15"`) | `graph_data.graph_data_current_gw` | Compute from today's date vs. 2025-08-16 season start. Single global value — produce once in ingestor. |
+| **P0-M6** | `games_missed` per **past** season inside `season_stats[]` | `player_season.player_season_games_missed` | Today the ML only exposes `matches_missed_this_season` at the summary level — no per-past-season breakdown. Add a `games_missed` field to each `season_stats[]` element by intersecting injury date ranges with each season's fixtures. (Acceptable interim: zero out for past seasons and flag.) |
+
+#### P0-M1-impl: Unsplash flag-fetch details
+- **Where:** add to `ml/predict_players.py` near the end of the export step (or factor into a small `ml/fetch_nation_flags.py` module called from there).
+- **Steps:**
+  1. Collect `unique_nations = sorted(set(p["nationality"] for p in predictions if p.get("nationality")))`.
+  2. For each nation, call Unsplash search: `GET https://api.unsplash.com/search/photos?query={nation}+flag&per_page=1&orientation=landscape` with header `Authorization: Client-ID {UNSPLASH_ACCESS_KEY}`.
+  3. Extract `results[0].urls.regular` (fallback: `urls.small`; if zero results, set `null`).
+  4. Cache results in a local file (e.g. `data/raw/nation_flags.json`) so we only hit Unsplash for new nations on subsequent runs — Unsplash free tier is 50 req/hour.
+  5. Emit a top-level array in the ML output (recommend new file `output/nations.json` to keep `predictions.json` player-shaped):
+     ```json
+     [
+       {"nation_name": "France", "nation_flag_image": "https://images.unsplash.com/photo-..."},
+       {"nation_name": "England", "nation_flag_image": "https://images.unsplash.com/photo-..."}
+     ]
+     ```
+- **Env:** `UNSPLASH_ACCESS_KEY` in `.env` (do not commit). Document in README.
+- **Caveat:** Unsplash returns generic photos tagged "{country} flag" — quality is inconsistent (sometimes a flag, sometimes a landscape). If results look poor in practice, swap source to `https://flagcdn.com/w320/{iso2}.png` (deterministic, free, no API key) — keep the same `nations[]` output shape so the ingestor doesn't change.
+- **Ingestor consumption:** `ingest_predictions.py` step 4 (insert `nation`) reads `output/nations.json` instead of deriving the list from player records.
+
+### 2.3 Non-blocking but flagged (defer past Phase 0)
+
+| # | Field | Status |
+|---|---|---|
+| P0-N1 | `marketValue` (`Player.marketValue`) | Not in any data source you collect. Needs Transfermarkt or manual feed. Frontend already tolerates absent. |
+| P0-N2 | `preferredFoot` (`Player.preferredFoot`) | Available in API-Football — easy to add to ML export when convenient. |
+| P0-N3 | `dateOfBirth` (`Player.dateOfBirth`) | Available in API-Football — same as N2. |
+| P0-N4 | `avgDistance`, `sprintsPerMatch` | Not in any source you collect. Recommend dropping from frontend. |
+| P0-N5 | `next_match` per player | ML produces `predictions[].next_match`, but DB has no column. **Recommendation:** drop from ML output; derive server-side in `integration/player_page.py` from the `match` table using `team_id` + earliest unplayed match. No DB or ML change required. |
+
+### 2.4 Phase 0 exit criteria
+- [ ] P0-S1, P0-S2 applied to `server/database_init.py` and DB recreated.
+- [ ] P0-M1, P0-M2 resolved (added to ML or dropped from schema).
+- [ ] P0-M3 added to `output/matches.json` — every entry has `home_team_id` and `away_team_id`.
+- [ ] P0-M4, P0-M5 — decided where computed and confirmed produced.
+- [ ] P0-M6 added to `season_stats[]` (or accepted as zero for past seasons with explicit note).
+- [ ] `output/predictions.json` and `output/matches.json` regenerated with all of the above.
+
+Once all checked, proceed to Phase 1.
+
+---
+
+## 3. Field-level mapping: ML output → DB columns
+
+Reference for the ingestion script. Source records: each entry of `output/predictions.json` (per player) and `output/matches.json` (completed + upcoming). Assumes Phase 0 is complete.
+
+### 3.1 `nation` table
 | DB column | Source |
 |---|---|
 | `nation_name` | `predictions[].nationality` (deduped) |
-| `nation_flag_image` | ⚠️ **MISSING from ML output** — see §4 |
+| `nation_flag_image` | per P0-M1 |
 
-### 2.2 `team` table
+### 3.2 `team` table
 | DB column | Source |
 |---|---|
 | `team_id` | `predictions[].team_id` |
 | `team_name` | `predictions[].team` |
 | `team_logo` | `predictions[].team_logo` |
-| `team_color` | ⚠️ **MISSING** — see §4 |
+| `team_color` | per P0-M2 |
 
-### 2.3 `player` table
+### 3.3 `player` table
 | DB column | Source | Notes |
 |---|---|---|
 | `player_id` | `predictions[].player_id` | |
@@ -54,10 +123,10 @@ Source records: each entry of `output/predictions.json` (per player) and `output
 | `player_weight` | `predictions[].weight` | DB is `str`; format `"68 kg"` |
 | `player_photo` | `predictions[].photo` | |
 | `player_kit_number` | `predictions[].kit_number` | |
-| `player_injury_risk` | `predictions[].injury_risk` | already 0.00–1.00 ✓ |
-| `player_risk_factor_1/2/3` | `predictions[].risk_factor_1/2/3` | ⚠️ **schema is `VARCHAR(50)` but some ML strings exceed 50 chars** — see §4 |
+| `player_injury_risk` | `predictions[].injury_risk` | 0.000–1.000 (P0-S2) |
+| `player_risk_factor_1/2/3` | `predictions[].risk_factor_1/2/3` | up to 100 chars (P0-S1) |
 
-### 2.4 `player_season` table
+### 3.4 `player_season` table
 One row per season per player. Source: `predictions[].season_stats[]`.
 
 | DB column | Source |
@@ -66,7 +135,7 @@ One row per season per player. Source: `predictions[].season_stats[]`.
 | `player_season_year` | `season_stats[].season` |
 | `player_season_appearences` | `season_stats[].appearances` |
 | `player_season_minutes` | `season_stats[].minutes` |
-| `player_season_fouls_drawn` | `season_stats[].fouls_drawn` (nullable in ML — coalesce to 0) |
+| `player_season_fouls_drawn` | `season_stats[].fouls_drawn` (coalesce to 0) |
 | `player_season_fouls_commited` | `season_stats[].fouls_committed` |
 | `player_season_duels_total` | `season_stats[].duels_total` |
 | `player_season_tackles` | `season_stats[].tackles` |
@@ -75,15 +144,15 @@ One row per season per player. Source: `predictions[].season_stats[]`.
 | `player_season_goals` | `season_stats[].goals` |
 | `player_season_assists` | `season_stats[].assists` |
 | `player_season_dribbles_attempts` | `season_stats[].dribbles_attempts` |
-| `player_season_games_missed` | derived from `injury_summary.matches_missed_this_season` for current season — only correct for the current season; for past seasons ⚠️ **not in ML output** (see §4) |
+| `player_season_games_missed` | `season_stats[].games_missed` (P0-M6) |
 | `player_season_rating` | `season_stats[].rating` |
 
-### 2.5 `player_injury` table
+### 3.5 `player_injury` table
 One row per injury. Source: `predictions[].injury_history[]`.
 
 | DB column | Source | Notes |
 |---|---|---|
-| `player_season_id` | derived: match injury `start` year to a `player_season.player_season_year` | requires lookup after seasons inserted |
+| `player_season_id` | derived: match injury `start` year to a `player_season.player_season_year` | resolve after seasons inserted; fallback = most recent season |
 | `player_injury_type` | `injury_history[].type` | |
 | `player_injury_days_out` | `injury_history[].days_out` | |
 | `player_injury_start` | `injury_history[].start` | |
@@ -91,75 +160,74 @@ One row per injury. Source: `predictions[].injury_history[]`.
 | `player_injury_severity` | `injury_history[].severity` | |
 | `player_injury_region` | `injury_history[].body_region` | |
 
-### 2.6 `graph_data` table
+### 3.6 `graph_data` table
 One row per player. Source: `predictions[].injury_risk_trend[]` (38 entries, gw_1…gw_38).
 
 | DB column | Source | Notes |
 |---|---|---|
 | `player_id` | parent | |
-| `gw_1` … `gw_38` | `injury_risk_trend[i].risk` mapped by `gw` label | "Injured" string → `0.99` sentinel (matches the `>= 0.99` check in `integration/player_page.py`) |
-| `player_injury_trend` | ⚠️ **not produced by ML** — compute in ingestion script as `(latest_gw_risk - earliest_gw_risk) * 100` (see §4) |
-| `graph_data_current_gw` | ⚠️ **not in ML output** — compute from today's date (see §4) |
+| `gw_1` … `gw_38` | `injury_risk_trend[i].risk` mapped by `gw` label | "Injured" string → `0.99` sentinel (matches `>= 0.99` check in `integration/player_page.py`) |
+| `player_injury_trend` | per P0-M4 | stored as 0–1 fraction (backend × 100 on read) |
+| `graph_data_current_gw` | per P0-M5 | |
 
-### 2.7 `match` table
+### 3.7 `match` table
 Source: `output/matches.json` (`completed[]` + `upcoming[]`).
 
 | DB column | Source | Notes |
 |---|---|---|
-| `match_id` | auto / use `fixture_id` | |
 | `match_fixture_id` | `fixture_id` | |
-| `home_team_id` | lookup by `home_team.name` | ⚠️ **matches.json gives team name+logo only, no team_id** — see §4 |
-| `away_team_id` | lookup by `away_team.name` | same |
+| `home_team_id` | `home_team_id` (P0-M3) | FK |
+| `away_team_id` | `away_team_id` (P0-M3) | FK |
 | `match_date` | parse from `date` (ISO) | |
 | `match_time` | parse from `date` (ISO) | |
-| `match_game_week` | `round` → normalize to `"gw1"`…`"gw38"` | |
+| `match_game_week` | `round` → normalize `"gw1"`…`"gw38"` (P0-S3) | |
 | `match_venue` | `venue` | |
-| `match_goals_home` | `score.home` (completed only; null/0 for upcoming) | |
+| `match_goals_home` | `score.home` (completed only) | |
 | `match_goals_away` | `score.away` | |
 | `match_is_played` | `true` for `completed[]`, `false` for `upcoming[]` | |
-| `home_avg_injury_risk` | **derived** — `AVG(player.player_injury_risk)` over home team after players inserted | DB field is `NUMERIC(2,2)` — needs widening, see §4 |
+| `home_avg_injury_risk` | **derived post-insert** — `AVG(player.player_injury_risk) WHERE team_id = match.home_team_id AND player_injury_risk < 0.99` | |
 | `away_avg_injury_risk` | same | |
 
-### 2.8 Tables not populated from ML output (out of scope here)
-- `app_user`, `user_favourite` — user-generated; keep current seeding behavior.
+### 3.8 Tables not populated from ML output
+- `app_user`, `user_favourite` — user-generated; keep current seeding behavior (small fixture from `test_data.sql` or equivalent).
 
 ---
 
-## 3. Phase 1 implementation plan
+## 4. Phase 1 — Ingestion script
 
-### 3.1 New script: `server/ingest_predictions.py`
-A single, idempotent script. Re-running replaces ML-derived rows but preserves user data (`app_user`, `user_favourite`).
+### 4.1 New script: `server/ingest_predictions.py`
+A single, idempotent script. Re-running replaces ML-derived rows but preserves user data (`app_user`, `user_favourite`). Same script becomes the Phase 2 cron payload — no rewrite needed.
 
 **Order of operations** (FK constraints):
 1. Load `output/predictions.json` and `output/matches.json`.
 2. Begin transaction.
-3. **Wipe** ML-derived tables in dependency order: `graph_data`, `player_injury`, `player_season`, `match`, `player`, `team`, `nation`. (Do *not* drop the schema — keep `app_user` / `user_favourite`.)
+3. **Wipe** ML-derived tables in dependency order: `graph_data`, `player_injury`, `player_season`, `match`, `player`, `team`, `nation`. Do *not* drop the schema — keep `app_user` / `user_favourite`.
 4. Insert `nation` (dedupe by `nation_name`); build `name → nation_id` map.
 5. Insert `team` (dedupe by `team_id`).
-6. Insert `player` rows; for each:
-   - Truncate `risk_factor_*` to 50 chars (or widen schema — see §4 task A).
-   - Format `height`/`weight` to `"X cm"`/`"X kg"`.
+6. Insert `player` rows; format `height`/`weight` to `"X cm"`/`"X kg"`.
 7. Insert `player_season` rows; build `(player_id, year) → player_season_id` map.
 8. Insert `player_injury` rows; resolve `player_season_id` via the start-year map (fallback: most recent season).
-9. Insert `graph_data` rows:
-   - Map each `injury_risk_trend[]` entry to a `gw_N` column.
-   - "Injured" → `0.99`.
-   - Compute `player_injury_trend = (last_known_gw - first_known_gw) * 100`.
-   - Compute `graph_data_current_gw` from today's date and 2025-08-16 season start.
-10. Insert `match` rows from `matches.json`:
-    - Resolve team IDs by team name → team_id from step 5.
-    - Set `match_is_played` based on completed vs upcoming.
-11. **Update** `match.home_avg_injury_risk` / `away_avg_injury_risk` via SQL: `UPDATE match SET home_avg_injury_risk = (SELECT AVG(player_injury_risk) FROM player WHERE team_id = match.home_team_id AND player_injury_risk < 0.99)` (and same for away). The `< 0.99` filter mirrors the convention in `server/integration/teams.py`.
+9. Insert `graph_data` rows: map each `injury_risk_trend[]` entry to a `gw_N` column; "Injured" → `0.99`; populate `player_injury_trend` and `graph_data_current_gw` per Phase 0 decisions.
+10. Insert `match` rows from `matches.json`; resolve team IDs via `home_team_id`/`away_team_id` (P0-M3).
+11. **Update** `match.home_avg_injury_risk` / `away_avg_injury_risk` via SQL: `UPDATE match SET home_avg_injury_risk = (SELECT AVG(player_injury_risk) FROM player WHERE team_id = match.home_team_id AND player_injury_risk < 0.99)` (and same for away). The `< 0.99` filter mirrors `server/integration/teams.py`.
 12. Commit.
 
-**Performance:** 3,500+ players in `predictions.json` → use SQLAlchemy bulk inserts (`session.bulk_insert_mappings` or `INSERT ... VALUES (...), (...)`) per table. Whole script should finish in seconds.
+**Performance:** 3,500+ players → use SQLAlchemy bulk inserts (`session.bulk_insert_mappings` or multi-row `INSERT`). Whole script should finish in seconds.
 
-### 3.2 Hook into existing seeding
+### 4.2 Hook into existing seeding
 - Update `server/seed_db.py` to: create schema, optionally seed `app_user` from a small fixture, then call `ingest_predictions.py` instead of loading `test_data.sql`.
-- Keep `test_data.sql` around for tests but stop using it as the production seed path.
+- Keep `test_data.sql` for tests but stop using it as the production seed path.
 
-### 3.3 Verification
-After ingestion, smoke-test each frontend endpoint manually:
+### 4.3 Backend integration code changes
+
+| # | Change | File |
+|---|---|---|
+| P1-D1 | New file `server/ingest_predictions.py` (§4.1) | new |
+| P1-D2 | Wire into `seed_db.py` | `server/seed_db.py` |
+| P1-D3 | Confirm `next_match` is derived from `match` table, not stored on player (per P0-N5) | `server/integration/player_page.py` |
+
+### 4.4 Verification
+After ingestion, smoke-test each frontend endpoint:
 - `GET /teams/overview` → non-zero `average_risk_of_injury`, correct counts.
 - `GET /players/{id}/card` → matches `predictions.json` for that player.
 - `GET /players/{id}/graph` → 38 gw_X values, "injured" string where risk ≥ 0.99.
@@ -168,83 +236,38 @@ After ingestion, smoke-test each frontend endpoint manually:
 - `GET /dashboard/high-risk-players` → top 10 sorted by risk DESC.
 - `GET /dashboard/trending-risk-players` → top 10 sorted by `player_injury_trend` DESC.
 
-Add a `tests/test_ingestion.py` that runs the ingest against a temp DB and asserts row counts match the JSON.
-
-### 3.4 Phase 2 stub (don't build now, but don't preclude)
-- The same script should run from a cron / GitHub Action / Celery beat → re-run `ml/predict_players.py` first, then `server/ingest_predictions.py`. Idempotency in §3.1 makes this trivial.
+Add `tests/test_ingestion.py` that runs the ingest against a temp DB and asserts row counts match the JSON.
 
 ---
 
-## 4. **Pre-flight: things that MUST be added before Phase 1 ingestion can succeed**
+## 5. Phase 2 — Daily refresh (out of scope, sketched)
 
-These are concrete blockers. Fix each before running the ingest script.
-
-### A. Schema fixes (DB side — `server/database_init.py`)
-
-| # | Issue | Fix |
-|---|---|---|
-| A1 | `Player.player_risk_factor_1/2/3` is `VARCHAR(50)`. Real ML strings exceed this (e.g. `"Workload spike: ACWR 1.40 with 5 consecutive starts"` = 51 chars). | Widen to `VARCHAR(100)` or `TEXT`. |
-| A2 | `Match.home_avg_injury_risk` and `away_avg_injury_risk` are `NUMERIC(2,2)` — max value `0.99`, cannot store `1.00`. Same precision issue exists on `Player.player_injury_risk` and all `GraphData.gw_N` columns. | Change to `NUMERIC(4,3)` or `NUMERIC(5,4)` for headroom. (Or document that 0.99 is the cap and clamp on write.) |
-| A3 | `Match.match_game_week` is `VARCHAR(10)` — fine, but values must be normalized to `"gw1"` (lowercase, no padding) since frontend hits `/dashboard/matches/gw1`. | Normalize on write. |
-| A4 | `GraphData.player_injury_trend` is `NUMERIC(5,2)` — frontend treats this as an int that it divides by 10 (see `mappers.ts`). Confirm units before populating. | Decide: store as percentage delta (e.g. `15.34`) and have backend pass through, or store as 0–1 and × 100. The current backend code in `integration/player_page.py:131-187` multiplies by 100, so store as **0–1 fraction**. |
-
-### B. Missing fields from ML output (`ml/predict_players.py`)
-
-These are needed in `predictions.json` / `matches.json` to populate the DB completely:
-
-| # | Missing field | Where it goes | Suggested source |
-|---|---|---|---|
-| B1 | `nation_flag_image` (URL per nation) | `nation.nation_flag_image` | API-Football `/players` already returns `birth.country` and you can use `https://media.api-sports.io/flags/{cc}.svg`. Add to ML export keyed by nationality. |
-| B2 | `team_color` (hex) | `team.team_color` | Not in API-Football. Either drop the column or hardcode a static `team_id → color` map (20 PL teams). |
-| B3 | `home_team_id` / `away_team_id` in `matches.json` | `match.home_team_id` / `away_team_id` | Already available in API-Football fixture payload — just include alongside `name`/`logo`. |
-| B4 | `injury_risk_trend` does not include a gameweek-by-gameweek `was_injured`/`is_injured` flag in addition to the "Injured" sentinel string. | Disambiguates real injury from high-risk score. | Confirm current "Injured" string is sufficient (matches frontend convention). If yes — no change. |
-| B5 | `player_injury_trend` (single delta number) per player | `graph_data.player_injury_trend` | Compute in ML or in ingestion script: `last_5_gw_avg - prior_5_gw_avg`. **Decide where it lives** before writing the ingestor. |
-| B6 | `current_gameweek` (e.g. `"GW15"`) — global for the season | `graph_data.graph_data_current_gw` | Compute in ML/ingest from today's date and season start (2025-08-16). |
-| B7 | `games_missed` per past season (not just current) | `player_season.player_season_games_missed` | ML has `injury_history[]` with start/end dates and season_stats; can be computed by intersecting injury date ranges with each season's fixtures. Currently `injury_summary` only exposes `matches_missed_this_season` and `matches_missed_career` — neither is per-season. **Add `games_missed` to each `season_stats[]` element.** |
-| B8 | `season_stats[].interceptions`, `duels_won`, `dribbles_success`, `fouls_drawn` are sometimes null/zero in ML output. | Frontend `SeasonStat` and DB `player_season` | Confirm these come from the API-Football statistics endpoint per season; backfill or document as null-acceptable. |
-
-### C. Fields the frontend renders that nobody is producing
-
-These are not blockers for Phase 1 (frontend already tolerates absent values) — but flag them so they're not forgotten:
-
-| # | Field | Frontend location | Status |
-|---|---|---|---|
-| C1 | `marketValue` | `Player.marketValue` (`mockData.ts:9`) | Not in API-Football. Needs Transfermarkt or manual feed. |
-| C2 | `preferredFoot` | `Player.preferredFoot` | API-Football *does* expose this on the player profile — add to ML export. |
-| C3 | `dateOfBirth` | `Player.dateOfBirth` | Same as C2 — available, just not exported. |
-| C4 | `avgDistance`, `sprintsPerMatch` | `Player.avgDistance`, `Player.sprintsPerMatch` | Not in API-Football. Drop from frontend or source from another provider. |
-| C5 | `next_match` per player on the player card | already produced by ML in `predictions[].next_match` | ⚠️ DB has **no column** for this. Either add to `player` table or query from `match` table at request time using team_id + earliest unplayed match. **Recommended:** drop from ML output; derive in `integration/player_page.py`. |
-
-### D. Backend integration code changes
-
-Once schemas are widened (A) and ML output is enriched (B):
-
-| # | Change | File |
-|---|---|---|
-| D1 | Add `ingest_predictions.py` per §3.1 | new file `server/ingest_predictions.py` |
-| D2 | Wire it into `seed_db.py` | `server/seed_db.py` |
-| D3 | Stop multiplying `player_injury_risk` by 100 if ML widens to fraction (already correct — confirm). | `server/integration/player_page.py:131-187` |
-| D4 | Confirm `next_match` is computed from `match` table, not stored on player | `server/integration/player_page.py` |
+- Cron / GitHub Action / Celery beat runs daily:
+  1. `python ml/predict_players.py` (regenerates `output/predictions.json` and `output/matches.json` from latest API-Football data).
+  2. `python server/ingest_predictions.py` (idempotent — wipes and re-inserts ML-derived tables).
+- No additional code beyond a scheduler config. Phase 1's idempotency guarantees this works.
 
 ---
 
-## 5. TL;DR — checklist before we can run Phase 1 ingestion
+## 6. TL;DR checklist
 
-**Must do first (blockers):**
-- [ ] **A1** Widen `Player.player_risk_factor_1/2/3` to `VARCHAR(100)`.
-- [ ] **A2** Widen all `NUMERIC(2,2)` risk columns (`player_injury_risk`, `home/away_avg_injury_risk`, all `gw_N`) to at least `NUMERIC(4,3)`.
-- [ ] **B1** Add `nation_flag_image` URL per player (or drop the column).
-- [ ] **B2** Decide: drop `team.team_color` or supply a 20-team static map.
-- [ ] **B3** Add `home_team_id` / `away_team_id` to entries in `output/matches.json`.
-- [ ] **B5** Decide where `player_injury_trend` is computed (ML or ingestor) and produce it.
-- [ ] **B6** Decide where `current_gameweek` is computed and produce it.
-- [ ] **B7** Add `games_missed` per past season to `season_stats[]` (or accept zeros for historical seasons).
+**Phase 0 (blockers):**
+- [ ] P0-S1 — Widen `Player.player_risk_factor_1/2/3` to `VARCHAR(100)`.
+- [ ] P0-S2 — All risk columns → `NUMERIC(4,3) CHECK (col BETWEEN 0 AND 1)`.
+- [ ] P0-M1 — Fetch nation flags via Unsplash; emit `output/nations.json` list of `{nation_name, nation_flag_image}`. Cache in `data/raw/nation_flags.json`. `UNSPLASH_ACCESS_KEY` in `.env`.
+- [ ] P0-M2 — Decide `team.team_color`: drop or static map.
+- [ ] P0-M3 — Add `home_team_id` / `away_team_id` to every `output/matches.json` entry.
+- [ ] P0-M4 — Produce `player_injury_trend` (single delta per player).
+- [ ] P0-M5 — Produce `current_gameweek`.
+- [ ] P0-M6 — Add `games_missed` per past season to `season_stats[]`.
+- [ ] Regenerate `output/predictions.json`, `output/matches.json`, `output/nations.json`.
 
-**Then build:**
-- [ ] **D1** Write `server/ingest_predictions.py` (§3.1).
-- [ ] **D2** Update `server/seed_db.py` to call it.
-- [ ] Smoke-test all 10 frontend endpoints (§3.3).
+**Phase 1 (build):**
+- [ ] P1-D1 — Write `server/ingest_predictions.py`.
+- [ ] P1-D2 — Update `server/seed_db.py`.
+- [ ] P1-D3 — Confirm `next_match` derives server-side.
+- [ ] Smoke-test all 10 frontend endpoints.
 
-**Defer (non-blocking for Phase 1):**
-- C1 (market value), C2/C3 (preferred foot, DOB — easy add), C4 (avg distance, sprints — drop), C5 (next_match — derive from `match` table).
+**Deferred (non-blocking):**
+- P0-N1 (market value), P0-N2/N3 (preferred foot, DOB), P0-N4 (avg distance, sprints), P0-N5 (next_match — already addressed via P1-D3).
 - Phase 2 scheduler.
