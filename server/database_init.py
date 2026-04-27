@@ -191,6 +191,10 @@ class GraphData(SQLModel, table=True):
             ' AND '.join(f'gw_{i} BETWEEN 0 AND 1' for i in range(1, 39)),
             name='chk_gw_risk_range'
         ),
+        CheckConstraint(
+            "graph_data_current_gw IN (" + ', '.join(f"'gw{i}'" for i in range(1, 39)) + ")",
+            name='chk_graph_data_current_gw'
+        ),
     )
 
     # Mapping all 38 weeks
