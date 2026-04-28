@@ -1,0 +1,34 @@
+# ── ML pipeline ──────────────────────────────────────────────────────────────
+certifi==2026.2.25
+charset-normalizer==3.4.7
+cloudpickle==3.1.2
+idna==3.11
+joblib==1.5.3
+llvmlite==0.47.0
+numba==0.65.0
+numpy==2.4.4
+packaging==26.1
+pandas==3.0.2
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.2
+requests==2.33.1
+scikit-learn==1.8.0
+scipy==1.17.1
+shap==0.51.0
+six==1.17.0
+slicer==0.0.8
+threadpoolctl==3.6.0
+tqdm==4.67.3
+typing_extensions==4.15.0
+urllib3==2.6.3
+xgboost==3.2.0
+
+# ── FastAPI server ────────────────────────────────────────────────────────────
+fastapi==0.115.12
+uvicorn==0.34.2
+sqlmodel==0.0.24
+sqlalchemy==2.0.41
+psycopg[binary]==3.2.7
+anyio==4.9.0
+starlette==0.46.2
+pydantic==2.11.4
