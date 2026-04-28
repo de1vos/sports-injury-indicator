@@ -26,6 +26,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from sqlalchemy import text, insert
+from create_views import create_all_views
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -108,7 +109,19 @@ def main():
         # Defer FK checks so we can delete + re-insert in bulk without ordering issues
         conn.execute(text("SET CONSTRAINTS ALL DEFERRED"))
 
-        # ── 1. Wipe ML-derived tables ─────────────────────────────────────────
+        # ── 1. Drop materialized views (must happen before table wipe) ────────
+        print("\nDropping materialized views...")
+        for view in (
+            "mv_high_risk_players", "mv_trending_risk_players",
+            "mv_teams_overview", "mv_search_players",
+            "mv_team_player_list", "mv_player_card",
+            "mv_injury_analysis", "mv_reported_injuries",
+            "mv_game_week_matches",
+        ):
+            conn.execute(text(f"DROP MATERIALIZED VIEW IF EXISTS {view}"))
+        print("  views dropped")
+
+        # ── 2. Wipe ML-derived tables ─────────────────────────────────────────
         print("\nClearing ML-derived tables...")
         for tbl in ("graph_data", "player_injury", "player_season", "match",
                     "player", "team", "nation", "season_meta"):
@@ -352,6 +365,12 @@ def main():
         conn.execute(insert(SeasonMeta), [{"current_season_year": season_yr, "current_game_week": current_gw}])
         print(f"  season_meta: year={season_yr}, gw={current_gw}")
 
+        conn.commit()
+
+    # ── Create materialized views ─────────────────────────────────────────────
+    print("\nCreating materialized views...")
+    with engine.connect() as conn:
+        create_all_views(conn)
         conn.commit()
 
     # ── Row count summary ─────────────────────────────────────────────────────
