@@ -620,7 +620,6 @@ def main():
             "risk_factor_2":  factors[1] if len(factors) > 1 else None,
             "risk_factor_3":  factors[2] if len(factors) > 2 else None,
             "injury_trend":   injury_trend,
-            "current_gw":     f"gw{current_gameweek}",
 
             "injury_risk_trend": trend,
 
