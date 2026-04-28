@@ -1,8 +1,7 @@
 from typing import List, TypedDict
-from sqlalchemy import select as sa_select, distinct
+from sqlalchemy import text, select as sa_select, distinct
 from sqlmodel import Session
-from database_init import Player, Team, PlayerInjury
-from integration.common import get_active_player_ids_sq
+from database_init import Team, PlayerInjury
 
 
 class SearchPlayer(TypedDict):
@@ -21,30 +20,15 @@ class SearchTeam(TypedDict):
 
 
 def get_search_players(session: Session) -> List[SearchPlayer]:
-    active_sq = get_active_player_ids_sq(session)
-
-    rows = session.execute(
-        sa_select(  # type: ignore[call-overload, arg-type]
-            Player.player_id,  # type: ignore[arg-type]
-            Player.player_first_name,  # type: ignore[arg-type]
-            Player.player_last_name,  # type: ignore[arg-type]
-            Player.player_photo,  # type: ignore[arg-type]
-            Team.team_name,  # type: ignore[arg-type]
-            Player.player_injury_risk,  # type: ignore[arg-type]
-        )
-        .join(Team, Player.team_id == Team.team_id)  # type: ignore[arg-type]
-        .join(active_sq, active_sq.c.player_id == Player.player_id)
-        .order_by(Player.player_last_name)  # type: ignore[attr-defined]
-    ).all()
-
+    rows = session.execute(text("SELECT * FROM mv_search_players")).mappings().all()
     return [
         {
-            "player_id": row.player_id,
-            "player_first_name": row.player_first_name,
-            "player_last_name": row.player_last_name,
-            "player_photo": row.player_photo,
-            "team_name": row.team_name,
-            "player_injury_risk": round(float(row.player_injury_risk) * 100),
+            "player_id": row["player_id"],
+            "player_first_name": row["player_first_name"],
+            "player_last_name": row["player_last_name"],
+            "player_photo": row["player_photo"],
+            "team_name": row["team_name"],
+            "player_injury_risk": round(float(row["player_injury_risk"]) * 100),
         }
         for row in rows
     ]
