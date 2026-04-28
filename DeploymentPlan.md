@@ -12,6 +12,50 @@
 
 ---
 
+## Branch strategy — read first
+
+**Work on a branch named `deploy`, not `main`.**
+
+```bash
+git checkout -b deploy
+git push -u origin deploy
+```
+
+Do every phase below on `deploy`. Vercel and Render will auto-create **preview deploys** for the branch (free, separate from production), so you can test the live deployed version without breaking anything.
+
+### Where each phase happens
+
+| Phase | Branch / location |
+|---|---|
+| P1 — Code prep | `deploy` branch (commit per task) |
+| P2 — Supabase | Supabase dashboard (no code) |
+| P3 — Render backend | Render dashboard, **point auto-deploy at `deploy`** initially |
+| P4 — Vercel frontend | Vercel dashboard, **import the `deploy` branch** for preview URL |
+| P5 — Custom domain | DNS provider + Vercel/Render dashboards |
+| P6 — GitHub Actions | `.github/workflows/refresh.yml` on `deploy` branch |
+
+### Switching to production
+
+When every smoke-test on `deploy`'s preview URLs passes:
+
+```bash
+git checkout main
+git merge deploy
+git push origin main
+```
+
+Then in Vercel/Render, change the **production branch** to `main`. From that point:
+- Push to `main` → production deploys to `yourdomain.com`.
+- Push to any other branch → preview deploy on a unique URL.
+
+### Caveat — GitHub Actions schedule
+
+`schedule:` triggers only fire on the repo's **default branch** (usually `main`). While testing on `deploy`:
+- Use the Actions tab → "Run workflow" → ref `deploy` to trigger manually.
+- After merging to `main`, the daily 04:00 UTC schedule starts firing automatically.
+
+---
+
 ## Phase 1 — Code prep (local)
 
 Make the codebase deploy-ready. Don't touch any hosting yet.
