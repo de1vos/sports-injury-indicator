@@ -1,8 +1,8 @@
-from datetime import date
 from typing import List, TypedDict
 from sqlalchemy import func, select as sa_select
 from sqlmodel import Session
 from database_init import UserFavourite, Player, Team, PlayerSeason, PlayerInjury, GraphData
+from integration.common import get_season_meta
 
 
 class FavouritePlayer(TypedDict):
@@ -18,8 +18,7 @@ class FavouritePlayer(TypedDict):
 
 
 def get_favourite_players(user_id: int, session: Session) -> List[FavouritePlayer]:
-    today = date.today()
-    current_season_year = today.year if today.month >= 8 else today.year - 1
+    current_season_year = get_season_meta(session).current_season_year
 
     latest_season_sq = (
         sa_select(  # type: ignore[call-overload, arg-type]

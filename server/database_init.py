@@ -20,6 +20,24 @@ class Nation(SQLModel, table=True):
 
     players: List["Player"] = Relationship(back_populates="nation")
 
+# 1b. SeasonMeta
+class SeasonMeta(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "season_meta"
+    id: Optional[int] = Field(
+        default=None,
+        primary_key=True,
+        sa_column_args=[Identity(always=True)]
+    )
+    current_season_year: int
+    current_game_week: str = Field(max_length=10)
+
+    __table_args__: ClassVar[tuple] = (
+        CheckConstraint(
+            "current_game_week IN (" + ', '.join(f"'gw{i}'" for i in range(1, 39)) + ")",
+            name='chk_season_meta_game_week'
+        ),
+    )
+
 # 2. Team
 class Team(SQLModel, table=True):
     team_id: Optional[int] = Field(
@@ -184,16 +202,11 @@ class GraphData(SQLModel, table=True):
     )
     player_id: int = Field(foreign_key="player.player_id")
     player_injury_trend: Decimal = Field(sa_column=Column(Numeric(5, 2), nullable=False))
-    graph_data_current_gw: str = Field(max_length=10)
 
     __table_args__: ClassVar[tuple] = (
         CheckConstraint(
             ' AND '.join(f'gw_{i} BETWEEN 0 AND 1' for i in range(1, 39)),
             name='chk_gw_risk_range'
-        ),
-        CheckConstraint(
-            "graph_data_current_gw IN (" + ', '.join(f"'gw{i}'" for i in range(1, 39)) + ")",
-            name='chk_graph_data_current_gw'
         ),
     )
 

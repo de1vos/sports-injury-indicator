@@ -32,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from database_init import (
     engine,
-    Nation, Team, Player, PlayerSeason, PlayerInjury, GraphData, Match,
+    Nation, Team, Player, PlayerSeason, PlayerInjury, GraphData, Match, SeasonMeta,
 )
 
 OUTPUT_DIR       = ROOT / "output"
@@ -92,7 +92,8 @@ def row_count(conn, table: str) -> int:
 def main():
     print("Loading output files...")
     with open(PREDICTIONS_FILE) as f:
-        players = json.load(f)
+        predictions_raw = json.load(f)
+    players = predictions_raw["players"]
     with open(MATCHES_FILE) as f:
         matches_raw = json.load(f)
     with open(NATIONS_FILE) as f:
@@ -109,7 +110,8 @@ def main():
 
         # ── 1. Wipe ML-derived tables ─────────────────────────────────────────
         print("\nClearing ML-derived tables...")
-        for tbl in ("graph_data", "player_injury", "player_season", "match", "player", "team", "nation"):
+        for tbl in ("graph_data", "player_injury", "player_season", "match",
+                    "player", "team", "nation", "season_meta"):
             conn.execute(text(f"DELETE FROM {tbl}"))
             print(f"  cleared {tbl}")
 
@@ -278,9 +280,8 @@ def main():
                 gw_map[f"gw_{n}"] = INJURED_SENTINEL if risk == "Injured" else clamp_risk(risk)
 
             row: dict = {
-                "player_id":             p["player_id"],
-                "player_injury_trend":   Decimal(str(p.get("injury_trend") or 0)),
-                "graph_data_current_gw": safe_str(p.get("current_gw"), max_len=10, fallback="gw1"),
+                "player_id":           p["player_id"],
+                "player_injury_trend": Decimal(str(p.get("injury_trend") or 0)),
             }
             for i in range(1, 39):
                 row[f"gw_{i}"] = gw_map.get(f"gw_{i}", Decimal("0"))
@@ -344,13 +345,20 @@ def main():
                 ), 0)
         """))
 
+        # ── 10. Season meta ───────────────────────────────────────────────────
+        season_yr  = predictions_raw["current_season"]
+        gw_int     = predictions_raw["current_gameweek"]
+        current_gw = f"gw{gw_int}"
+        conn.execute(insert(SeasonMeta), [{"current_season_year": season_yr, "current_game_week": current_gw}])
+        print(f"  season_meta: year={season_yr}, gw={current_gw}")
+
         conn.commit()
 
     # ── Row count summary ─────────────────────────────────────────────────────
     print(f"\n{'─' * 40}")
     print("Ingestion complete. Row counts:")
     with engine.connect() as conn:
-        for tbl in ("nation", "team", "player", "player_season", "player_injury", "graph_data", "match"):
+        for tbl in ("nation", "team", "player", "player_season", "player_injury", "graph_data", "match", "season_meta"):
             print(f"  {tbl:<20} {row_count(conn, tbl):>6} rows")
 
 

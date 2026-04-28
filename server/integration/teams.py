@@ -1,24 +1,8 @@
-from datetime import date
 from typing import List, TypedDict
 from sqlalchemy import func, select as sa_select
 from sqlmodel import Session
 from database_init import Team, Player, PlayerSeason, PlayerInjury
-
-
-def _current_season_year() -> int:
-    today = date.today()
-    return today.year if today.month >= 8 else today.year - 1
-
-
-def _active_player_ids_sq():
-    """Players whose latest player_season row is the current PL season."""
-    yr = _current_season_year()
-    return (
-        sa_select(PlayerSeason.player_id)  # type: ignore[arg-type]
-        .group_by(PlayerSeason.player_id)
-        .having(func.max(PlayerSeason.player_season_year) == yr)
-        .subquery("active_players")
-    )
+from integration.common import get_season_meta, get_active_player_ids_sq
 
 
 class TeamOverview(TypedDict):
@@ -32,7 +16,7 @@ class TeamOverview(TypedDict):
 
 
 def get_teams_overview(session: Session) -> List[TeamOverview]:
-    active_sq = _active_player_ids_sq()
+    active_sq = get_active_player_ids_sq(session)
     player_stats_sq = (
         sa_select(  # type: ignore[call-overload, arg-type]
             Player.team_id,
@@ -45,8 +29,7 @@ def get_teams_overview(session: Session) -> List[TeamOverview]:
         .subquery("player_stats")
     )
 
-    today = date.today()
-    current_season_year = today.year if today.month >= 8 else today.year - 1
+    current_season_year = get_season_meta(session).current_season_year
     injury_stats_sq = (
         sa_select(  # type: ignore[call-overload, arg-type]
             Player.team_id,

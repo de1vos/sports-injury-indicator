@@ -3,22 +3,7 @@ from typing import List, TypedDict
 from sqlalchemy import func, select as sa_select
 from sqlmodel import Session, select
 from database_init import Player, PlayerSeason, GraphData, Nation, PlayerInjury
-
-
-def _current_season_year() -> int:
-    today = date.today()
-    return today.year if today.month >= 8 else today.year - 1
-
-
-def _active_player_ids_sq():
-    """Players whose latest player_season row is the current PL season."""
-    yr = _current_season_year()
-    return (
-        sa_select(PlayerSeason.player_id)  # type: ignore[arg-type]
-        .group_by(PlayerSeason.player_id)
-        .having(func.max(PlayerSeason.player_season_year) == yr)
-        .subquery("active_players")
-    )
+from integration.common import get_season_meta, get_active_player_ids_sq
 
 
 class TeamPlayerList(TypedDict):
@@ -85,7 +70,6 @@ class InjuryPredictionGraph(TypedDict):
     gw_36: int | str
     gw_37: int | str
     gw_38: int | str
-    graph_data_current_gw: str
     player_injury_trend: int
 
 
@@ -123,7 +107,7 @@ class InjuryAnalysis(TypedDict):
 
 
 def get_team_player_list(team_id: int, session: Session) -> List[TeamPlayerList]:
-    active_sq = _active_player_ids_sq()
+    active_sq = get_active_player_ids_sq(session)
     rows = session.execute(
         sa_select(  # type: ignore[call-overload, arg-type]
             Player.player_id,  # type: ignore[arg-type]
@@ -232,7 +216,7 @@ def get_injury_prediction_graph(player_id: int, session: Session) -> InjuryPredi
         "gw_31": gw_val(graph.gw_31), "gw_32": gw_val(graph.gw_32), "gw_33": gw_val(graph.gw_33),
         "gw_34": gw_val(graph.gw_34), "gw_35": gw_val(graph.gw_35), "gw_36": gw_val(graph.gw_36),
         "gw_37": gw_val(graph.gw_37), "gw_38": gw_val(graph.gw_38),
-        "graph_data_current_gw": graph.graph_data_current_gw,
+        "graph_data_current_gw": get_season_meta(session).current_game_week,
         "player_injury_trend": round(float(graph.player_injury_trend)),
     }
 
@@ -293,8 +277,7 @@ def get_injury_history(player_id: int, session: Session) -> List[InjuryHistory]:
 
 
 def get_injury_analysis(player_id: int, session: Session) -> InjuryAnalysis:
-    today = date.today()
-    current_season_year = today.year if today.month >= 8 else today.year - 1
+    current_season_year = get_season_meta(session).current_season_year
 
     total_stats = session.execute(
         sa_select(  # type: ignore[call-overload, arg-type]

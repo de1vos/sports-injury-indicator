@@ -6,9 +6,9 @@ import integration.dashboard as dashboard
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
-@router.get("/matches/{game_week}")
-def game_week_matches(game_week: str, session: Session = Depends(get_session)):
-    return dashboard.get_game_week_matches(game_week, session)
+@router.get("/matches")
+def game_week_matches(session: Session = Depends(get_session)):
+    return dashboard.get_game_week_matches(session)
 
 
 @router.get("/high-risk-players")
