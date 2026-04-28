@@ -1,43 +1,6 @@
 {
-  "completed": [
-    {
-      "fixture_id": 1379285,
-      "date": "2026-04-13T19:00:00+00:00",
-      "round": "Regular Season - 32",
-      "home_team_id": 33,
-      "away_team_id": 63,
-      "home_team": {
-        "name": "Manchester United",
-        "logo": "https://media.api-sports.io/football/teams/33.png"
-      },
-      "away_team": {
-        "name": "Leeds",
-        "logo": "https://media.api-sports.io/football/teams/63.png"
-      },
-      "venue": "Old Trafford",
-      "score": {
-        "home": 1,
-        "away": 2
-      }
-    }
-  ],
+  "completed": [],
   "upcoming": [
-    {
-      "fixture_id": 1379305,
-      "date": "2026-04-27T19:00:00+00:00",
-      "round": "Regular Season - 34",
-      "home_team_id": 33,
-      "away_team_id": 55,
-      "home_team": {
-        "name": "Manchester United",
-        "logo": "https://media.api-sports.io/football/teams/33.png"
-      },
-      "away_team": {
-        "name": "Brentford",
-        "logo": "https://media.api-sports.io/football/teams/55.png"
-      },
-      "venue": "Old Trafford"
-    },
     {
       "fixture_id": 1379315,
       "date": "2026-05-01T19:00:00+00:00",
@@ -341,6 +304,22 @@
         "logo": "https://media.api-sports.io/football/teams/42.png"
       },
       "venue": "London Stadium"
+    },
+    {
+      "fixture_id": 1379327,
+      "date": "2026-05-11T19:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 47,
+      "away_team_id": 63,
+      "home_team": {
+        "name": "Tottenham",
+        "logo": "https://media.api-sports.io/football/teams/47.png"
+      },
+      "away_team": {
+        "name": "Leeds",
+        "logo": "https://media.api-sports.io/football/teams/63.png"
+      },
+      "venue": "Tottenham Hotspur Stadium"
     }
   ]
 }

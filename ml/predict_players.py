@@ -645,8 +645,14 @@ def main():
     matches_path = OUTPUT_DIR / "matches.json"
     nations_path = OUTPUT_DIR / "nations.json"
 
+    output = {
+        "current_gameweek": current_gameweek,
+        "current_season":   CURRENT_SEASON,
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "players":          records,
+    }
     with open(pred_path, "w") as f:
-        json.dump(records, f, indent=2, default=str)
+        json.dump(output, f, indent=2, default=str)
     with open(matches_path, "w") as f:
         json.dump(matches, f, indent=2, default=str)
 
