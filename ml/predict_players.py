@@ -29,6 +29,7 @@ from config import (
     PLAYERS_CSV, SEASON_STATS_CSV, INJURIES_CSV, ML_FEATURES_CSV,
     FIXTURES_FILE, FIXTURES_UPCOMING_FILE,
     MODEL_FILE, OUTPUT_DIR, RISK_THRESHOLDS, CURRENT_SEASON,
+    INJURY_REGIONS_FOR_MODEL,
 )
 from model_utils import SigmoidCalibrator  # required for pickle deserialization
 from nation_flags import write_nations_json
@@ -293,13 +294,16 @@ def get_injury_history(injuries_df: pd.DataFrame, player_id: int) -> list[dict]:
         itype = safe_str(row.get("injury_type"))
         if not itype:
             continue
+        region = safe_str(row.get("body_region"))
+        if region in INJURY_REGIONS_FOR_MODEL:
+            continue
         history.append({
             "type":        itype,
             "start":       str(row["start_date"].date()) if pd.notna(row["start_date"]) else None,
             "end":         str(row["end_date"].date())   if pd.notna(row["end_date"])   else None,
             "days_out":    safe_int(row.get("days_out")),
             "severity":    safe_str(row.get("severity")),
-            "body_region": safe_str(row.get("body_region")),
+            "body_region": region,
         })
     return history
 
@@ -532,7 +536,13 @@ def main():
         for slot, fx in enumerate(ordered_fixtures, start=1):
             fid     = fx["fixture"]["id"]
             fx_date = pd.Timestamp(fx["fixture"]["date"][:10])
-            gw_key  = f"GW{slot}"
+            # Use actual PL round number if available; fall back to slot index
+            round_str = fx["league"].get("round", "")
+            round_parts = round_str.rsplit("-", 1)
+            if len(round_parts) == 2 and round_parts[1].strip().isdigit():
+                gw_key = f"GW{round_parts[1].strip()}"
+            else:
+                gw_key = f"GW{slot}"
             # Determine season for this fixture
             fx_season = CURRENT_SEASON if fx_date >= season_cut else CURRENT_SEASON - 1
 
