@@ -29,7 +29,7 @@ from config import (
     PLAYERS_CSV, SEASON_STATS_CSV, INJURIES_CSV, ML_FEATURES_CSV,
     FIXTURES_FILE, FIXTURES_UPCOMING_FILE,
     MODEL_FILE, OUTPUT_DIR, RISK_THRESHOLDS, CURRENT_SEASON,
-    INJURY_REGIONS_FOR_MODEL,
+    INJURY_REGIONS_FOR_MODEL, BODY_REGION_MAP,
 )
 from model_utils import SigmoidCalibrator  # required for pickle deserialization
 from nation_flags import write_nations_json
@@ -285,6 +285,14 @@ def get_all_season_stats(
 
 # ── Injury history ────────────────────────────────────────────────────────────
 
+def _derive_body_region(injury_type: str) -> str:
+    lower = injury_type.lower()
+    for keyword, region in BODY_REGION_MAP.items():
+        if keyword in lower:
+            return region
+    return "Other"
+
+
 def get_injury_history(injuries_df: pd.DataFrame, player_id: int) -> list[dict]:
     rows = injuries_df[injuries_df["player_id"] == player_id].sort_values(
         "start_date", ascending=False
@@ -294,7 +302,8 @@ def get_injury_history(injuries_df: pd.DataFrame, player_id: int) -> list[dict]:
         itype = safe_str(row.get("injury_type"))
         if not itype:
             continue
-        region = safe_str(row.get("body_region"))
+        # Re-derive from type so stale CSV values don't bypass the filter
+        region = _derive_body_region(itype)
         if region in INJURY_REGIONS_FOR_MODEL:
             continue
         history.append({

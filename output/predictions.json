@@ -1,7 +1,7 @@
 {
   "current_gameweek": 34,
   "current_season": 2025,
-  "generated_at": "2026-04-28T09:29:01.112219+00:00",
+  "generated_at": "2026-04-28T09:36:24.379781+00:00",
   "players": [
     {
       "player_id": 5,
@@ -823,30 +823,6 @@
       },
       "injury_history": [
         {
-          "type": "Loan agreement",
-          "start": "2026-03-15",
-          "end": "2026-04-26",
-          "days_out": 42,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2025-12-21",
-          "end": "2026-01-04",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2025-05-16",
-          "end": "2025-05-30",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-11-06",
           "end": "2024-11-19",
@@ -1655,14 +1631,6 @@
           "days_out": 3,
           "severity": "Minor",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-06",
-          "end": "2023-12-20",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Calf/Shin Injury",
@@ -6633,14 +6601,6 @@
           "body_region": "Groin"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2022-11-13",
-          "end": "2022-11-27",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2022-10-17",
           "end": "2022-10-28",
@@ -7011,14 +6971,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-04-26",
-          "days_out": 127,
-          "severity": "Long-term",
-          "body_region": "Other"
-        },
         {
           "type": "Unknown",
           "start": "2025-08-17",
@@ -7539,14 +7491,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-29",
-          "end": "2025-01-12",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Hamstring",
           "start": "2023-04-10",
           "end": "2023-05-07",
@@ -7963,14 +7907,6 @@
           "days_out": 13,
           "severity": "Moderate",
           "body_region": "Head"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2025-01-04",
-          "end": "2025-02-02",
-          "days_out": 29,
-          "severity": "Severe",
-          "body_region": "Other"
         },
         {
           "type": "Head Injury",
@@ -8709,14 +8645,6 @@
           "days_out": 22,
           "severity": "Moderate",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-11-13",
-          "end": "2022-11-27",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Ankle/Foot Injury",
@@ -9619,14 +9547,6 @@
           "days_out": 12,
           "severity": "Moderate",
           "body_region": "Knee"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-28",
-          "end": "2024-01-11",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knee Injury",
@@ -11541,14 +11461,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-30",
-          "end": "2026-04-26",
-          "days_out": 117,
-          "severity": "Long-term",
-          "body_region": "Other"
-        },
-        {
           "type": "Hamstring",
           "start": "2025-08-24",
           "end": "2025-09-15",
@@ -11603,14 +11515,6 @@
           "days_out": 235,
           "severity": "Long-term",
           "body_region": "Knee"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-03",
-          "end": "2023-12-17",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knock",
@@ -12569,14 +12473,6 @@
           "body_region": "Knee"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-04",
-          "end": "2024-12-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-11-12",
           "end": "2024-11-27",
@@ -13416,14 +13312,6 @@
           "days_out": 5,
           "severity": "Minor",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2025-01-04",
-          "end": "2025-01-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Ankle Injury",
@@ -14459,14 +14347,6 @@
           "body_region": "Thigh"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-04-02",
-          "end": "2024-04-16",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Calf Injury",
           "start": "2024-01-17",
           "end": "2024-02-01",
@@ -14481,14 +14361,6 @@
           "days_out": 1,
           "severity": "Minor",
           "body_region": "Hip"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-11-04",
-          "end": "2023-11-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knock",
@@ -15646,14 +15518,6 @@
           "body_region": "Knee"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-26",
-          "end": "2025-01-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Groin Injury",
           "start": "2024-05-19",
           "end": "2024-06-02",
@@ -16388,14 +16252,6 @@
           "end": "2024-11-29",
           "days_out": 3,
           "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-11-11",
-          "end": "2023-11-25",
-          "days_out": 14,
-          "severity": "Moderate",
           "body_region": "Other"
         },
         {
@@ -17844,14 +17700,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-12-16",
-          "end": "2023-12-30",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2023-11-05",
           "end": "2023-11-10",
@@ -18224,14 +18072,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-22",
-          "end": "2026-04-26",
-          "days_out": 125,
-          "severity": "Long-term",
-          "body_region": "Other"
-        },
         {
           "type": "Calf Injury",
           "start": "2024-09-10",
@@ -19183,14 +19023,6 @@
           "body_region": "Knee"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2022-10-20",
-          "end": "2022-11-03",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2022-08-24",
           "end": "2022-08-31",
@@ -19651,14 +19483,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-20",
-          "days_out": 31,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Toe Injury",
           "start": "2025-04-17",
@@ -20742,14 +20566,6 @@
           "days_out": 5,
           "severity": "Minor",
           "body_region": "Groin"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-01-14",
-          "end": "2023-01-28",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Head Injury",
@@ -22051,14 +21867,6 @@
           "body_region": "Shoulder"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-12-16",
-          "end": "2024-02-14",
-          "days_out": 60,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle/Foot Injury",
           "start": "2022-01-03",
           "end": "2022-02-25",
@@ -22463,22 +22271,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2026-04-11",
-          "end": "2026-04-25",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2025-12-20",
-          "end": "2026-01-03",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2025-05-10",
           "end": "2025-05-16",
@@ -22533,14 +22325,6 @@
           "days_out": 15,
           "severity": "Moderate",
           "body_region": "Knee"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-01-02",
-          "end": "2024-01-16",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Groin Injury",
@@ -22945,14 +22729,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-15",
-          "end": "2024-12-29",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-09-11",
           "end": "2024-09-20",
@@ -22977,28 +22753,12 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-11-26",
-          "end": "2023-12-10",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle/Foot Injury",
           "start": "2023-02-06",
           "end": "2023-05-05",
           "days_out": 88,
           "severity": "Severe",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-01-04",
-          "end": "2023-05-14",
-          "days_out": 130,
-          "severity": "Long-term",
-          "body_region": "Other"
         },
         {
           "type": "Foot Injury",
@@ -24117,14 +23877,6 @@
           "body_region": "Foot"
         },
         {
-          "type": "Loan agreement",
-          "start": "2025-10-18",
-          "end": "2025-11-01",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Coach's decision",
           "start": "2025-05-25",
           "end": "2025-06-08",
@@ -24195,14 +23947,6 @@
           "days_out": 1,
           "severity": "Minor",
           "body_region": "Groin"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-06",
-          "end": "2023-12-20",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Thigh Injury",
@@ -25467,22 +25211,6 @@
           "body_region": "Thigh"
         },
         {
-          "type": "Loan agreement",
-          "start": "2023-04-22",
-          "end": "2023-05-27",
-          "days_out": 35,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2022-10-23",
-          "end": "2022-11-06",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Groin Injury",
           "start": "2021-12-15",
           "end": "2022-01-01",
@@ -25899,14 +25627,6 @@
           "days_out": 0,
           "severity": "Long-term",
           "body_region": "Knee"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-11-13",
-          "end": "2022-11-27",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Ankle/Foot Injury",
@@ -26828,14 +26548,6 @@
           "body_region": "Back"
         },
         {
-          "type": "Loan agreement",
-          "start": "2025-01-04",
-          "end": "2025-01-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2024-09-14",
           "end": "2024-09-28",
@@ -27270,26 +26982,10 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2025-04-06",
-          "end": "2025-04-26",
-          "days_out": 20,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Leg Injury",
           "start": "2024-12-28",
           "end": "2025-01-15",
           "days_out": 18,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-04",
-          "end": "2024-12-18",
-          "days_out": 14,
           "severity": "Moderate",
           "body_region": "Other"
         },
@@ -27601,14 +27297,6 @@
           "start": "2023-11-26",
           "end": "2023-12-15",
           "days_out": 19,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-11-04",
-          "end": "2023-11-18",
-          "days_out": 14,
           "severity": "Moderate",
           "body_region": "Other"
         }
@@ -30851,14 +30539,6 @@
           "body_region": "Thigh"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2025-01-04",
-          "end": "2025-01-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Muscle Injury",
           "start": "2024-10-28",
           "end": "2024-10-29",
@@ -34069,14 +33749,6 @@
           "body_region": "Other"
         },
         {
-          "type": "International duty",
-          "start": "2025-12-27",
-          "end": "2026-01-17",
-          "days_out": 21,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Medical Condition",
           "start": "2023-05-22",
           "end": "2023-06-30",
@@ -35132,14 +34804,6 @@
           "days_out": null,
           "severity": "Long-term",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-21",
-          "end": "2025-01-04",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knee Injury",
@@ -36846,14 +36510,6 @@
           "days_out": 18,
           "severity": "Moderate",
           "body_region": "Groin"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-01-03",
-          "end": "2023-01-17",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -37564,14 +37220,6 @@
           "body_region": "Foot"
         },
         {
-          "type": "Personal Reasons",
-          "start": "2024-02-10",
-          "end": "2024-02-24",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Back Injury",
           "start": "2023-07-25",
           "end": "2023-11-29",
@@ -37909,42 +37557,10 @@
           "body_region": "Thigh"
         },
         {
-          "type": "International duty",
-          "start": "2026-01-03",
-          "end": "2026-01-17",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2025-04-21",
           "end": "2025-04-24",
           "days_out": 3,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2025-01-15",
-          "end": "2025-01-17",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2025-01-02",
-          "end": "2025-01-04",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-08",
-          "end": "2024-12-10",
-          "days_out": 2,
           "severity": "Minor",
           "body_region": "Other"
         }
@@ -42766,14 +42382,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Red Card",
-          "start": "2024-10-01",
-          "end": "2024-10-03",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2022-09-10",
           "end": "2022-09-13",
@@ -43995,14 +43603,6 @@
           "end": "2025-08-30",
           "days_out": 14,
           "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2024-09-19",
-          "end": "2024-09-21",
-          "days_out": 2,
-          "severity": "Minor",
           "body_region": "Other"
         }
       ],
@@ -46172,48 +45772,7 @@
         "minutes_missed_this_season": 0,
         "matches_missed_career": null
       },
-      "injury_history": [
-        {
-          "type": "Red Card",
-          "start": "2025-05-08",
-          "end": "2025-05-10",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2025-04-30",
-          "end": "2025-05-02",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2025-04-21",
-          "end": "2025-04-23",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2025-03-28",
-          "end": "2025-03-30",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2025-02-21",
-          "end": "2025-02-23",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        }
-      ],
+      "injury_history": [],
       "next_match": {
         "fixture_id": 1379311,
         "date": "2026-05-03T13:00:00+00:00",
@@ -50495,14 +50054,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-21",
-          "end": "2026-01-31",
-          "days_out": 41,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "injured",
           "start": "2025-08-17",
           "end": "2025-10-18",
@@ -51065,14 +50616,6 @@
           "body_region": "Knee"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-21",
-          "end": "2025-01-04",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Facial Injury",
           "start": "2024-12-19",
           "end": "2024-12-23",
@@ -51167,22 +50710,6 @@
           "days_out": 4,
           "severity": "Minor",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-03-12",
-          "end": "2023-03-31",
-          "days_out": 19,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-11-06",
-          "end": "2022-11-20",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Groin Injury",
@@ -52527,14 +52054,6 @@
           "days_out": 15,
           "severity": "Moderate",
           "body_region": "Knee"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-23",
-          "end": "2024-01-06",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Muscle Injury",
@@ -55528,14 +55047,6 @@
       },
       "injury_history": [
         {
-          "type": "Personal Reasons",
-          "start": "2025-05-25",
-          "end": "2025-06-08",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2025-01-09",
           "end": "2025-01-14",
@@ -56526,14 +56037,6 @@
           "body_region": "Calf"
         },
         {
-          "type": "Loan agreement",
-          "start": "2025-01-19",
-          "end": "2025-02-02",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2024-11-03",
           "end": "2024-12-02",
@@ -56995,14 +56498,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-30",
-          "end": "2026-01-13",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Contusion",
           "start": "2025-09-13",
           "end": "2025-09-27",
@@ -57032,14 +56527,6 @@
           "end": "2025-02-18",
           "days_out": 19,
           "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-30",
-          "end": "2025-03-01",
-          "days_out": 61,
-          "severity": "Severe",
           "body_region": "Other"
         },
         {
@@ -57081,14 +56568,6 @@
           "days_out": 22,
           "severity": "Moderate",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-26",
-          "end": "2024-01-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Shoulder Injury",
@@ -57560,14 +57039,6 @@
           "body_region": "Knee"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-10-20",
-          "end": "2025-03-08",
-          "days_out": 139,
-          "severity": "Long-term",
-          "body_region": "Other"
-        },
-        {
           "type": "Leg Injury",
           "start": "2023-08-13",
           "end": "2024-06-02",
@@ -57606,14 +57077,6 @@
           "days_out": 128,
           "severity": "Long-term",
           "body_region": "Knee"
-        },
-        {
-          "type": "Personal Reasons",
-          "start": "2022-08-27",
-          "end": "2023-02-17",
-          "days_out": 174,
-          "severity": "Long-term",
-          "body_region": "Other"
         },
         {
           "type": "Knock",
@@ -60814,14 +60277,6 @@
           "body_region": "Hip"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-10-08",
-          "end": "2023-10-22",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2023-03-17",
           "end": "2023-03-31",
@@ -60836,14 +60291,6 @@
           "days_out": 27,
           "severity": "Moderate",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-10-15",
-          "end": "2022-10-29",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -62411,14 +61858,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-18",
-          "days_out": 29,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Groin Injury",
           "start": "2025-05-04",
           "end": "2025-07-26",
@@ -63104,14 +62543,6 @@
           "end": "2025-03-13",
           "days_out": 10,
           "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2023-08-25",
-          "end": "2023-08-27",
-          "days_out": 2,
-          "severity": "Minor",
           "body_region": "Other"
         }
       ],
@@ -64711,14 +64142,6 @@
           "body_region": "Ankle"
         },
         {
-          "type": "Personal Reasons",
-          "start": "2024-04-24",
-          "end": "2024-05-08",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knee Injury",
           "start": "2023-10-01",
           "end": "2023-10-20",
@@ -65688,14 +65111,6 @@
           "body_region": "Other"
         },
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-31",
-          "days_out": 42,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Muscle Injury",
           "start": "2024-02-18",
           "end": "2024-03-06",
@@ -66120,14 +65535,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2025-12-13",
-          "end": "2025-12-27",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Hand Injury",
           "start": "2025-04-08",
@@ -67652,14 +67059,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-21",
-          "end": "2026-01-04",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-11-11",
           "end": "2024-11-21",
@@ -67714,14 +67113,6 @@
           "days_out": 11,
           "severity": "Moderate",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-01-22",
-          "end": "2023-02-05",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Inactive",
@@ -69105,14 +68496,6 @@
           "body_region": "Groin"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-11-23",
-          "end": "2024-12-07",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knee Injury",
           "start": "2024-03-27",
           "end": "2024-04-01",
@@ -69484,14 +68867,6 @@
           "days_out": 15,
           "severity": "Moderate",
           "body_region": "Achilles"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2025-01-15",
-          "end": "2025-01-29",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Lacking Match Fitness",
@@ -74128,14 +73503,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-22",
-          "end": "2026-03-08",
-          "days_out": 76,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Calf Injury",
           "start": "2025-10-25",
           "end": "2025-11-08",
@@ -74556,14 +73923,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-15",
-          "end": "2024-12-29",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Knock",
           "start": "2024-11-16",
@@ -75789,14 +75148,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2026-01-04",
-          "end": "2026-01-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Injury",
           "start": "2025-08-23",
@@ -77100,14 +76451,6 @@
           "body_region": "Thigh"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-12-17",
-          "end": "2024-01-13",
-          "days_out": 27,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Shoulder Injury",
           "start": "2023-01-14",
           "end": "2023-02-03",
@@ -77594,14 +76937,6 @@
           "start": "2025-05-09",
           "end": "2025-05-17",
           "days_out": 8,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2025-03-16",
-          "end": "2025-03-30",
-          "days_out": 14,
           "severity": "Moderate",
           "body_region": "Other"
         },
@@ -80277,14 +79612,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-02-01",
-          "days_out": 43,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2024-09-21",
           "end": "2024-10-05",
@@ -81156,14 +80483,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-14",
-          "end": "2024-12-28",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Groin Injury",
           "start": "2024-10-17",
           "end": "2024-10-19",
@@ -81186,14 +80505,6 @@
           "days_out": 24,
           "severity": "Moderate",
           "body_region": "Knee"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-11-12",
-          "end": "2024-01-09",
-          "days_out": 58,
-          "severity": "Severe",
-          "body_region": "Other"
         },
         {
           "type": "Rest",
@@ -81561,14 +80872,6 @@
           "days_out": 48,
           "severity": "Severe",
           "body_region": "Knee"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-21",
-          "end": "2025-01-04",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Groin Injury",
@@ -82243,14 +81546,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-02-01",
-          "days_out": 43,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Knee Injury",
           "start": "2025-02-15",
@@ -84409,14 +83704,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-12-02",
-          "end": "2023-12-16",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2023-11-20",
           "end": "2023-11-26",
@@ -84944,14 +84231,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2025-01-04",
-          "end": "2025-01-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-11-04",
           "end": "2024-11-06",
@@ -85258,14 +84537,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-04-04",
-          "days_out": 105,
-          "severity": "Long-term",
-          "body_region": "Other"
-        },
         {
           "type": "Injured Doubtful",
           "start": "2025-08-23",
@@ -85681,14 +84952,6 @@
           "days_out": 12,
           "severity": "Moderate",
           "body_region": "Head"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-26",
-          "end": "2024-01-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knee Injury",
@@ -86963,14 +86226,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2024-11-30",
-          "end": "2024-12-14",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Knee Injury",
           "start": "2024-11-11",
@@ -88354,14 +87609,6 @@
           "start": "2023-09-14",
           "end": "2023-09-22",
           "days_out": 8,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-01-15",
-          "end": "2023-01-29",
-          "days_out": 14,
           "severity": "Moderate",
           "body_region": "Other"
         },
@@ -91151,14 +90398,6 @@
       },
       "injury_history": [
         {
-          "type": "Loan agreement",
-          "start": "2025-02-22",
-          "end": "2025-03-08",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-05-01",
           "end": "2024-05-04",
@@ -91493,14 +90732,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-22",
-          "end": "2026-01-20",
-          "days_out": 29,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Lacking Match Fitness",
           "start": "2024-09-22",
@@ -96474,14 +95705,6 @@
           "days_out": 2,
           "severity": "Minor",
           "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-30",
-          "end": "2025-01-13",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -97498,14 +96721,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-29",
-          "end": "2025-01-12",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knee Injury",
           "start": "2024-02-04",
           "end": "2024-05-03",
@@ -97520,14 +96735,6 @@
           "days_out": 7,
           "severity": "Minor",
           "body_region": "Hip"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-12-26",
-          "end": "2023-01-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Ankle/Foot Injury",
@@ -100038,14 +99245,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2023-11-03",
-          "end": "2023-11-05",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2021-11-26",
           "end": "2022-03-11",
@@ -100733,14 +99932,6 @@
           "days_out": 36,
           "severity": "Severe",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2025-10-05",
-          "end": "2025-10-19",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knock",
@@ -101877,14 +101068,6 @@
           "days_out": 1,
           "severity": "Minor",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-27",
-          "end": "2024-01-10",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Thigh Injury",
@@ -103629,14 +102812,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-20",
-          "end": "2026-01-03",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ruptured cruciate ligament",
           "start": "2025-08-16",
           "end": "2025-08-30",
@@ -104006,14 +103181,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-31",
-          "days_out": 42,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Knock",
           "start": "2025-01-20",
@@ -105083,14 +104250,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2025-12-20",
-          "end": "2026-01-03",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Inactive",
           "start": "2025-01-04",
@@ -106974,43 +106133,11 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-02-21",
-          "end": "2025-02-23",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-08-16",
-          "end": "2024-08-18",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-06-25",
-          "end": "2023-06-27",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2023-05-31",
           "end": "2023-06-21",
           "days_out": 21,
           "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "International duty",
-          "start": "2023-05-25",
-          "end": "2023-05-27",
-          "days_out": 2,
-          "severity": "Minor",
           "body_region": "Other"
         }
       ],
@@ -108580,16 +107707,7 @@
         "minutes_missed_this_season": 0,
         "matches_missed_career": null
       },
-      "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2025-01-04",
-          "end": "2025-01-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        }
-      ],
+      "injury_history": [],
       "next_match": {
         "fixture_id": 1379312,
         "date": "2026-05-02T14:00:00+00:00",
@@ -110442,14 +109560,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-18",
-          "days_out": 29,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2024-03-09",
           "end": "2024-03-13",
@@ -112030,14 +111140,6 @@
           "body_region": "Thigh"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-04",
-          "end": "2024-12-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Calf Injury",
           "start": "2024-04-14",
           "end": "2024-04-23",
@@ -112052,14 +111154,6 @@
           "days_out": 11,
           "severity": "Moderate",
           "body_region": "Foot"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-10-21",
-          "end": "2023-11-04",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knee Injury",
@@ -116562,14 +115656,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2022-10-16",
-          "end": "2022-10-30",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle/Foot Injury",
           "start": "2022-04-03",
           "end": "2022-04-18",
@@ -117887,22 +116973,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-27",
-          "end": "2026-01-10",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-29",
-          "end": "2025-01-19",
-          "days_out": 21,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knee Injury",
           "start": "2024-02-10",
           "end": "2024-03-02",
@@ -118715,14 +117785,6 @@
       },
       "injury_history": [
         {
-          "type": "Personal Reasons",
-          "start": "2026-01-24",
-          "end": "2026-02-07",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knee Injury",
           "start": "2024-11-28",
           "end": "2025-01-03",
@@ -119173,14 +118235,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-06",
-          "end": "2026-04-03",
-          "days_out": 118,
-          "severity": "Long-term",
-          "body_region": "Other"
-        },
-        {
           "type": "Muscle Injury",
           "start": "2024-12-28",
           "end": "2025-01-03",
@@ -119606,14 +118660,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-29",
-          "end": "2025-01-12",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Head Injury",
           "start": "2023-09-01",
@@ -120419,14 +119465,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-22",
-          "end": "2026-01-31",
-          "days_out": 40,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "National selection",
           "start": "2024-01-13",
           "end": "2024-02-24",
@@ -120853,28 +119891,12 @@
           "body_region": "Arm"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-12-17",
-          "end": "2023-12-31",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle/Foot Injury",
           "start": "2023-04-24",
           "end": "2023-04-27",
           "days_out": 3,
           "severity": "Minor",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-11-06",
-          "end": "2022-11-20",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knock",
@@ -121223,14 +120245,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2025-11-22",
-          "end": "2025-12-06",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2025-02-18",
           "end": "2025-03-04",
@@ -121245,14 +120259,6 @@
           "days_out": 14,
           "severity": "Moderate",
           "body_region": "Groin"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-26",
-          "end": "2025-01-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Calf Injury",
@@ -121852,14 +120858,6 @@
           "days_out": 11,
           "severity": "Moderate",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-30",
-          "end": "2024-01-13",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Thigh Injury",
@@ -123696,66 +122694,10 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-03-07",
-          "end": "2025-03-09",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2025-01-27",
-          "end": "2025-01-29",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-02-16",
-          "end": "2024-02-18",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2022-04-07",
           "end": "2022-04-12",
           "days_out": 5,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-01-07",
-          "end": "2022-01-09",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-01-04",
-          "end": "2022-01-06",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2021-08-19",
-          "end": "2021-08-21",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2021-03-14",
-          "end": "2021-03-16",
-          "days_out": 2,
           "severity": "Minor",
           "body_region": "Other"
         },
@@ -123774,22 +122716,6 @@
           "days_out": 11,
           "severity": "Moderate",
           "body_region": "Calf"
-        },
-        {
-          "type": "Red Card",
-          "start": "2017-11-17",
-          "end": "2017-11-20",
-          "days_out": 3,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2017-05-01",
-          "end": "2017-05-07",
-          "days_out": 6,
-          "severity": "Minor",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -124076,30 +123002,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2024-03-12",
-          "end": "2024-03-14",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2023-12-15",
-          "end": "2023-12-17",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-05-09",
-          "end": "2023-05-11",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2023-02-19",
           "end": "2023-02-23",
@@ -124116,51 +123018,11 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2022-02-24",
-          "end": "2022-02-26",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2021-11-18",
-          "end": "2021-11-20",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Muscle Injury",
           "start": "2021-05-16",
           "end": "2021-07-18",
           "days_out": 63,
           "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2021-04-18",
-          "end": "2021-04-20",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2021-02-03",
-          "end": "2021-02-12",
-          "days_out": 9,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2019-02-07",
-          "end": "2019-02-09",
-          "days_out": 2,
-          "severity": "Minor",
           "body_region": "Other"
         },
         {
@@ -124172,25 +123034,9 @@
           "body_region": "Other"
         },
         {
-          "type": "Red Card",
-          "start": "2018-12-14",
-          "end": "2018-12-16",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Muscle Injury",
           "start": "2018-03-13",
           "end": "2018-03-15",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2018-02-23",
-          "end": "2018-02-25",
           "days_out": 2,
           "severity": "Minor",
           "body_region": "Other"
@@ -125838,14 +124684,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-02",
-          "end": "2025-12-16",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Thigh Injury",
           "start": "2024-12-01",
           "end": "2025-03-15",
@@ -125868,14 +124706,6 @@
           "days_out": 32,
           "severity": "Severe",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-01-21",
-          "end": "2024-02-04",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Muscle Injury",
@@ -126448,50 +125278,10 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2024-11-06",
-          "end": "2024-11-08",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-08-16",
-          "end": "2024-08-18",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "International duty",
-          "start": "2024-06-10",
-          "end": "2024-07-01",
-          "days_out": 21,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2023-11-29",
           "end": "2023-12-05",
           "days_out": 6,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-08-25",
-          "end": "2023-08-27",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2023-07-07",
-          "end": "2023-07-09",
-          "days_out": 2,
           "severity": "Minor",
           "body_region": "Other"
         },
@@ -128306,14 +127096,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2025-03-08",
-          "end": "2025-04-16",
-          "days_out": 39,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2025-01-04",
           "end": "2025-01-18",
@@ -128336,14 +127118,6 @@
           "days_out": 1,
           "severity": "Minor",
           "body_region": "Knee"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-11-09",
-          "end": "2024-11-23",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knee Injury",
@@ -128710,14 +127484,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-02-07",
-          "days_out": 49,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Knee Injury",
           "start": "2024-04-02",
@@ -134243,14 +133009,6 @@
           "days_out": 1,
           "severity": "Minor",
           "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2025-01-19",
-          "end": "2025-01-21",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -135691,14 +134449,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-21",
-          "end": "2026-01-18",
-          "days_out": 28,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-11-12",
           "end": "2024-11-22",
@@ -137102,14 +135852,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-18",
-          "days_out": 29,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Ankle Injury",
           "start": "2025-09-13",
@@ -138838,14 +137580,6 @@
           "days_out": 24,
           "severity": "Moderate",
           "body_region": "Achilles"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-06",
-          "end": "2024-02-03",
-          "days_out": 59,
-          "severity": "Severe",
-          "body_region": "Other"
         },
         {
           "type": "Knock",
@@ -140656,44 +139390,12 @@
           "body_region": "Groin"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-02-24",
-          "end": "2024-03-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-11-27",
-          "end": "2023-12-11",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Shoulder Injury",
           "start": "2023-08-06",
           "end": "2023-08-18",
           "days_out": 12,
           "severity": "Moderate",
           "body_region": "Shoulder"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-03-06",
-          "end": "2023-03-26",
-          "days_out": 20,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-10-01",
-          "end": "2022-10-15",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -141424,22 +140126,6 @@
           "days_out": 12,
           "severity": "Moderate",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-04-14",
-          "end": "2024-05-05",
-          "days_out": 21,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-17",
-          "end": "2023-12-31",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Head Injury",
@@ -142853,14 +141539,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-17",
-          "days_out": 28,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Shoulder Injury",
           "start": "2025-04-09",
           "end": "2025-05-02",
@@ -143827,14 +142505,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2026-01-04",
-          "end": "2026-01-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Ankle Injury",
           "start": "2025-07-09",
@@ -146919,14 +145589,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Loan agreement",
-          "start": "2025-04-26",
-          "end": "2025-05-10",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2025-01-10",
           "end": "2025-03-14",
@@ -148090,22 +146752,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-22",
-          "end": "2026-01-31",
-          "days_out": 40,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-14",
-          "end": "2024-12-28",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "National selection",
           "start": "2024-01-13",
           "end": "2024-02-24",
@@ -149180,14 +147826,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2025-12-13",
-          "end": "2026-01-31",
-          "days_out": 49,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Bruise on the knee",
           "start": "2025-08-17",
@@ -151653,14 +150291,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-14",
-          "end": "2025-12-28",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Injured Doubtful",
           "start": "2025-08-17",
           "end": "2025-08-31",
@@ -153439,27 +152069,11 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-08",
-          "end": "2025-12-22",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2025-02-17",
           "end": "2025-02-20",
           "days_out": 3,
           "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-14",
-          "end": "2024-12-28",
-          "days_out": 14,
-          "severity": "Moderate",
           "body_region": "Other"
         },
         {
@@ -153469,14 +152083,6 @@
           "days_out": 8,
           "severity": "Moderate",
           "body_region": "Thigh"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-02",
-          "end": "2023-12-16",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -155160,14 +153766,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-12-30",
-          "end": "2026-01-13",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-12-30",
           "end": "2025-01-10",
@@ -155802,22 +154400,6 @@
           "end": "2025-04-05",
           "days_out": 2,
           "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2025-02-25",
-          "end": "2025-03-11",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2024-12-04",
-          "end": "2024-12-18",
-          "days_out": 14,
-          "severity": "Moderate",
           "body_region": "Other"
         },
         {
@@ -156664,22 +155246,6 @@
           "body_region": "Thigh"
         },
         {
-          "type": "Loan agreement",
-          "start": "2024-03-11",
-          "end": "2024-03-25",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2023-11-25",
-          "end": "2023-12-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2023-08-25",
           "end": "2023-09-01",
@@ -157028,14 +155594,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2025-12-06",
-          "end": "2026-02-09",
-          "days_out": 65,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Unknown",
           "start": "2025-08-25",
@@ -157618,30 +156176,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2025-01-10",
-          "end": "2025-01-12",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2025-01-02",
-          "end": "2025-01-04",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2024-11-01",
-          "end": "2024-11-03",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
         {
           "type": "Neck Injury",
           "start": "2023-07-31",
@@ -160534,14 +159068,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-17",
-          "days_out": 28,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Injured Doubtful",
           "start": "2025-08-16",
           "end": "2025-08-30",
@@ -161453,14 +159979,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-31",
-          "days_out": 42,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Calf Injury",
           "start": "2025-03-09",
@@ -163519,22 +162037,6 @@
       },
       "injury_history": [
         {
-          "type": "Loan agreement",
-          "start": "2026-02-12",
-          "end": "2026-03-17",
-          "days_out": 33,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2025-12-03",
-          "end": "2025-12-17",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Thigh Injury",
           "start": "2024-12-08",
           "end": "2025-06-08",
@@ -164327,14 +162829,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-22",
-          "end": "2025-01-05",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Knock",
           "start": "2024-10-27",
@@ -167202,14 +165696,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-16",
-          "end": "2024-12-30",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knee Injury",
           "start": "2024-09-15",
           "end": "2024-09-20",
@@ -167224,14 +165710,6 @@
           "days_out": 8,
           "severity": "Moderate",
           "body_region": "Groin"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-10-29",
-          "end": "2023-11-12",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knee Injury",
@@ -168517,22 +166995,6 @@
       },
       "injury_history": [
         {
-          "type": "Loan agreement",
-          "start": "2026-02-07",
-          "end": "2026-02-21",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2024-11-02",
-          "end": "2024-11-16",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-10-26",
           "end": "2024-11-06",
@@ -168954,14 +167416,6 @@
           "days_out": 5,
           "severity": "Minor",
           "body_region": "Head"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2022-09-16",
-          "end": "2022-09-30",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Hip/Thigh Injury",
@@ -177572,14 +176026,6 @@
           "body_region": "Thigh"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-29",
-          "end": "2025-01-12",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2024-12-15",
           "end": "2024-12-20",
@@ -180132,14 +178578,6 @@
           "body_region": "Knee"
         },
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-18",
-          "days_out": 29,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Leg Injury",
           "start": "2024-09-11",
           "end": "2024-09-13",
@@ -180835,14 +179273,6 @@
           "body_region": "Back"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-02-05",
-          "end": "2023-02-19",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2023-01-14",
           "end": "2023-01-21",
@@ -181308,22 +179738,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Red Card",
-          "start": "2024-10-27",
-          "end": "2024-10-29",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-02-09",
-          "end": "2024-02-11",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
         {
           "type": "Injury",
           "start": "2022-01-19",
@@ -182303,28 +180717,12 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-10-20",
-          "end": "2024-11-03",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2023-12-11",
           "end": "2024-03-01",
           "days_out": 81,
           "severity": "Severe",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-03",
-          "end": "2024-03-02",
-          "days_out": 90,
-          "severity": "Severe",
-          "body_region": "Other"
         },
         {
           "type": "Thigh Injury",
@@ -182989,14 +181387,6 @@
       },
       "injury_history": [
         {
-          "type": "Red Card",
-          "start": "2023-02-18",
-          "end": "2023-02-20",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Ankle Injury",
           "start": "2022-10-23",
           "end": "2022-11-18",
@@ -183628,14 +182018,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-31",
-          "days_out": 42,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Jumpers knee",
           "start": "2025-09-14",
@@ -186110,14 +184492,6 @@
           "body_region": "Ankle"
         },
         {
-          "type": "Loan agreement",
-          "start": "2024-04-13",
-          "end": "2024-06-02",
-          "days_out": 50,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Muscle Injury",
           "start": "2023-12-24",
           "end": "2023-12-29",
@@ -186475,14 +184849,6 @@
           "days_out": 18,
           "severity": "Moderate",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-04",
-          "end": "2024-12-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -188405,36 +186771,12 @@
       },
       "injury_history": [
         {
-          "type": "Loan agreement",
-          "start": "2025-09-27",
-          "end": "2025-10-11",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Head Injury",
           "start": "2025-04-27",
           "end": "2025-05-09",
           "days_out": 12,
           "severity": "Moderate",
           "body_region": "Head"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2025-04-12",
-          "end": "2025-05-17",
-          "days_out": 35,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-11-23",
-          "end": "2024-12-22",
-          "days_out": 29,
-          "severity": "Severe",
-          "body_region": "Other"
         },
         {
           "type": "Knock",
@@ -189341,14 +187683,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2024-02-23",
-          "end": "2024-02-25",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2023-08-04",
           "end": "2023-08-11",
@@ -189362,14 +187696,6 @@
           "end": "2022-08-19",
           "days_out": 35,
           "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2022-06-13",
-          "end": "2022-06-15",
-          "days_out": 2,
-          "severity": "Minor",
           "body_region": "Other"
         }
       ],
@@ -189617,14 +187943,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-31",
-          "days_out": 42,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
         {
           "type": "Knock",
           "start": "2025-05-09",
@@ -192946,28 +191264,12 @@
       },
       "injury_history": [
         {
-          "type": "Loan agreement",
-          "start": "2025-01-14",
-          "end": "2025-01-28",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Groin Injury",
           "start": "2024-10-25",
           "end": "2024-11-08",
           "days_out": 14,
           "severity": "Moderate",
           "body_region": "Groin"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2024-09-14",
-          "end": "2024-09-28",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Hamstring",
@@ -194450,14 +192752,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Loan agreement",
-          "start": "2025-12-07",
-          "end": "2025-12-21",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Injury",
           "start": "2025-08-16",
@@ -200318,14 +198612,6 @@
           "body_region": "Thigh"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-10-21",
-          "end": "2024-06-02",
-          "days_out": 225,
-          "severity": "Long-term",
-          "body_region": "Other"
-        },
-        {
           "type": "Unknown",
           "start": "2023-10-13",
           "end": "2023-10-20",
@@ -202533,14 +200819,6 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-17",
-          "days_out": 28,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2025-02-22",
           "end": "2025-03-11",
@@ -203240,22 +201518,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-21",
-          "end": "2026-01-18",
-          "days_out": 28,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Personal Reasons",
-          "start": "2025-09-27",
-          "end": "2025-10-11",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Ankle Injury",
           "start": "2025-02-16",
@@ -214351,14 +212613,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-26",
-          "end": "2025-01-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2023-12-23",
           "end": "2024-01-13",
@@ -216530,14 +214784,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-29",
-          "end": "2025-01-12",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Hamstring",
           "start": "2024-05-17",
@@ -220162,14 +218408,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2024-12-29",
-          "end": "2025-01-12",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knee Injury",
           "start": "2024-11-16",
           "end": "2024-11-22",
@@ -221080,27 +219318,11 @@
       },
       "injury_history": [
         {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-31",
-          "days_out": 42,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2024-05-10",
           "end": "2024-06-06",
           "days_out": 27,
           "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-12-27",
-          "end": "2024-02-24",
-          "days_out": 59,
-          "severity": "Severe",
           "body_region": "Other"
         },
         {
@@ -225199,14 +223421,6 @@
           "body_region": "Knee"
         },
         {
-          "type": "Loan agreement",
-          "start": "2022-10-16",
-          "end": "2022-10-30",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2022-09-22",
           "end": "2022-10-05",
@@ -228348,14 +226562,6 @@
           "body_region": "Calf"
         },
         {
-          "type": "Loan agreement",
-          "start": "2023-04-27",
-          "end": "2023-05-11",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Calf Injury",
           "start": "2023-01-22",
           "end": "2023-02-10",
@@ -229815,14 +228021,6 @@
           "body_region": "Groin"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2024-11-25",
-          "end": "2024-12-09",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Back Injury",
           "start": "2023-11-05",
           "end": "2023-12-13",
@@ -230247,14 +228445,6 @@
           "days_out": 16,
           "severity": "Moderate",
           "body_region": "Achilles"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2022-11-05",
-          "end": "2022-11-19",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         },
         {
           "type": "Knock",
@@ -231394,14 +229584,6 @@
           "type": "Injury",
           "start": "2026-03-04",
           "end": "2026-03-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2025-11-01",
-          "end": "2025-11-15",
           "days_out": 14,
           "severity": "Moderate",
           "body_region": "Other"
@@ -233180,14 +231362,6 @@
           "body_region": "Ankle"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-12-16",
-          "end": "2023-12-30",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Knock",
           "start": "2020-12-30",
           "end": "2021-05-01",
@@ -234519,22 +232693,6 @@
           "end": "2024-09-27",
           "days_out": 4,
           "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2024-03-09",
-          "end": "2024-03-23",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2023-11-25",
-          "end": "2023-12-09",
-          "days_out": 14,
-          "severity": "Moderate",
           "body_region": "Other"
         },
         {
@@ -239187,14 +237345,6 @@
           "body_region": "Other"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-12-30",
-          "end": "2024-01-13",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Muscle Injury",
           "start": "2023-11-05",
           "end": "2023-11-11",
@@ -240787,14 +238937,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Yellow Cards",
-          "start": "2022-03-04",
-          "end": "2022-03-06",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
         {
           "type": "Ankle Injury",
           "start": "2021-10-08",
@@ -245624,14 +243766,6 @@
           "days_out": 46,
           "severity": "Severe",
           "body_region": "Other"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2023-09-30",
-          "end": "2023-10-14",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -247598,14 +245732,6 @@
           "days_out": 8,
           "severity": "Moderate",
           "body_region": "Groin"
-        },
-        {
-          "type": "Loan agreement",
-          "start": "2023-12-30",
-          "end": "2024-01-13",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -249618,14 +247744,6 @@
       },
       "injury_history": [
         {
-          "type": "Yellow Cards",
-          "start": "2025-03-14",
-          "end": "2025-03-16",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2024-04-12",
           "end": "2024-04-26",
@@ -249638,14 +247756,6 @@
           "start": "2023-09-30",
           "end": "2023-10-01",
           "days_out": 1,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2023-04-08",
-          "end": "2023-04-10",
-          "days_out": 2,
           "severity": "Minor",
           "body_region": "Other"
         },
@@ -251775,14 +249885,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2025-12-20",
-          "end": "2026-01-13",
-          "days_out": 24,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
         {
           "type": "Thigh Injury",
           "start": "2024-10-02",
@@ -256883,14 +254985,6 @@
           "body_region": "Arm"
         },
         {
-          "type": "Yellow Cards",
-          "start": "2023-10-02",
-          "end": "2023-10-16",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        },
-        {
           "type": "Thigh Injury",
           "start": "2023-01-04",
           "end": "2023-03-03",
@@ -259491,16 +257585,7 @@
         "minutes_missed_this_season": 0,
         "matches_missed_career": null
       },
-      "injury_history": [
-        {
-          "type": "Red Card",
-          "start": "2023-12-24",
-          "end": "2023-12-26",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        }
-      ],
+      "injury_history": [],
       "next_match": null
     },
     {
@@ -259799,14 +257884,6 @@
           "start": "2024-12-19",
           "end": "2024-12-24",
           "days_out": 5,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2024-10-24",
-          "end": "2024-10-26",
-          "days_out": 2,
           "severity": "Minor",
           "body_region": "Other"
         }
@@ -263870,14 +261947,6 @@
           "days_out": 13,
           "severity": "Moderate",
           "body_region": "Ankle"
-        },
-        {
-          "type": "Yellow Cards",
-          "start": "2024-12-04",
-          "end": "2024-12-18",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -265031,14 +263100,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Red Card",
-          "start": "2025-05-15",
-          "end": "2025-05-17",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
         {
           "type": "Injury",
           "start": "2025-04-19",
@@ -268741,16 +266802,7 @@
         "minutes_missed_this_season": 0,
         "matches_missed_career": null
       },
-      "injury_history": [
-        {
-          "type": "Loan agreement",
-          "start": "2026-03-21",
-          "end": "2026-04-04",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        }
-      ],
+      "injury_history": [],
       "next_match": {
         "fixture_id": 1379313,
         "date": "2026-05-04T14:00:00+00:00",
@@ -270841,22 +268893,6 @@
       },
       "injury_history": [
         {
-          "type": "Red Card",
-          "start": "2025-05-01",
-          "end": "2025-05-03",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2025-04-24",
-          "end": "2025-04-26",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
           "type": "Injury",
           "start": "2025-04-18",
           "end": "2025-04-19",
@@ -272540,30 +270576,6 @@
           "end": "2026-04-03",
           "days_out": 69,
           "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "International duty",
-          "start": "2025-10-03",
-          "end": "2025-11-01",
-          "days_out": 29,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "International duty",
-          "start": "2025-01-13",
-          "end": "2025-02-21",
-          "days_out": 39,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
-          "type": "International duty",
-          "start": "2024-08-07",
-          "end": "2024-08-09",
-          "days_out": 2,
-          "severity": "Minor",
           "body_region": "Other"
         },
         {
@@ -277165,14 +275177,6 @@
       },
       "injury_history": [
         {
-          "type": "Personal Reasons",
-          "start": "2026-01-31",
-          "end": "2026-03-28",
-          "days_out": 56,
-          "severity": "Severe",
-          "body_region": "Other"
-        },
-        {
           "type": "Thigh Injury",
           "start": "2024-09-20",
           "end": "2024-10-04",
@@ -281172,16 +279176,7 @@
         "minutes_missed_this_season": 0,
         "matches_missed_career": null
       },
-      "injury_history": [
-        {
-          "type": "Red Card",
-          "start": "2023-09-15",
-          "end": "2023-09-17",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        }
-      ],
+      "injury_history": [],
       "next_match": {
         "fixture_id": 1379312,
         "date": "2026-05-02T14:00:00+00:00",
@@ -283185,22 +281180,6 @@
         "matches_missed_career": null
       },
       "injury_history": [
-        {
-          "type": "Red Card",
-          "start": "2025-01-30",
-          "end": "2025-02-01",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
-        {
-          "type": "Red Card",
-          "start": "2024-12-27",
-          "end": "2024-12-29",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        },
         {
           "type": "Injury",
           "start": "2022-12-16",
@@ -287495,16 +285474,7 @@
         "minutes_missed_this_season": 0,
         "matches_missed_career": null
       },
-      "injury_history": [
-        {
-          "type": "Red Card",
-          "start": "2025-01-27",
-          "end": "2025-01-29",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        }
-      ],
+      "injury_history": [],
       "next_match": null
     },
     {
@@ -291319,14 +289289,6 @@
           "days_out": 42,
           "severity": "Severe",
           "body_region": "Ankle"
-        },
-        {
-          "type": "International duty",
-          "start": "2025-02-15",
-          "end": "2025-03-01",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
         }
       ],
       "next_match": {
@@ -294620,16 +292582,7 @@
         "minutes_missed_this_season": 0,
         "matches_missed_career": null
       },
-      "injury_history": [
-        {
-          "type": "International duty",
-          "start": "2024-02-03",
-          "end": "2024-02-17",
-          "days_out": 14,
-          "severity": "Moderate",
-          "body_region": "Other"
-        }
-      ],
+      "injury_history": [],
       "next_match": {
         "fixture_id": 1379310,
         "date": "2026-05-03T18:00:00+00:00",
@@ -318046,16 +315999,7 @@
         "minutes_missed_this_season": 0,
         "matches_missed_career": null
       },
-      "injury_history": [
-        {
-          "type": "Red Card",
-          "start": "2024-11-26",
-          "end": "2024-11-28",
-          "days_out": 2,
-          "severity": "Minor",
-          "body_region": "Other"
-        }
-      ],
+      "injury_history": [],
       "next_match": {
         "fixture_id": 1379310,
         "date": "2026-05-03T18:00:00+00:00",
