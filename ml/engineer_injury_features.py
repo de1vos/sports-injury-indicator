@@ -11,7 +11,10 @@ Output: data/injury_features.csv — one row per player per reference date
 import numpy as np
 import pandas as pd
 from scipy import stats as scipy_stats
-from config import INJURIES_CSV, MATCH_STATS_CSV, DATA_DIR, BODY_REGION_MAP
+from config import (
+    INJURIES_CSV, MATCH_STATS_CSV, DATA_DIR, BODY_REGION_MAP,
+    INJURY_REGIONS_FOR_MODEL,
+)
 
 OUTPUT_FILE = DATA_DIR / "injury_features.csv"
 
@@ -35,11 +38,15 @@ def compute_injury_features(df_player_injuries, ref_date):
     """
     Compute all injury history features for one player
     looking backwards from ref_date.
-    Suspensions are excluded from injury counts.
+    Disciplinary, administrative, and illness records are excluded.
     """
-    # Exclude suspensions
+    # Make sure body_region is populated (older CSVs may lack it)
+    if "body_region" not in df_player_injuries.columns:
+        df_player_injuries = df_player_injuries.assign(
+            body_region=df_player_injuries["injury_type"].apply(get_body_region)
+        )
     injuries = df_player_injuries[
-        ~df_player_injuries["injury_type"].str.lower().str.contains("suspend", na=False)
+        ~df_player_injuries["body_region"].isin(INJURY_REGIONS_FOR_MODEL)
     ].copy()
 
     # Only look at injuries that started before ref_date

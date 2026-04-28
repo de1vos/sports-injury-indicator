@@ -143,8 +143,21 @@ BODY_REGION_MAP = {
     "neck":      "Neck",
     "rib":       "Torso",
     "chest":     "Torso",
-    "illness":   "Illness",
-    "virus":     "Illness",
-    "covid":     "Illness",
-    "suspended": "Disciplinary",
+    "illness":       "Illness",
+    "virus":         "Illness",
+    "covid":         "Illness",
+    "fever":         "Illness",
+    "suspended":     "Disciplinary",
+    "yellow card":   "Disciplinary",
+    "red card":      "Disciplinary",
+    "loan":          "Administrative",
+    "international": "Administrative",
+    "duty":          "Administrative",
+    "personal":      "Administrative",
 }
+
+# Regions that aren't real injuries — excluded from injury counts and the model target.
+NON_INJURY_REGIONS       = {"Disciplinary", "Administrative"}
+# Illness is unavailability but not musculoskeletal — exclude from the prediction target,
+# but the user-facing "matches missed" stats may still want to include it.
+INJURY_REGIONS_FOR_MODEL = NON_INJURY_REGIONS | {"Illness"}

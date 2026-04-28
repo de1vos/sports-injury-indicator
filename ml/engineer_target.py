@@ -11,7 +11,8 @@ Output: data/ml_features.csv — one row per player per match, all features + ta
 
 import pandas as pd
 from config import (
-    INJURIES_CSV, MATCH_STATS_CSV, ML_FEATURES_CSV, DATA_DIR, ALL_SEASONS, CURRENT_SEASON
+    INJURIES_CSV, MATCH_STATS_CSV, ML_FEATURES_CSV, DATA_DIR, ALL_SEASONS, CURRENT_SEASON,
+    INJURY_REGIONS_FOR_MODEL,
 )
 
 ROLLING_FILE  = DATA_DIR / "rolling_features.csv"
@@ -24,15 +25,15 @@ TARGET_COL = f"injured_next_{LOOKAHEAD_DAYS}d"
 
 def compute_target(player_injuries, ref_date):
     """
-    Returns 1 if a new non-suspension injury started within LOOKAHEAD_DAYS
-    after ref_date, else 0.
+    Returns 1 if a new musculoskeletal injury started within LOOKAHEAD_DAYS
+    after ref_date. Disciplinary, administrative, and illness records don't count.
     """
     future_cutoff = ref_date + pd.Timedelta(days=LOOKAHEAD_DAYS)
 
     future_injuries = player_injuries[
         (player_injuries["start_date"] > ref_date) &
         (player_injuries["start_date"] <= future_cutoff) &
-        (~player_injuries["injury_type"].str.lower().str.contains("suspend", na=False))
+        (~player_injuries["body_region"].isin(INJURY_REGIONS_FOR_MODEL))
     ]
     return int(len(future_injuries) > 0)
 

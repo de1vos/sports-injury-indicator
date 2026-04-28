@@ -9,7 +9,7 @@ Output: data/players.csv
 
 import json
 import pandas as pd
-from config import PLAYERS_FILE, SQUADS_FILE, PLAYERS_CSV, ALL_SEASONS
+from config import PLAYERS_FILE, SQUADS_FILE, PLAYERS_CSV, ALL_SEASONS, LEAGUE
 
 
 def parse_height(h) -> float | None:
@@ -66,9 +66,15 @@ def main():
         if not stats:
             continue
 
-        # Pick the stat block with the highest season year
+        # Filter to Premier League only — API returns all leagues a player appeared in,
+        # so a Liverpool→Atalanta loanee would otherwise be tagged with their Atalanta team.
+        pl_stats = [s for s in stats if s.get("league", {}).get("id") == LEAGUE]
+        if not pl_stats:
+            continue
+
+        # Pick the most recent PL stat block
         stat = max(
-            stats,
+            pl_stats,
             key=lambda s: season_order.get(s.get("league", {}).get("season", 0), 0)
         )
 
