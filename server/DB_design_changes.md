@@ -311,9 +311,9 @@ app.include_router(search.router)
 
 | Method | Path | Returns | Notes |
 |---|---|---|---|
-| `GET` | `/search/players` | `[{player_id, player_first_name, player_last_name}]` | Current-season players only; ordered by last name |
-| `GET` | `/search/teams` | `[{team_id, team_name}]` | All teams; ordered alphabetically |
-| `GET` | `/search/season` | `{current_season_year, current_game_week}` | Single `season_meta` row |
+| `GET` | `/search/players` | `[{player_id, player_first_name, player_last_name, player_photo, team_name, player_injury_risk}]` | Current-season players only; ordered by last name |
+| `GET` | `/search/teams` | `[{team_id, team_name, team_logo}]` | All teams; ordered alphabetically |
+| `GET` | `/search/injury-regions` | `[{player_injury_region}]` | All unique injury regions across all `player_injury` rows |
 
 ### 5.3 Field-level mapping
 
@@ -323,22 +323,25 @@ app.include_router(search.router)
 | `player_id` | `player.player_id` |
 | `player_first_name` | `player.player_first_name` |
 | `player_last_name` | `player.player_last_name` |
+| `player_photo` | `player.player_photo` |
+| `team_name` | `team.team_name` (JOIN on `player.team_id`) |
+| `player_injury_risk` | `player.player_injury_risk` (multiplied × 100, rounded) |
 
-Filter: JOIN to `_active_player_ids_sq()` — current-season players only.
+Filter: JOIN to `get_active_player_ids_sq()` — current-season players only. Ordered by last name.
 
 #### `GET /search/teams`
 | Response field | Source |
 |---|---|
 | `team_id` | `team.team_id` |
 | `team_name` | `team.team_name` |
+| `team_logo` | `team.team_logo` |
 
 No filter — all teams in the `team` table.
 
-#### `GET /search/season`
+#### `GET /search/injury-regions`
 | Response field | Source |
 |---|---|
-| `current_season_year` | `season_meta.current_season_year` |
-| `current_game_week` | `season_meta.current_game_week` |
+| `player_injury_region` | `player_injury.player_injury_region` (DISTINCT, ordered alphabetically) |
 
 ---
 

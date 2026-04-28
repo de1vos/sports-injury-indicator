@@ -31,4 +31,4 @@
 - [ ] Register `search.router` in `server/main.py`
 - [ ] Smoke-test `GET /search/players`
 - [ ] Smoke-test `GET /search/teams`
-- [ ] Smoke-test `GET /search/season`
+- [ ] Smoke-test `GET /search/injury-regions`
