@@ -63,7 +63,8 @@ predict:
 # ── Refresh current-season data + predict (weekly use) ───────────────────────
 refresh-current:
 	@echo "\n══ Refreshing current-season fixtures + match stats ══"
-	$(PYTHON) collect_fixtures.py
+	$(PYTHON) collect_fixtures.py --force
+	$(PYTHON) collect_fixtures_upcoming.py --force
 	$(PYTHON) collect_match_stats.py
 	@echo "\n══ Rebuilding CSVs ══"
 	$(PYTHON) build_match_stats.py

@@ -24,12 +24,17 @@ def save_progress(progress: dict):
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", action="store_true", help="Re-fetch even if cached")
+    args = parser.parse_args()
+
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
     progress = load_progress()
 
-    if progress.get("fixtures_2025_done"):
-        print("Fixtures already fetched. Delete 'fixtures_2025_done' from progress.json to re-fetch.")
+    if progress.get("fixtures_2025_done") and not args.force:
+        print("Fixtures already fetched. Use --force to re-fetch.")
         with open(FIXTURES_FILE) as f:
             fixtures = json.load(f)
         print(f"Loaded {len(fixtures)} fixtures from cache.")
