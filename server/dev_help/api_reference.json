@@ -189,6 +189,56 @@
       ]
     }
   },
+  "search": {
+    "GET /search/players": {
+      "description": "All players for search, with team and injury risk",
+      "test_call": "GET /search/players",
+      "example_response": [
+        {
+          "player_id": 1,
+          "player_first_name": "Alexander",
+          "player_last_name": "Isak",
+          "player_photo": "link.to.isak.photo.com",
+          "team_name": "Newcastle United",
+          "player_injury_risk": 62
+        },
+        {
+          "player_id": 10,
+          "player_first_name": "Reece",
+          "player_last_name": "James",
+          "player_photo": "link.to.james.photo.com",
+          "team_name": "Chelsea",
+          "player_injury_risk": 88
+        }
+      ]
+    },
+    "GET /search/teams": {
+      "description": "All teams for search, ordered alphabetically",
+      "test_call": "GET /search/teams",
+      "example_response": [
+        {
+          "team_id": 4,
+          "team_name": "Chelsea",
+          "team_logo": "link.to.chelsea.badge.com"
+        },
+        {
+          "team_id": 1,
+          "team_name": "Liverpool",
+          "team_logo": "link.to.liverpool.badge.com"
+        }
+      ]
+    },
+    "GET /search/injury-regions": {
+      "description": "Distinct injury regions for filtering, ordered alphabetically",
+      "test_call": "GET /search/injury-regions",
+      "example_response": [
+        "Ankle",
+        "Hamstring",
+        "Knee",
+        "Shoulder"
+      ]
+    }
+  },
   "reported_injuries": {
     "GET /reported-injuries/": {
       "description": "All injuries from latest season",
