@@ -73,7 +73,7 @@ def get_high_risk_players(session: Session, user_id: int | None = None) -> List[
         ).mappings().all()
     else:
         rows = session.execute(
-            text("SELECT * FROM mv_high_risk_players WHERE player_injury_risk > 0.50")
+            text("SELECT * FROM mv_high_risk_players WHERE player_injury_risk > 0.10")
         ).mappings().all()
     return [
         {
