@@ -212,7 +212,9 @@ export function TeamPage() {
   const team = teamFromState ?? teamsOverview?.find(t => t.id === teamId) ?? null;
 
   const sortedPlayers = useMemo(() =>
-    [...(playerList ?? [])].sort((a, b) => {
+    (playerList ?? [])
+      .filter(p => p.riskLevel === 'Injured' || (p.injuryRisk ?? 0) > 0)
+      .sort((a, b) => {
       switch (sortBy) {
         case 'risk':      return b.injuryRisk - a.injuryRisk;
         case 'firstName': return a.firstName.localeCompare(b.firstName);
