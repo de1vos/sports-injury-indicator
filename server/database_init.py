@@ -1,9 +1,13 @@
 import os
 from datetime import date, time
 from decimal import Decimal
+from pathlib import Path
 from typing import ClassVar, List, Optional
+from dotenv import load_dotenv
 from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric
 from sqlmodel import Field, Relationship, SQLModel, create_engine
+
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 _db_url = os.environ["DATABASE_URL"]
 if "sslmode" not in _db_url:
