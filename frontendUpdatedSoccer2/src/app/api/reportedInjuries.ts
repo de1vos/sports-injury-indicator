@@ -2,6 +2,9 @@ import { apiFetch } from './client';
 import type { ApiReportedInjury } from './types';
 
 export interface ReportedInjuryItem {
+  playerId: string;
+  teamId: string;
+  photo: string;
   startDate: string;
   endDate: string | null;  // null = ongoing
   firstName: string;
@@ -15,6 +18,9 @@ export interface ReportedInjuryItem {
 }
 
 const mapReportedInjury = (i: ApiReportedInjury): ReportedInjuryItem => ({
+  playerId: String(i.player_id),
+  teamId: String(i.team_id),
+  photo: i.player_photo,
   startDate: i.injury_date_start,
   endDate: i.injury_date_end,
   firstName: i.player_first_name,

@@ -82,8 +82,8 @@ export const usePlayerInjuryAnalysis = (playerId: string | undefined) =>
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
-export const useDashboardMatches = (gameweek?: string) =>
-  useApi(() => dashboardApi.getMatches(gameweek), `matches-${gameweek ?? 'current'}`);
+export const useDashboardMatches = () =>
+  useApi(() => dashboardApi.getMatches(), 'matches-current');
 
 /**
  * userId = undefined  → global (all players)

@@ -9,6 +9,11 @@ export function TeamsPage() {
   const { data: teams, loading } = useTeamsOverview();
 
   const sortedTeams = [...(teams ?? [])].sort((a, b) => {
+    // Teams with no data always go to the bottom regardless of sort mode
+    const aHasData = a.squadSize > 0;
+    const bHasData = b.squadSize > 0;
+    if (aHasData !== bHasData) return aHasData ? -1 : 1;
+
     if (sortBy === 'risk') {
       return b.avgRisk - a.avgRisk;
     } else {
@@ -52,85 +57,103 @@ export function TeamsPage() {
           {/* Team Rows */}
           <div className="space-y-3">
             {sortedTeams.map((team) => {
+              const hasData = team.squadSize > 0;
               const percentInjured = team.percentInjured;
-              return (
+
+              const rowContent = (
+                <>
+                  {/* Mobile View */}
+                  <div className="flex md:hidden items-center gap-4">
+                    <div className={`flex-shrink-0 w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-md overflow-hidden border border-[rgba(0,0,0,0.06)] ${!hasData ? 'opacity-40' : ''}`}>
+                      <img src={team.logo} alt={team.name} className="w-10 h-10 object-contain" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`text-xl font-bold ${hasData ? 'text-[#1A1A2E]' : 'text-[#9CA3AF]'}`}>{team.name}</h3>
+                      {!hasData && <p className="text-xs text-[#C4C9D4] mt-0.5">No current season data</p>}
+                    </div>
+                  </div>
+
+                  {/* Desktop View */}
+                  <div className="hidden md:flex items-center gap-4">
+                    <div className={`flex-shrink-0 w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-md overflow-hidden border border-[rgba(0,0,0,0.06)] ${!hasData ? 'opacity-40' : ''}`}>
+                      <img src={team.logo} alt={team.name} className="w-10 h-10 object-contain" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`text-xl font-bold ${hasData ? 'text-[#1A1A2E]' : 'text-[#9CA3AF]'}`}>{team.name}</h3>
+                      {!hasData && <p className="text-xs text-[#C4C9D4] mt-0.5">No current season data</p>}
+                    </div>
+
+                    {hasData ? (
+                      <div className="flex items-center gap-8">
+                        <div className="text-center">
+                          <div className="text-xs text-[#6B7280] mb-1">Avg Risk</div>
+                          <div
+                            className="text-lg font-bold px-3 py-1 rounded-lg text-white"
+                            style={{ backgroundColor: getRiskColor(team.avgRisk), fontFamily: 'var(--font-mono)' }}
+                          >
+                            {team.avgRisk}%
+                          </div>
+                        </div>
+
+                        <div className="text-center">
+                          <div className="text-xs text-[#6B7280] mb-1">Active Injuries</div>
+                          <div className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                            {team.totalInjuries}
+                          </div>
+                        </div>
+
+                        <div className="text-center">
+                          <div className="text-xs text-[#6B7280] mb-1">Squad</div>
+                          <div className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                            {team.squadSize}
+                          </div>
+                        </div>
+
+                        <div className="text-center">
+                          <div className="text-xs text-[#6B7280] mb-1">% Injured</div>
+                          <div className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                            {percentInjured}%
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <span className="text-xs font-medium text-[#C4C9D4] bg-[#F9FAFB] px-3 py-1.5 rounded-lg border border-[rgba(0,0,0,0.06)]">
+                          No data available
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex-shrink-0">
+                      {hasData ? (
+                        <svg className="w-6 h-6 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      ) : (
+                        <div className="w-6 h-6" />
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+
+              return hasData ? (
                 <Link
                   key={team.id}
                   to={`/team/${team.id}`}
                   state={{ team }}
                   className="block bg-gradient-to-r from-white to-[#F5F6FA] rounded-2xl p-5 border-2 border-[rgba(0,0,0,0.06)] hover:border-[#1A56DB] hover:shadow-md transition-all"
                 >
-                  {/* Mobile View - Logo and Name only */}
-                  <div className="flex md:hidden items-center gap-4">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-md overflow-hidden border border-[rgba(0,0,0,0.06)]">
-                      <img src={team.logo} alt={team.name} className="w-10 h-10 object-contain" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-bold text-[#1A1A2E]">{team.name}</h3>
-                    </div>
-                  </div>
-
-                  {/* Desktop View - Full stats */}
-                  <div className="hidden md:flex items-center gap-4">
-                    {/* Team Logo */}
-                    <div className="flex-shrink-0 w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-md overflow-hidden border border-[rgba(0,0,0,0.06)]">
-                      <img src={team.logo} alt={team.name} className="w-10 h-10 object-contain" />
-                    </div>
-
-                    {/* Team Name */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-bold text-[#1A1A2E]">{team.name}</h3>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="flex items-center gap-8">
-                      {/* Avg Risk badge */}
-                      <div className="text-center">
-                        <div className="text-xs text-[#6B7280] mb-1">Avg Risk</div>
-                        <div
-                          className="text-lg font-bold px-3 py-1 rounded-lg text-white"
-                          style={{
-                            backgroundColor: getRiskColor(team.avgRisk),
-                            fontFamily: 'var(--font-mono)'
-                          }}
-                        >
-                          {team.avgRisk}%
-                        </div>
-                      </div>
-
-                      {/* Active Injuries */}
-                      <div className="text-center">
-                        <div className="text-xs text-[#6B7280] mb-1">Active Injuries</div>
-                        <div className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {team.totalInjuries}
-                        </div>
-                      </div>
-
-                      {/* Squad Size */}
-                      <div className="text-center">
-                        <div className="text-xs text-[#6B7280] mb-1">Squad</div>
-                        <div className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {team.squadSize}
-                        </div>
-                      </div>
-
-                      {/* % Injured */}
-                      <div className="text-center">
-                        <div className="text-xs text-[#6B7280] mb-1">% Injured</div>
-                        <div className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {percentInjured}%
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Arrow Icon */}
-                    <div className="flex-shrink-0">
-                      <svg className="w-6 h-6 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </div>
+                  {rowContent}
                 </Link>
+              ) : (
+                <div
+                  key={team.id}
+                  className="block bg-gradient-to-r from-white to-[#F5F6FA] rounded-2xl p-5 border-2 border-[rgba(0,0,0,0.04)] opacity-60 cursor-default"
+                >
+                  {rowContent}
+                </div>
               );
             })}
           </div>

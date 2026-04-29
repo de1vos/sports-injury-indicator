@@ -27,7 +27,7 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
   const trendColor = player.riskTrend > 0 ? '#FCA5A5' : '#6EE7B7';
 
   const today = new Date().toISOString().split('T')[0];
-  const isInjured = (player.injuryHistory ?? []).some(entry => entry.until >= today);
+  const isInjured = player.injuryRisk >= 99 || (player.injuryHistory ?? []).some(entry => entry.until >= today);
   const missedMatches = player.injurySummaryData?.matches_missed_this_season ?? Math.round((player.minutesMissed ?? 0) / 90);
 
   const lighterColor = lightenColor(teamColor, 20);
@@ -132,7 +132,7 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
 
           {/* Injury Risk */}
           <div className="text-center mb-4">
-            <div className="text-6xl font-bold leading-none mb-1">
+            <div className="text-6xl font-bold font-mono leading-none mb-1">
               {isInjured ? 'INJ' : `${player.injuryRisk}%`}
             </div>
             <div className="text-[10px] uppercase tracking-widest opacity-75 mb-2">
@@ -153,22 +153,22 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
             <div>
               <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">TREND</div>
-              <div className="text-lg font-bold" style={{ color: trendColor }}>
+              <div className="text-lg font-bold font-mono" style={{ color: trendColor }}>
                 {trendArrow}{Math.abs(player.riskTrend)}%
               </div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">MISSED MATCHES</div>
-              <div className="text-lg font-bold">{missedMatches}</div>
+              <div className="text-lg font-bold font-mono">{missedMatches}</div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">MINS PLAYED</div>
-              <div className="text-lg font-bold">{player.minutesPlayed?.toLocaleString() ?? '-'}</div>
+              <div className="text-lg font-bold font-mono">{player.minutesPlayed?.toLocaleString() ?? '-'}</div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">INJURIES</div>
               <div
-                className="text-lg font-bold"
+                className="text-lg font-bold font-mono"
                 style={{ color: player.injuries >= 2 ? '#FCA5A5' : 'white' }}
               >
                 {player.injuries}

@@ -2,10 +2,15 @@ import { useMemo, useState, useEffect } from 'react';
 import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 import { Player } from '../data/mockData';
 
-interface ChartPoint { week: string; risk: number | null; injuredLine: number | null; injured?: boolean; }
+interface ChartPoint { week: string; risk: number | null; injuredLine: number | null; injured?: boolean; prevSeason?: boolean; }
 
 // GW1 of 2025/26 season started ~Aug 16 2025
 const SEASON_START = new Date('2025-08-16');
+
+function currentGW(): number {
+  const seasonStart = SEASON_START.getTime();
+  return Math.max(1, Math.min(38, Math.ceil((Date.now() - seasonStart) / (7 * 86_400_000))));
+}
 
 function gwToDateRange(gw: number): [Date, Date] {
   const start = new Date(SEASON_START);
@@ -16,8 +21,9 @@ function gwToDateRange(gw: number): [Date, Date] {
 }
 
 function generateGWData(player: Player): ChartPoint[] {
-  const startGW = 13;
-  const endGW = 32;
+  const curGW = currentGW();
+  const startGW = Math.max(1, curGW - 19);
+  const endGW = curGW;
   const raw: Omit<ChartPoint, 'injuredLine'>[] = [];
 
   for (let gw = startGW; gw <= endGW; gw++) {
@@ -45,14 +51,35 @@ function generateGWData(player: Player): ChartPoint[] {
   return addInjuredLine(raw);
 }
 
-function buildTrendData(player: Player): ChartPoint[] {
+function buildTrendData(player: Player, currentGw: number): ChartPoint[] {
   if (!player.injuryRiskTrend?.length) return generateGWData(player);
-  const entries = player.injuryRiskTrend.slice(-20);
-  const raw: Omit<ChartPoint, 'injuredLine'>[] = entries.map(e => ({
+
+  const gwNum = (e: { gw: string }) => parseInt(e.gw.replace('GW', ''), 10);
+
+  const all = [...player.injuryRiskTrend].sort((a, b) => gwNum(a) - gwNum(b));
+
+  // GW numbers ABOVE currentGw belong to the PREVIOUS season (e.g., GW35–38 from 2024/25
+  // that ran before the current season started). They sit on the LEFT of the chart.
+  // GW numbers AT OR BELOW currentGw are the current season — rightmost, ending at "Now".
+  const prevSeason  = all.filter(e => gwNum(e) >  currentGw);   // e.g. GW35–38 from last year
+  const currentSzn  = all.filter(e => gwNum(e) <= currentGw);   // GW1–currentGw this year
+
+  // Show up to 4 tail entries from prev season + up to 11 from current season (15 total)
+  const prevSlice = prevSeason.slice(-4);
+  const currSlice = currentSzn.slice(-11);
+
+  const toPoint = (e: typeof all[0], isPrev: boolean): Omit<ChartPoint, 'injuredLine'> => ({
     week: e.gw,
-    risk: e.risk === 'Injured' ? null : Math.round(e.risk * 10) / 10,
+    risk: e.risk === 'Injured' ? null : Math.round((e.risk as number) * 10) / 10,
     injured: e.risk === 'Injured' ? true : undefined,
-  }));
+    prevSeason: isPrev || undefined,
+  });
+
+  const raw = [
+    ...prevSlice.map(e => toPoint(e, true)),
+    ...currSlice.map(e => toPoint(e, false)),
+  ];
+
   return addInjuredLine(raw);
 }
 
@@ -105,22 +132,33 @@ const getRiskZoneColor = (risk: number) => {
 
 const ANIM_DURATION = 1400;
 
-export function PlayerInjuryRiskChart({ player }: { player: Player }) {
+export function PlayerInjuryRiskChart({ player, currentGw: currentGwProp }: { player: Player; currentGw?: number }) {
+  // Prefer the API-supplied value; fall back to date-computed GW — never hardcoded
+  const currentGw = currentGwProp ?? currentGW();
   const chartData = useMemo(
-    () => buildTrendData(player),
+    () => buildTrendData(player, currentGw),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [player.id, player.injuryRisk, player.riskTrend, player.injuryRiskTrend],
+    [player.id, player.injuryRisk, player.riskTrend, player.injuryRiskTrend, currentGw],
   );
 
   const color = getRiskZoneColor(player.injuryRisk);
   const hasGaps = chartData.some(d => d.risk === null);
   const gwsMissed = hasGaps ? chartData.filter(d => d.risk === null).length : 0;
 
-  // Injured check: mirrors TeamPage Injury Analysis — null/missing 'until' means still injured
+  // Injured check: also treat 99%+ risk as effectively injured
   const today = new Date().toISOString().split('T')[0];
   const isCurrentlyInjured =
+    player.injuryRisk >= 99 ||
     player.riskLevel === 'Injured' ||
     (player.injuryHistory ?? []).some(entry => !entry.until || entry.until >= today);
+
+  // "Now" sits at the current GW — always the rightmost visible point
+  const nowLabel = `GW${currentGw}`;
+
+  // Forecast region (GWs after currentGw) — amber shading to the right of "Now"
+  const prevSeasonWeeks = chartData.filter(d => d.prevSeason).map(d => d.week);
+  const prevSeasonFirst = prevSeasonWeeks[0];
+  const prevSeasonLast = prevSeasonWeeks[prevSeasonWeeks.length - 1];
 
   // ── Counter animation (0 → risk%) — skipped when injured ──────────────────
   const [displayRisk, setDisplayRisk] = useState(0);
@@ -233,6 +271,36 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
               itemStyle={{ color: color, fontFamily: 'var(--font-mono)' }}
               formatter={(value: number | null) => value === null ? ['Injured', ''] : [`${value}%`, 'Risk']}
             />
+            {/* Previous season — amber filled box on the LEFT */}
+            {prevSeasonFirst && prevSeasonLast && (
+              <ReferenceArea
+                x1={prevSeasonFirst}
+                x2={prevSeasonLast}
+                fill="#F59E0B"
+                fillOpacity={0.12}
+                stroke="#F59E0B"
+                strokeOpacity={0.2}
+                label={{ value: 'Prev Season', position: 'insideTopLeft', fill: '#D97706', fontSize: 10, dy: 4 }}
+              />
+            )}
+            {/* Boundary line between prev season and current season */}
+            {prevSeasonLast && (
+              <ReferenceLine
+                x={prevSeasonLast}
+                stroke="#9CA3AF"
+                strokeWidth={1.5}
+                strokeDasharray="4 2"
+              />
+            )}
+            {/* Current GW "Now" marker — always shown at the rightmost (current) GW */}
+            <ReferenceLine
+              x={nowLabel}
+              stroke="#1A56DB"
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+              strokeOpacity={0.55}
+              label={{ value: 'Now', position: 'insideTopRight', fill: '#1A56DB', fontSize: 10, dy: 4 }}
+            />
             {getInjurySpans(chartData).map(({ x1, x2 }, i) => (
               <ReferenceArea key={i} x1={x1} x2={x2} fill="url(#injuredGradient)" fillOpacity={1} stroke="none" />
             ))}
@@ -291,6 +359,12 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
           </div>
           <span className="text-[#6B7280]">Injured</span>
         </div>
+        {prevSeasonFirst && (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-3 rounded bg-[#F59E0B] opacity-40" />
+            <span className="text-[#6B7280]">Prev Season</span>
+          </div>
+        )}
       </div>
     </div>
   );

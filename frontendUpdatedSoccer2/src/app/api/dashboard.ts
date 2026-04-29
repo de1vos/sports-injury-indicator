@@ -5,6 +5,8 @@ import type { ApiDashboardMatch, ApiHighRiskPlayer, ApiTrendingRiskPlayer } from
 
 export interface DashboardMatch {
   id: string;
+  homeTeamId: string | null;  // not returned by backend
+  awayTeamId: string | null;  // not returned by backend
   homeTeamName: string;
   awayTeamName: string;
   homeTeamLogo: string;
@@ -46,15 +48,17 @@ export interface DashboardTrendingPlayer {
 
 const mapMatch = (m: ApiDashboardMatch, idx: number): DashboardMatch => ({
   id: `match-${idx}`,
+  homeTeamId: null,
+  awayTeamId: null,
   homeTeamName: m.home_team_name,
   awayTeamName: m.away_team_name,
   homeTeamLogo: m.home_team_logo,
   awayTeamLogo: m.away_team_logo,
   homeGoals: m.home_team_goals,
   awayGoals: m.away_team_goals,
-  homeAvgRisk: Math.round(m.home_average_injury_risk),
-  awayAvgRisk: Math.round(m.away_average_injury_risk),
-  time: m.match_time.slice(0, 5),
+  homeAvgRisk: Math.round(m.home_average_injury_risk ?? 0),
+  awayAvgRisk: Math.round(m.away_average_injury_risk ?? 0),
+  time: m.match_time ? m.match_time.slice(0, 5) : '',
   date: m.match_date,
   isPlayed: m.match_is_played,
 });
@@ -83,21 +87,12 @@ const mapTrending = (p: ApiTrendingRiskPlayer): DashboardTrendingPlayer => ({
   seasonalInjuries: p.player_seasonal_injuries,
 });
 
-// ── Compute current gameweek (GW1 ≈ Aug 16 2025, 1 GW = 7 days) ─────────────
-
-function currentGameweek(): string {
-  const seasonStart = new Date('2025-08-16').getTime();
-  const gw = Math.max(1, Math.min(38, Math.ceil((Date.now() - seasonStart) / (7 * 86_400_000))));
-  return `gw${gw}`;
-}
-
 // ── API functions ────────────────────────────────────────────────────────────
 
 export const dashboardApi = {
-  /** All matches for a gameweek. Defaults to computed current GW. */
-  getMatches: async (gameweek?: string): Promise<DashboardMatch[]> => {
-    const gw = gameweek ?? currentGameweek();
-    const data = await apiFetch<ApiDashboardMatch[]>(`/dashboard/matches/${gw}`);
+  /** Current gameweek matches — GW is determined server-side from the database. */
+  getMatches: async (): Promise<DashboardMatch[]> => {
+    const data = await apiFetch<ApiDashboardMatch[]>(`/dashboard/matches`);
     return data.map(mapMatch);
   },
 

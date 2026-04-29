@@ -19,10 +19,14 @@ export const playersApi = {
     return mapPlayerCard(data, playerId);
   },
 
-  /** Gameweek risk graph → { trend: RiskTrendEntry[] } */
+  /** Gameweek risk graph → { trend: RiskTrendEntry[], currentGw?: number } */
   getGraph: async (playerId: string) => {
     const data = await apiFetch<ApiPlayerGraph>(`/players/${playerId}/graph`);
-    return { trend: mapGraph(data) };
+    const gwStr = data['graph_data_current_gw'];
+    const currentGw = typeof gwStr === 'string'
+      ? (parseInt(gwStr.replace('gw', ''), 10) || undefined)
+      : undefined;
+    return { trend: mapGraph(data), currentGw };
   },
 
   /** Season stats → { seasons: SeasonStat[] } */

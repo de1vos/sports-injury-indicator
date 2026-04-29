@@ -76,16 +76,17 @@ export interface ApiInjuryAnalysis {
 }
 
 export interface ApiDashboardMatch {
+  // No match_id / home_team_id / away_team_id — backend doesn't return these
   home_team_name: string;
   away_team_name: string;
   home_team_logo: string;
   away_team_logo: string;
   home_team_goals: number | null;
   away_team_goals: number | null;
-  home_average_injury_risk: number; // 0–100 integer
-  away_average_injury_risk: number; // 0–100 integer
-  match_time: string;   // "17:30:00"
-  match_date: string;   // "2026-04-25"
+  home_average_injury_risk: number | null; // 0–100 integer, null when played
+  away_average_injury_risk: number | null; // 0–100 integer, null when played
+  match_time: string | null;  // "17:30:00"
+  match_date: string;         // "2026-04-25"
   match_is_played: boolean;
 }
 
@@ -126,6 +127,9 @@ export interface ApiMyPlayer {
 }
 
 export interface ApiReportedInjury {
+  player_id: number;
+  team_id: number;
+  player_photo: string;
   injury_date_start: string;
   injury_date_end: string | null;  // null = ongoing
   player_first_name: string;

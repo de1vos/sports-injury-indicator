@@ -1,10 +1,16 @@
 @custom-variant dark (&:is(.dark *));
 
+/* Font family tokens — exposed as Tailwind utilities (font-display, font-sans, font-mono) AND as CSS variables */
+@theme {
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'DM Mono', 'SF Mono', Monaco, monospace;
+}
+
 :root {
   --font-size: 16px;
-  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
   --background: #F5F6FA;
+
   --foreground: #1A1A2E;
   --card: #ffffff;
   --card-foreground: #1A1A2E;
@@ -147,27 +153,31 @@
   }
 
   h1 {
+    font-family: var(--font-sans);
     font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-weight: 700;
+    line-height: 1.3;
   }
 
   h2 {
+    font-family: var(--font-sans);
     font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-weight: 700;
+    line-height: 1.3;
   }
 
   h3 {
+    font-family: var(--font-sans);
     font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-weight: 600;
+    line-height: 1.3;
   }
 
   h4 {
+    font-family: var(--font-sans);
     font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-weight: 600;
+    line-height: 1.4;
   }
 
   label {

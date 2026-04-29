@@ -1,10 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useFavorites } from '../hooks/useFavorites';
+import { getRiskColor } from '../data/mockData';
 
 export function MyPlayersPage() {
-  const { favoritePlayers: players, toggleFavorite } = useFavorites();
+  const { favoritePlayers: rawPlayers, toggleFavorite } = useFavorites();
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
+
+  const players = [...rawPlayers].sort((a, b) => {
+    if (a.injuryStatus === 'Injured' && b.injuryStatus !== 'Injured') return -1;
+    if (b.injuryStatus === 'Injured' && a.injuryStatus !== 'Injured') return 1;
+    const aRisk = a.injuryRisk ?? -1;
+    const bRisk = b.injuryRisk ?? -1;
+    return bRisk - aRisk;
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
@@ -18,7 +27,6 @@ export function MyPlayersPage() {
           </p>
         </div>
 
-        {/* View toggle */}
         {players.length > 0 && (
           <div className="flex items-center gap-1 bg-[#F5F6FA] rounded-xl p-1">
             <button
@@ -65,13 +73,15 @@ export function MyPlayersPage() {
         /* ── LIST VIEW ── */
         <div className="bg-white rounded-2xl shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
           {players.map((player, index) => {
+            const isInjured = player.injuryStatus === 'Injured';
             const trendPositive = player.injuryTrend > 0;
             const trendLabel = `${trendPositive ? '+' : ''}${player.injuryTrend.toFixed(1)}%`;
             const href = player.id && player.teamId
               ? `/team/${player.teamId}?player=${player.id}`
               : null;
+
             const inner = (
-              <>
+              <div className="flex items-center gap-3 w-full">
                 {player.photo ? (
                   <img
                     src={player.photo}
@@ -81,28 +91,66 @@ export function MyPlayersPage() {
                 ) : (
                   <div className="w-10 h-10 bg-[#D1D5DB] rounded-full flex-shrink-0" />
                 )}
+
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-[#1A1A2E]">
-                    <span className="font-bold">{player.firstName}</span>{' '}
-                    <span className="font-normal">{player.lastName}</span>
+                    <span className="font-bold">{player.lastName}</span>{' '}
+                    <span className="font-normal">{player.firstName}</span>
                   </div>
-                  <div className="text-xs text-[#6B7280]">{player.teamName} · {player.position}</div>
+                  <div className="text-xs text-[#6B7280]">{player.teamName}</div>
                 </div>
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${trendPositive ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+
+                {/* Injury status */}
+                <span
+                  className="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: isInjured ? '#DC2626' : '#0D9488', color: 'white' }}
+                >
+                  {isInjured ? 'Injured' : 'Fit'}
+                </span>
+
+                {/* Injury risk — only shown when not injured */}
+                {player.injuryRisk != null && !isInjured && (
+                  <span
+                    className="flex-shrink-0 px-2 py-1 rounded-xl text-xs font-bold text-white"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      backgroundColor: getRiskColor(player.injuryRisk),
+                    }}
+                  >
+                    {player.injuryRisk}%
+                  </span>
+                )}
+
+                {/* Trend */}
+                <span className={`flex-shrink-0 text-xs font-semibold px-2 py-1 rounded-full hidden sm:block ${trendPositive ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                   {trendLabel}
                 </span>
-                <span className="text-xs text-[#6B7280] flex-shrink-0 hidden sm:block">
+
+                {/* Season injuries */}
+                <span className="flex-shrink-0 text-xs text-[#6B7280] hidden md:block">
                   {player.seasonalInjuries} inj.
                 </span>
+
+                {/* Minutes played */}
+                {player.minutesPlayed != null && (
+                  <span className="flex-shrink-0 text-xs text-[#6B7280] hidden lg:block" style={{ fontFamily: 'var(--font-mono)' }}>
+                    {player.minutesPlayed} min
+                  </span>
+                )}
+
+                {/* Star / remove */}
                 <button
                   onClick={e => { e.preventDefault(); toggleFavorite(player.id); }}
                   className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F5F6FA] transition-colors text-[#F59E0B]"
                   title="Remove from watchlist"
                 >
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                  </svg>
                 </button>
-              </>
+              </div>
             );
+
             return (
               <div key={player.id ?? `${player.firstName}-${player.lastName}-${index}`}>
                 {href ? (
@@ -123,58 +171,123 @@ export function MyPlayersPage() {
         /* ── CARD VIEW ── */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {players.map((player, index) => {
+            const isInjured = player.injuryStatus === 'Injured';
             const trendPositive = player.injuryTrend > 0;
             const trendLabel = `${trendPositive ? '+' : ''}${player.injuryTrend.toFixed(1)}%`;
             const href = player.id && player.teamId
               ? `/team/${player.teamId}?player=${player.id}`
               : null;
+
             const cardContent = (
               <>
-                <div className="flex items-center gap-3 mb-4">
-                  {player.photo ? (
-                    <img
-                      src={player.photo}
-                      alt={`${player.firstName} ${player.lastName}`}
-                      className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 bg-[#D1D5DB] rounded-full flex-shrink-0" />
-                  )}
-                  <div>
-                    <h3 className="font-bold text-[#1A1A2E]">
-                      {player.firstName} {player.lastName}
-                    </h3>
-                    <p className="text-sm text-[#6B7280]">{player.teamName} · {player.position}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    {player.photo ? (
+                      <img
+                        src={player.photo}
+                        alt={`${player.firstName} ${player.lastName}`}
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-[#D1D5DB] rounded-full flex-shrink-0" />
+                    )}
+                    <div>
+                      <h3 className="font-bold text-[#1A1A2E] leading-tight">
+                        {player.lastName} {player.firstName}
+                      </h3>
+                      <p className="text-sm text-[#6B7280]">{player.teamName}</p>
+                    </div>
                   </div>
+
+                  {/* Star */}
+                  <button
+                    onClick={e => { e.preventDefault(); toggleFavorite(player.id); }}
+                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F5F6FA] transition-colors text-[#F59E0B]"
+                    title="Remove from watchlist"
+                  >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                    </svg>
+                  </button>
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t border-[rgba(0,0,0,0.06)]">
-                  <div>
-                    <div className="text-xs text-[#6B7280] mb-1">Injury Trend</div>
-                    <span className={`text-sm font-semibold px-2 py-1 rounded-full ${trendPositive ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {/* Injury status */}
+                  <div className="flex flex-col gap-0.5 p-2.5 bg-[#F5F6FA] rounded-xl">
+                    <span className="text-xs text-[#6B7280]">Status</span>
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full self-start"
+                      style={{ backgroundColor: isInjured ? '#DC2626' : '#0D9488', color: 'white' }}
+                    >
+                      {isInjured ? 'Injured' : 'Fit'}
+                    </span>
+                  </div>
+
+                  {/* Injury risk */}
+                  <div className="flex flex-col gap-0.5 p-2.5 bg-[#F5F6FA] rounded-xl">
+                    <span className="text-xs text-[#6B7280]">Risk</span>
+                    {isInjured ? (
+                      <span className="text-sm font-bold text-[#DC2626]" style={{ fontFamily: 'var(--font-mono)' }}>INJURED</span>
+                    ) : player.injuryRisk != null ? (
+                      <span
+                        className="text-lg font-bold"
+                        style={{ fontFamily: 'var(--font-mono)', color: getRiskColor(player.injuryRisk) }}
+                      >
+                        {player.injuryRisk}%
+                      </span>
+                    ) : (
+                      <span className="text-lg font-bold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>-</span>
+                    )}
+                  </div>
+
+                  {/* Trend */}
+                  <div className="flex flex-col gap-0.5 p-2.5 bg-[#F5F6FA] rounded-xl">
+                    <span className="text-xs text-[#6B7280]">Trend</span>
+                    <span
+                      className={`text-sm font-semibold px-1.5 py-0.5 rounded-full self-start text-xs ${trendPositive ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
+                    >
                       {trendLabel}
                     </span>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs text-[#6B7280] mb-1">Seasonal Inj.</div>
-                    <div className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: player.seasonalInjuries >= 2 ? '#DC2626' : '#1A1A2E' }}>
+
+                  {/* Season injuries */}
+                  <div className="flex flex-col gap-0.5 p-2.5 bg-[#F5F6FA] rounded-xl">
+                    <span className="text-xs text-[#6B7280]">Season Inj.</span>
+                    <span
+                      className="text-lg font-bold"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        color: player.seasonalInjuries >= 2 ? '#DC2626' : '#1A1A2E',
+                      }}
+                    >
                       {player.seasonalInjuries}
-                    </div>
+                    </span>
                   </div>
                 </div>
+
+                {player.minutesPlayed != null && (
+                  <div className="flex items-center justify-between pt-3 border-t border-[rgba(0,0,0,0.06)]">
+                    <span className="text-xs text-[#6B7280]">Minutes Played</span>
+                    <span className="text-sm font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                      {player.minutesPlayed.toLocaleString()}
+                    </span>
+                  </div>
+                )}
               </>
             );
+
             return href ? (
               <Link
                 key={player.id ?? `${player.firstName}-${player.lastName}-${index}`}
                 to={href}
-                className="block bg-white rounded-2xl p-6 shadow-sm border border-[rgba(0,0,0,0.06)] hover:shadow-md hover:border-[#1A56DB] transition-all"
+                className="block bg-white rounded-2xl p-5 shadow-sm border border-[rgba(0,0,0,0.06)] hover:shadow-md hover:border-[#1A56DB] transition-all"
               >
                 {cardContent}
               </Link>
             ) : (
               <div
                 key={player.id ?? `${player.firstName}-${player.lastName}-${index}`}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-[rgba(0,0,0,0.06)]"
+                className="bg-white rounded-2xl p-5 shadow-sm border border-[rgba(0,0,0,0.06)]"
               >
                 {cardContent}
               </div>

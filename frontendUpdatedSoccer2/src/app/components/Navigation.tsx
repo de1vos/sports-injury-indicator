@@ -1,18 +1,18 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router';
-import { matches, teams, getRiskColor, getAllPlayers } from '../data/mockData';
+import { getRiskColor } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
+import { useSearchData, searchPlayers, searchTeams } from '../hooks/useSearchData';
 import logo from '../../assets/logo.png';
 
-type SearchResult = { type: 'Match' | 'Team' | 'Player'; name: string; path: string; subtitle?: string; risk?: number };
-
-function toMatchResult(match: (typeof matches)[number], home: (typeof teams)[number], away: (typeof teams)[number]): SearchResult {
-  return { type: 'Match', name: `${home.name} vs ${away.name}`, path: `/match/${match.id}`, subtitle: `${match.date} · ${match.time}` };
-}
-
-function toPlayerResult(player: ReturnType<typeof getAllPlayers>[number]): SearchResult {
-  return { type: 'Player', name: `${player.firstName} ${player.lastName}`, path: `/team/${player.teamId}?player=${player.id}`, subtitle: `${player.teamName} · ${player.position}`, risk: player.injuryRisk };
-}
+type SearchResult = {
+  type: 'Team' | 'Player' | 'Region';
+  name: string;
+  path: string;
+  subtitle?: string;
+  risk?: number;
+  isInjured?: boolean;
+};
 
 const NAV_LINKS = [
   { to: '/', label: 'Dashboard', match: (p: string) => p === '/' },
@@ -31,6 +31,7 @@ export function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
   const { favoriteCount } = useFavorites();
+  const { data: searchData, load: loadSearch } = useSearchData();
 
   useEffect(() => {
     if (searchParams.get('search') === 'open') {
@@ -41,59 +42,101 @@ export function Navigation() {
     }
   }, [searchParams, setSearchParams]);
 
-  const searchResults = useMemo(() => {
+  const searchResults = useMemo<SearchResult[]>(() => {
     const query = searchQuery.toLowerCase().trim();
     const results: SearchResult[] = [];
 
     if (!query) {
-      matches
-        .filter(m => m.status === 'upcoming')
+      // Default suggestions: top teams + top players by risk
+      [...searchData.teams]
+        .sort((a, b) => b.avgRisk - a.avgRisk)
         .slice(0, 2)
-        .forEach(match => {
-          const home = teams.find(t => t.id === match.homeTeamId);
-          const away = teams.find(t => t.id === match.awayTeamId);
-          if (home && away) results.push(toMatchResult(match, home, away));
+        .forEach(team => {
+          results.push({
+            type: 'Team',
+            name: team.name,
+            path: `/team/${team.id}`,
+            subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk}%`,
+            risk: team.avgRisk,
+          });
         });
 
-      getAllPlayers()
+      [...searchData.players]
         .sort((a, b) => b.injuryRisk - a.injuryRisk)
         .slice(0, 3)
-        .forEach(player => results.push(toPlayerResult(player)));
+        .forEach(p => {
+          results.push({
+            type: 'Player',
+            name: `${p.firstName} ${p.lastName}`,
+            path: `/team/${p.teamId}?player=${p.id}`,
+            subtitle: p.teamName,
+            risk: p.injuryRisk,
+            isInjured: p.isInjured,
+          });
+        });
 
       return results.slice(0, 5);
     }
 
-    matches.forEach(match => {
-      const home = teams.find(t => t.id === match.homeTeamId);
-      const away = teams.find(t => t.id === match.awayTeamId);
-      if (home && away) {
-        const matchName = `${home.name} vs ${away.name}`.toLowerCase();
-        if (matchName.includes(query) || home.name.toLowerCase().includes(query) || away.name.toLowerCase().includes(query)) {
-          results.push(toMatchResult(match, home, away));
-        }
-      }
+    // Teams — O(log n) BST prefix search with contains fallback
+    const teamMatches = searchData.index
+      ? searchTeams(searchData.index, query, 3)
+      : searchData.teams.filter(t => t.name.toLowerCase().includes(query));
+    teamMatches.forEach(team => {
+      results.push({
+        type: 'Team',
+        name: team.name,
+        path: `/team/${team.id}`,
+        subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk}%`,
+        risk: team.avgRisk,
+      });
     });
 
-    teams.forEach(team => {
-      if (team.name.toLowerCase().includes(query)) {
-        results.push({ type: 'Team', name: team.name, path: `/team/${team.id}`, subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk}%` });
-      }
-    });
+    // Players — O(log n) BST prefix search with contains fallback
+    const playerMatches = searchData.index
+      ? searchPlayers(searchData.index, query, 8)
+      : searchData.players.filter(p =>
+          `${p.firstName} ${p.lastName}`.toLowerCase().includes(query) ||
+          p.lastName.toLowerCase().includes(query),
+        );
+    [...playerMatches]
+      .sort((a, b) => b.injuryRisk - a.injuryRisk)
+      .forEach(p => {
+        results.push({
+          type: 'Player',
+          name: `${p.firstName} ${p.lastName}`,
+          path: `/team/${p.teamId}?player=${p.id}`,
+          subtitle: p.teamName,
+          risk: p.injuryRisk,
+          isInjured: p.isInjured,
+        });
+      });
 
-    getAllPlayers()
-      .filter(player => {
-        const fullName = `${player.firstName} ${player.lastName}`.toLowerCase();
-        return fullName.includes(query) || player.lastName.toLowerCase().includes(query);
-      })
-      .forEach(player => results.push(toPlayerResult(player)));
+    // Injury regions matching query
+    searchData.regions
+      .filter(r => r.toLowerCase().includes(query))
+      .forEach(region => {
+        results.push({
+          type: 'Region',
+          name: region,
+          path: `/reported-injuries?region=${encodeURIComponent(region)}&ongoing=true`,
+          subtitle: 'Reported Injuries · Ongoing',
+        });
+      });
 
     return results.slice(0, 10);
-  }, [searchQuery]);
+  }, [searchQuery, searchData]);
 
   const handleResultClick = (path: string) => {
     navigate(path);
     setSearchQuery('');
     setShowDropdown(false);
+  };
+
+  const BADGE_COLORS: Record<SearchResult['type'], string> = {
+    Team:   'bg-blue-50 text-[#1A56DB]',
+    Player: 'bg-[#F5F6FA] text-[#6B7280]',
+    Region: 'bg-purple-50 text-purple-700',
   };
 
   return (
@@ -136,10 +179,10 @@ export function Navigation() {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search matches, teams, players..."
+                placeholder="Search players, teams, injury regions..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }}
-                onFocus={() => setShowDropdown(true)}
+                onFocus={() => { setShowDropdown(true); loadSearch(); }}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                 className="w-full pl-11 pr-4 py-2.5 bg-[#F5F6FA] border border-transparent rounded-full text-[#1A1A2E] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:bg-white transition-all"
                 style={{ fontFamily: 'var(--font-sans)' }}
@@ -164,16 +207,26 @@ export function Navigation() {
                       <div className="text-[#1A1A2E] font-medium truncate">{result.name}</div>
                       {result.subtitle && <div className="text-sm text-[#6B7280] truncate">{result.subtitle}</div>}
                     </div>
-                    <div className="flex items-center gap-2 ml-3">
-                      {result.type === 'Player' && result.risk !== undefined && (
-                        <span
-                          className="text-xs font-bold px-2 py-1 rounded-full text-white"
-                          style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}
-                        >
-                          {result.risk}%
-                        </span>
+
+                    <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                      {/* Risk / injured badge for players and teams */}
+                      {result.type === 'Player' && (
+                        result.isInjured ? (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                            INJ
+                          </span>
+                        ) : result.risk !== undefined ? (
+                          <span
+                            className="text-xs font-bold px-2 py-1 rounded-full text-white"
+                            style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}
+                          >
+                            {result.risk}%
+                          </span>
+                        ) : null
                       )}
-                      <span className="text-xs font-medium px-2 py-1 rounded-full bg-[#F5F6FA] text-[#6B7280]">
+
+                      {/* Type badge */}
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${BADGE_COLORS[result.type]}`}>
                         {result.type}
                       </span>
                     </div>

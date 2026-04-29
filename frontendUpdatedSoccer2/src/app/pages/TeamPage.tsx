@@ -95,21 +95,30 @@ function SeasonStatisticsTable({ player }: { player: Player }) {
   );
 }
 
-const SEVERITY_STYLES: Record<string, string> = {
-  'Long-term': 'bg-red-100 text-red-700',
-  'Moderate': 'bg-orange-100 text-orange-700',
-  'Minor': 'bg-yellow-100 text-yellow-700',
+const SEVERITY_STYLES: Record<string, { bg: string; text: string }> = {
+  'Long-term': { bg: '#FEE2E2', text: '#DC2626' },
+  'Severe':    { bg: '#FEE2E2', text: '#DC2626' },
+  'Moderate':  { bg: '#FFEDD5', text: '#EA580C' },
+  'Minor':     { bg: '#FEF9C3', text: '#CA8A04' },
 };
 
 const INJURY_COLLAPSE_THRESHOLD = 4;
 
 function InjuryHistoryTable({ player }: { player: Player }) {
   const [expanded, setExpanded] = useState(false);
-  const total = player.injuryHistory.length;
+
+  const sorted = [...player.injuryHistory].sort((a, b) => {
+    if (!a.until && !b.until) return 0;
+    if (!a.until) return -1;
+    if (!b.until) return 1;
+    return new Date(b.until).getTime() - new Date(a.until).getTime();
+  });
+
+  const total = sorted.length;
   const collapsible = total > INJURY_COLLAPSE_THRESHOLD;
   const visible = collapsible && !expanded
-    ? player.injuryHistory.slice(0, INJURY_COLLAPSE_THRESHOLD)
-    : player.injuryHistory;
+    ? sorted.slice(0, INJURY_COLLAPSE_THRESHOLD)
+    : sorted;
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6 w-full">
@@ -122,10 +131,9 @@ function InjuryHistoryTable({ player }: { player: Player }) {
                 <tr className="border-b border-[rgba(0,0,0,0.06)]">
                   <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Diagnosis</th>
                   <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Region</th>
-                  <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">From</th>
-                  <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Until</th>
+                  <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">Start Date</th>
+                  <th className="text-left py-2 px-2 text-xs text-[#6B7280] font-semibold">End Date</th>
                   <th className="text-center py-2 px-2 text-xs text-[#6B7280] font-semibold">Severity</th>
-                  <th className="text-center py-2 px-2 text-xs text-[#6B7280] font-semibold">Days Out</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,16 +142,27 @@ function InjuryHistoryTable({ player }: { player: Player }) {
                     <td className="py-3 px-2 text-[#1A1A2E] font-medium">{injury.diagnosis}</td>
                     <td className="py-3 px-2 text-[#6B7280]">{injury.region}</td>
                     <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.from}</td>
-                    <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.until}</td>
+                    <td className="py-3 px-2 whitespace-nowrap font-mono text-xs">
+                      {injury.until ? (
+                        <span className="text-[#1A1A2E]">{injury.until}</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Ongoing</span>
+                      )}
+                    </td>
                     <td className="py-3 px-2 text-center">
                       {injury.severity ? (
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${SEVERITY_STYLES[injury.severity] ?? 'bg-[#F5F6FA] text-[#6B7280]'}`}>
-                          {injury.severity}
-                        </span>
+                        (() => {
+                          const s = SEVERITY_STYLES[injury.severity] ?? { bg: '#F3F4F6', text: '#6B7280' };
+                          return (
+                            <span
+                              className="px-2 py-0.5 rounded-full text-xs font-semibold"
+                              style={{ backgroundColor: s.bg, color: s.text }}
+                            >
+                              {injury.severity}
+                            </span>
+                          );
+                        })()
                       ) : <span className="text-[#6B7280]">-</span>}
-                    </td>
-                    <td className="py-3 px-2 text-center font-mono text-[#1A1A2E]">
-                      {injury.daysOut ?? '-'}
                     </td>
                   </tr>
                 ))}
@@ -289,7 +308,7 @@ export function TeamPage() {
         </div>
         <div className="flex flex-wrap gap-3">
           <span className="px-4 py-2 bg-white rounded-full text-sm font-medium text-[#1A1A2E] border border-[rgba(0,0,0,0.06)]">
-            Squad: {team.squadSize} players
+            Squad: {sortedPlayers.filter(p => p.riskLevel !== 'Injured').length}/{sortedPlayers.length} available
           </span>
           <span
             className="px-4 py-2 rounded-full text-sm font-medium text-white"
@@ -338,22 +357,22 @@ export function TeamPage() {
                     : `linear-gradient(145deg, ${team.accentColor}, ${team.accentColor}BB)`,
                 }}
               >
-                <div className="h-full flex flex-col items-center px-2 pt-3 pb-2.5 text-white gap-2">
-                  {/* Name — flex-1 so it fills remaining space and centres vertically */}
-                  <div className="flex-1 flex items-center justify-center w-full">
-                    <span className="text-[9px] font-bold text-center leading-[1.25] w-full" style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+                <div className="h-full flex flex-col items-center px-2 pt-3 pb-2.5 text-white">
+                  {/* Name — fixed-height flex area, clamps at 3 lines */}
+                  <div className="flex-1 min-h-0 flex items-start justify-center w-full overflow-hidden">
+                    <span className="text-[9px] font-bold text-center leading-[1.25] w-full line-clamp-3">
                       {player.firstName} {player.lastName}
                     </span>
                   </div>
-                  {/* Risk badge */}
+                  {/* Risk badge — fixed, never shrinks */}
                   <div
-                    className="px-3 py-1 rounded-full text-[11px] font-bold"
+                    className="flex-shrink-0 px-3 py-1 rounded-full text-[11px] font-bold mt-1.5"
                     style={{ backgroundColor: isInjured ? 'rgba(0,0,0,0.25)' : getRiskColor(player.injuryRisk) }}
                   >
                     {isInjured ? 'INJ' : `${player.injuryRisk}%`}
                   </div>
-                  {/* Status pill */}
-                  <div className="w-full rounded-xl py-1 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
+                  {/* Status pill — fixed, never shrinks */}
+                  <div className="flex-shrink-0 w-full rounded-xl py-1 text-center mt-1.5" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
                     <span className="text-[10px] font-bold" style={{ color: isInjured ? '#DC2626' : '#0D9488' }}>
                       {isInjured ? 'INJ' : 'FIT'}
                     </span>
@@ -379,7 +398,7 @@ export function TeamPage() {
               teamName={team.name}
               teamColor={team.accentColor}
               isFavorite={isFavorite(currentPlayer.id)}
-              onToggleFavorite={() => toggleFavorite(currentPlayer.id, { id: currentPlayer.id, teamId: teamId ?? '', firstName: currentPlayer.firstName, lastName: currentPlayer.lastName, photo: currentPlayer.photo, teamName: team?.name ?? '', position: currentPlayer.position, injuryTrend: currentPlayer.riskTrend, seasonalInjuries: currentPlayer.injuries })}
+              onToggleFavorite={() => toggleFavorite(currentPlayer.id, { id: currentPlayer.id, teamId: teamId ?? '', firstName: currentPlayer.firstName, lastName: currentPlayer.lastName, photo: currentPlayer.photo, teamName: team?.name ?? '', position: currentPlayer.position, injuryTrend: currentPlayer.riskTrend, seasonalInjuries: currentPlayer.injuries, injuryRisk: currentPlayer.injuryRisk, injuryStatus: currentPlayer.riskLevel, minutesPlayed: currentPlayer.minutesPlayed })}
             />
             <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6 mt-6 w-full">
               <div className="flex items-center justify-between">
@@ -392,7 +411,7 @@ export function TeamPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => toggleFavorite(currentPlayer.id, { id: currentPlayer.id, teamId: teamId ?? '', firstName: currentPlayer.firstName, lastName: currentPlayer.lastName, photo: currentPlayer.photo, teamName: team?.name ?? '', position: currentPlayer.position, injuryTrend: currentPlayer.riskTrend, seasonalInjuries: currentPlayer.injuries })}
+                  onClick={() => toggleFavorite(currentPlayer.id, { id: currentPlayer.id, teamId: teamId ?? '', firstName: currentPlayer.firstName, lastName: currentPlayer.lastName, photo: currentPlayer.photo, teamName: team?.name ?? '', position: currentPlayer.position, injuryTrend: currentPlayer.riskTrend, seasonalInjuries: currentPlayer.injuries, injuryRisk: currentPlayer.injuryRisk, injuryStatus: currentPlayer.riskLevel, minutesPlayed: currentPlayer.minutesPlayed })}
                   className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-full hover:bg-[#F5F6FA] transition-colors"
                 >
                   <StarIcon
@@ -428,7 +447,7 @@ export function TeamPage() {
                     teamName={team.name}
                     teamColor={team.accentColor}
                     isFavorite={isFavorite(currentPlayer.id)}
-                    onToggleFavorite={() => toggleFavorite(currentPlayer.id, { id: currentPlayer.id, teamId: teamId ?? '', firstName: currentPlayer.firstName, lastName: currentPlayer.lastName, photo: currentPlayer.photo, teamName: team?.name ?? '', position: currentPlayer.position, injuryTrend: currentPlayer.riskTrend, seasonalInjuries: currentPlayer.injuries })}
+                    onToggleFavorite={() => toggleFavorite(currentPlayer.id, { id: currentPlayer.id, teamId: teamId ?? '', firstName: currentPlayer.firstName, lastName: currentPlayer.lastName, photo: currentPlayer.photo, teamName: team?.name ?? '', position: currentPlayer.position, injuryTrend: currentPlayer.riskTrend, seasonalInjuries: currentPlayer.injuries, injuryRisk: currentPlayer.injuryRisk, injuryStatus: currentPlayer.riskLevel, minutesPlayed: currentPlayer.minutesPlayed })}
                   />
                 </div>
               </div>
@@ -440,7 +459,7 @@ export function TeamPage() {
                 {/* Group B — Predictor core */}
                 {(() => {
                   const todayStr = new Date().toISOString().split('T')[0];
-                  const isInjured = (currentPlayer.injuryHistory ?? []).some(entry => !entry.until || entry.until >= todayStr);
+                  const isInjured = currentPlayer.injuryRisk >= 99 || (currentPlayer.injuryHistory ?? []).some(entry => !entry.until || entry.until >= todayStr);
                   return (
                     <div className="flex items-start justify-between p-4 bg-[#F5F6FA] rounded-2xl mb-5">
                       <div>
@@ -466,7 +485,6 @@ export function TeamPage() {
                 <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">Load Metrics</p>
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   {[
-                    { label: 'Total Injuries',   value: currentPlayer.injurySummaryData?.career_total_injuries ?? currentPlayer.injuries,                                                                         red: false },
                     { label: 'Season Injuries',  value: currentPlayer.injurySummaryData?.injuries_this_season  ?? currentPlayer.injuries,                                                                         red: (currentPlayer.injurySummaryData?.injuries_this_season ?? currentPlayer.injuries) >= 2 },
                     { label: 'Matches Missed',   value: currentPlayer.injurySummaryData?.matches_missed_this_season ?? Math.round(currentPlayer.minutesMissed / MATCH_DURATION),                                 red: (currentPlayer.injurySummaryData?.matches_missed_this_season ?? Math.round(currentPlayer.minutesMissed / MATCH_DURATION)) >= 5 },
                     { label: 'Days Since Inj.',  value: currentPlayer.injurySummaryData?.days_since_last_injury ?? currentPlayer.daysSinceLastInjury,                                                             red: (currentPlayer.injurySummaryData?.days_since_last_injury ?? currentPlayer.daysSinceLastInjury) < 14 },
@@ -507,7 +525,7 @@ export function TeamPage() {
 
             {/* ── Right column: Chart · Performance/Stats toggle · Risk factors ── */}
             <div className="space-y-8">
-              <PlayerInjuryRiskChart player={currentPlayer} />
+              <PlayerInjuryRiskChart player={currentPlayer} currentGw={graphData?.currentGw} />
 
               {/* Season Performance / Statistics toggle */}
               <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">

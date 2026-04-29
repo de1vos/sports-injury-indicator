@@ -13,6 +13,9 @@ export interface CachedPlayer {
   position: string;
   injuryTrend: number;
   seasonalInjuries: number;
+  injuryRisk?: number;
+  injuryStatus?: string;
+  minutesPlayed?: number;
 }
 
 function loadFavorites(): Set<string> {
