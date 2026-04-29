@@ -1,7 +1,7 @@
 from typing import List, TypedDict
 from sqlalchemy import text, select as sa_select, distinct
 from sqlmodel import Session
-from database_init import Team, PlayerInjury
+from database_init import PlayerInjury
 
 
 class SearchPlayer(TypedDict):
@@ -36,19 +36,14 @@ def get_search_players(session: Session) -> List[SearchPlayer]:
 
 def get_search_teams(session: Session) -> List[SearchTeam]:
     rows = session.execute(
-        sa_select(  # type: ignore[call-overload, arg-type]
-            Team.team_id,  # type: ignore[arg-type]
-            Team.team_name,  # type: ignore[arg-type]
-            Team.team_logo,  # type: ignore[arg-type]
-        )
-        .order_by(Team.team_name)  # type: ignore[attr-defined]
-    ).all()
+        text("SELECT team_id, team_name, team_logo FROM mv_teams_overview ORDER BY team_name")
+    ).mappings().all()
 
     return [
         {
-            "team_id": row.team_id,
-            "team_name": row.team_name,
-            "team_logo": row.team_logo,
+            "team_id": row["team_id"],
+            "team_name": row["team_name"],
+            "team_logo": row["team_logo"],
         }
         for row in rows
     ]

@@ -3,7 +3,7 @@
 **Goal:** fix the business-logic bug surfaced in the frontend (relegated teams and non-PL players appearing in the API) by adjusting the materialized views in `server/create_views.py` and one integration-layer query in `server/integration/search.py`. Source tables (`team`, `player`, `player_season`, `player_injury`, `match`) keep all rows untouched — the filtering is layered on in the views so the API endpoints return only Premier-League-relevant rows. `mv_teams_overview` becomes the single source of truth for "which teams are in the league this season"; every player-level view and the team search endpoint consume it.
 
 **Phasing:**
-- **Phase 1** — restrict `mv_teams_overview` to current-season Premier League teams (drops relegated teams from the `/teams` endpoint) and fix `GET /search/teams` to read from `mv_teams_overview` instead of the raw `Team` table. This view also becomes the canonical league-membership reference used by all dependent views.
+- **Phase 1** — restrict `mv_teams_overview` to current-season Premier League teams (drops relegated teams from the `GET /teams/overview` endpoint) and fix `GET /search/teams` to read from `mv_teams_overview` instead of the raw `Team` table. This view also becomes the canonical league-membership reference used by all dependent views.
 - **Phase 2** — restrict `mv_reported_injuries` to current-season PL players, returning their full all-time injury history. Reads `mv_teams_overview` to determine PL teams.
 - **Phase 3** — propagate the same PL-team filter to `mv_high_risk_players`, `mv_trending_risk_players`, `mv_search_players`, and `mv_team_player_list` so players linked to non-PL teams are excluded from those endpoints. Each consumes `mv_teams_overview`.
 - **Phase 4** — adjust view creation order in `server/create_views.py` and drop order in `server/ingest_predictions.py` to respect the new MV-on-MV dependency on `mv_teams_overview`.
@@ -50,11 +50,12 @@ mv_team_player_list      ──► FROM player p ─ no league filter       ← 
 | **B-9** | `server/integration/search.py` | `get_search_teams` (line 37) | Queries raw `Team` ORM table — returns all teams ever ingested, bypasses `mv_teams_overview` entirely | ⬜ To do |
 
 Downstream readers (no code change needed — they `SELECT * FROM` the view):
-- `server/integration/teams.py` → `get_teams_overview` → `GET /teams`
-- `server/integration/reported_injuries.py` → `get_reported_injuries` → `GET /reported-injuries`
-- `server/integration/dashboard.py` → `get_high_risk_players` → `GET /dashboard/high-risk`
+- `server/integration/teams.py` → `get_teams_overview` → `GET /teams/overview`
+- `server/integration/reported_injuries.py` → `get_reported_injuries` → `GET /reported-injuries/`
+- `server/integration/dashboard.py` → `get_high_risk_players` → `GET /dashboard/high-risk-players`
+- `server/integration/dashboard.py` → `get_trending_risk_players` → `GET /dashboard/trending-risk-players`
 - `server/integration/search.py` → `get_search_players` → `GET /search/players`
-- `server/integration/player_page.py` → `get_team_player_list` → `GET /teams/{id}/players`
+- `server/integration/player_page.py` → `get_team_player_list` → `GET /players/team/{team_id}`
 
 ---
 
@@ -481,7 +482,7 @@ Dependents must be dropped before the view they depend on. Current drop list:
 
 ### 6.4 Deep-link behaviour for non-PL teams and players
 
-After Phases 1–3, non-PL teams and their players are filtered from `/teams`, `/dashboard/high-risk`, `/search/players`, and `/teams/{id}/players`. However, two per-entity views are **not** changed by this plan:
+After Phases 1–3, non-PL teams and their players are filtered from `GET /teams/overview`, `GET /dashboard/high-risk-players`, `GET /dashboard/trending-risk-players`, `GET /search/players`, and `GET /players/team/{team_id}`. However, two per-entity views are **not** changed by this plan:
 
 - `mv_player_card` — keyed by `player_id`, no team filter. A direct URL like `/player/<relegated_player_id>` will still load and render that player's card with their historical data.
 - `mv_injury_analysis` — also keyed by `player_id`, no team filter. The player's injury analysis page will still be reachable via a direct link.
@@ -501,11 +502,13 @@ python server/ingest_predictions.py
 The ingestor drops all views (in the new safe order), wipes and repopulates source tables, then recreates all views (in the new correct order) — no separate migration needed.
 
 Smoke-tests:
-- `GET /teams` → exactly 20 PL teams; no relegated teams.
-- `GET /reported-injuries` → no players whose `team_id` points at a relegated or non-PL club.
-- `GET /dashboard/high-risk` → no players from non-PL teams.
+- `GET /teams/overview` → exactly 20 PL teams; no relegated teams.
+- `GET /reported-injuries/` → no players whose `team_id` points at a relegated or non-PL club.
+- `GET /dashboard/high-risk-players` → no players from non-PL teams.
+- `GET /dashboard/trending-risk-players` → no players from non-PL teams.
 - `GET /search/players` → no players from non-PL teams.
-- `GET /teams/{pl_team_id}/players` → returns players; a non-PL team ID returns an empty list.
+- `GET /search/teams` → exactly 20 PL teams; no relegated teams.
+- `GET /players/team/{pl_team_id}` → returns players; a non-PL team ID returns an empty list.
 
 ---
 
@@ -532,5 +535,10 @@ Smoke-tests:
 
 **Rebuild & smoke-test:**
 - [ ] Re-run `python server/ingest_predictions.py`
-- [ ] Verify `GET /teams` returns exactly 20 teams
-- [ ] Verify `GET /reported-injuries`, `GET /dashboard/high-risk`, `GET /dashboard/trending`, `GET /search/players` contain no non-PL players
+- [ ] `GET /teams/overview` → exactly 20 teams
+- [ ] `GET /search/teams` → exactly 20 teams
+- [ ] `GET /reported-injuries/` → no non-PL players
+- [ ] `GET /dashboard/high-risk-players` → no non-PL players
+- [ ] `GET /dashboard/trending-risk-players` → no non-PL players
+- [ ] `GET /search/players` → no non-PL players
+- [ ] `GET /players/team/{pl_team_id}` → returns players; non-PL team ID returns empty list

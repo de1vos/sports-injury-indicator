@@ -113,10 +113,9 @@ def main():
         print("\nDropping materialized views...")
         for view in (
             "mv_high_risk_players", "mv_trending_risk_players",
-            "mv_teams_overview", "mv_search_players",
-            "mv_team_player_list", "mv_player_card",
-            "mv_injury_analysis", "mv_reported_injuries",
-            "mv_game_week_matches",
+            "mv_search_players", "mv_team_player_list", "mv_reported_injuries",
+            "mv_teams_overview",
+            "mv_player_card", "mv_injury_analysis", "mv_game_week_matches",
         ):
             conn.execute(text(f"DROP MATERIALIZED VIEW IF EXISTS {view}"))
         print("  views dropped")
