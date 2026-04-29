@@ -304,6 +304,7 @@ def _create_mv_reported_injuries(conn: Connection) -> None:
             p.player_position,
             p.player_photo,
             t.team_name,
+            t.team_logo,
             pi.player_injury_type,
             pi.player_injury_region,
             pi.player_injury_severity,
