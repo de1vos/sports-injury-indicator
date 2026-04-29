@@ -52,12 +52,14 @@ function TeamHalf({
     <div className={`flex flex-col items-center gap-1.5 px-3 py-3 ${side === 'home' ? 'border-r' : ''} border-[rgba(0,0,0,0.06)] flex-1`}>
       <img src={teamLogo} alt={teamName} className="w-9 h-9 object-contain" />
       <span className="text-[10px] font-semibold text-[#1A1A2E] text-center leading-tight line-clamp-1 w-full text-center">{teamName}</span>
-      <span
-        className="text-xs font-bold px-2 py-0.5 rounded-full"
-        style={{ backgroundColor: badge.bg, color: badge.text, fontFamily: 'var(--font-mono)' }}
-      >
-        {avgRisk}%
-      </span>
+      {!isPlayed && (
+        <span
+          className="text-xs font-bold px-2 py-0.5 rounded-full"
+          style={{ backgroundColor: badge.bg, color: badge.text, fontFamily: 'var(--font-mono)' }}
+        >
+          {avgRisk}%
+        </span>
+      )}
       {isPlayed && goals !== null && (
         <span className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>{goals}</span>
       )}
@@ -445,7 +447,7 @@ export function HomePage() {
                           photo: player.photo,
                           teamName: player.teamName,
                           position: player.position,
-                          injuryTrend: 0,
+                          injuryTrend: (trendingData ?? []).find(t => t.id === player.id)?.injuryTrend ?? 0,
                           seasonalInjuries: player.seasonalInjuries,
                           injuryRisk: player.injuryRisk,
                         })}
@@ -525,6 +527,7 @@ export function HomePage() {
                           position: player.position,
                           injuryTrend: player.injuryTrend,
                           seasonalInjuries: player.seasonalInjuries,
+                          injuryRisk: (highRiskData ?? []).find(h => h.id === player.id)?.injuryRisk ?? 0,
                         })}
                         badge={
                           <div>
