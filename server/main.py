@@ -6,12 +6,10 @@ from routers import player_page, teams, dashboard, my_players, reported_injuries
 app = FastAPI(title="Sports Injury Indicator API")
 
 _allowed_origins = ["http://localhost:5173"]
-_prod_origin = os.environ.get("ALLOWED_ORIGIN")
-if _prod_origin:
-    _allowed_origins.append(_prod_origin)
-    # also allow www subdomain
-    if _prod_origin.startswith("https://") and not _prod_origin.startswith("https://www."):
-        _allowed_origins.append(_prod_origin.replace("https://", "https://www.", 1))
+for _origin in os.environ.get("ALLOWED_ORIGINS", "").split(","):
+    _origin = _origin.strip()
+    if _origin:
+        _allowed_origins.append(_origin)
 
 app.add_middleware(
     CORSMiddleware,
