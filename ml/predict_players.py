@@ -415,8 +415,12 @@ def main():
 
     with open(FIXTURES_FILE) as f:
         fixtures_2025 = json.load(f)
-    with open(FIXTURES_PREV_FILE) as f:
-        fixtures_2024 = json.load(f)
+    if FIXTURES_PREV_FILE.exists():
+        with open(FIXTURES_PREV_FILE) as f:
+            fixtures_2024 = json.load(f)
+    else:
+        print("  fixtures_2024.json not found — using current season only for trend")
+        fixtures_2024 = []
     with open(FIXTURES_UPCOMING_FILE) as f:
         fixtures_upcoming = json.load(f)
 
