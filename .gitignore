@@ -7,19 +7,15 @@ __pycache__/
 venv/
 .venv/
 
+# npm local cache (created when invoking `npm install --cache .npm-cache`)
+.npm-cache/
+
 # Node.js (Frontend)
 .vite/
 node_modules/
-frontend/node_modules/
-frontend/dist/
 frontend/.env
 frontend/.next/
 frontend/.svelte-kit/
-frontend/build/
-frontendUpdatedSoccer2/node_modules/
-frontendUpdatedSoccer2/dist/
-# Frontend
-node_modules/
 dist/
 .next/
 out/
