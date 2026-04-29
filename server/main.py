@@ -9,6 +9,9 @@ _allowed_origins = ["http://localhost:5173"]
 _prod_origin = os.environ.get("ALLOWED_ORIGIN")
 if _prod_origin:
     _allowed_origins.append(_prod_origin)
+    # also allow www subdomain
+    if _prod_origin.startswith("https://") and not _prod_origin.startswith("https://www."):
+        _allowed_origins.append(_prod_origin.replace("https://", "https://www.", 1))
 
 app.add_middleware(
     CORSMiddleware,
