@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useReportedInjuries } from '../hooks/useApi';
+import { useSearchData } from '../hooks/useSearchData';
 
 type SortField = 'endDate' | 'startDate' | 'lastName' | 'team' | 'severity';
 type SortDirection = 'asc' | 'desc';
@@ -50,6 +51,25 @@ function PlayerAvatar({ name, severity, photo }: { name: string; severity: strin
 
 export function ReportedInjuriesPage() {
   const { data: injuriesData, loading, error } = useReportedInjuries();
+  const { data: searchData, load: loadSearchData } = useSearchData();
+
+  // Eagerly load the global player/team index so we can resolve names → IDs
+  // for the row links. The hook caches at module level, so this is a no-op
+  // if the search dropdown already loaded it.
+  useEffect(() => { loadSearchData(); }, [loadSearchData]);
+
+  // Map "firstName lastName|teamName" → playerId, and teamName → teamId.
+  const { playerIdByKey, teamIdByName } = useMemo(() => {
+    const playerIdByKey = new Map<string, string>();
+    for (const p of searchData.players) {
+      playerIdByKey.set(`${p.firstName} ${p.lastName}|${p.teamName}`, p.id);
+    }
+    const teamIdByName = new Map<string, string>();
+    for (const t of searchData.teams) {
+      teamIdByName.set(t.name, t.id);
+    }
+    return { playerIdByKey, teamIdByName };
+  }, [searchData.players, searchData.teams]);
 
   const [searchParams] = useSearchParams();
   const [sortField, setSortField]         = useState<SortField>('endDate');
@@ -283,14 +303,24 @@ export function ReportedInjuriesPage() {
             {pageData.map((injury, idx) => {
               const sty = severityStyle(injury.severity);
               const isOngoing = injury.endDate === null;
-              const href = `/team/${injury.teamId}?player=${injury.playerId}`;
+              const teamId = injury.teamId && injury.teamId !== 'undefined'
+                ? injury.teamId
+                : teamIdByName.get(injury.teamName);
+              const playerId = injury.playerId && injury.playerId !== 'undefined'
+                ? injury.playerId
+                : playerIdByKey.get(`${injury.firstName} ${injury.lastName}|${injury.teamName}`);
+              const href = teamId && playerId ? `/team/${teamId}?player=${playerId}` : null;
+
+              const rowKey = `${playerId ?? injury.lastName}-${injury.startDate}-${idx}`;
+              const rowClass = "flex items-center gap-4 bg-white rounded-2xl border border-[rgba(0,0,0,0.06)] px-5 py-4 hover:shadow-md hover:shadow-black/[0.04] hover:border-[rgba(26,86,219,0.2)] transition-all duration-200";
+
+              const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
+                href
+                  ? <Link to={href} className={rowClass}>{children}</Link>
+                  : <div className={rowClass}>{children}</div>;
 
               return (
-                <Link
-                  key={`${injury.playerId}-${injury.startDate}-${idx}`}
-                  to={href}
-                  className="flex items-center gap-4 bg-white rounded-2xl border border-[rgba(0,0,0,0.06)] px-5 py-4 hover:shadow-md hover:shadow-black/[0.04] hover:border-[rgba(26,86,219,0.2)] transition-all duration-200"
-                >
+                <Wrapper key={rowKey}>
                   {/* Avatar */}
                   <PlayerAvatar name={`${injury.firstName} ${injury.lastName}`} severity={injury.severity} photo={injury.photo} />
 
@@ -349,7 +379,7 @@ export function ReportedInjuriesPage() {
                       {injury.severity}
                     </span>
                   </div>
-                </Link>
+                </Wrapper>
               );
             })}
           </div>

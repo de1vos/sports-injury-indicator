@@ -211,9 +211,23 @@ export function TeamPage() {
 
   const team = teamFromState ?? teamsOverview?.find(t => t.id === teamId) ?? null;
 
+  // Pinned player from ?player= URL param — kept in state so the entry stays
+  // included in sortedPlayers even after the URL is cleared by the focus effect.
+  const [pinnedPlayerId, setPinnedPlayerId] = useState<string | null>(
+    () => searchParams.get('player'),
+  );
+  useEffect(() => {
+    const p = searchParams.get('player');
+    if (p) setPinnedPlayerId(p);
+  }, [searchParams]);
+
   const sortedPlayers = useMemo(() =>
     (playerList ?? [])
-      .filter(p => p.riskLevel === 'Injured' || (p.injuryRisk ?? 0) > 0)
+      .filter(p =>
+        p.riskLevel === 'Injured' ||
+        (p.injuryRisk ?? 0) > 0 ||
+        p.id === pinnedPlayerId,
+      )
       .sort((a, b) => {
       switch (sortBy) {
         case 'risk':      return b.injuryRisk - a.injuryRisk;
@@ -227,7 +241,7 @@ export function TeamPage() {
         default: return 0;
       }
     }),
-    [playerList, sortBy]
+    [playerList, sortBy, pinnedPlayerId]
   );
 
   const currentPlayerId = sortedPlayers[currentPlayerIndex]?.id;
