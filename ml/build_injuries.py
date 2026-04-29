@@ -67,6 +67,9 @@ def finalise(df: pd.DataFrame) -> pd.DataFrame:
 # ── Source 1: sidelined.json ──────────────────────────────────────────────────
 
 def load_sidelined() -> pd.DataFrame:
+    if not SIDELINED_FILE.exists():
+        print("sidelined.json not found — skipping (using season injuries only)")
+        return pd.DataFrame(columns=["player_id", "injury_type", "start_date", "end_date", "source"])
     print("Loading sidelined.json...")
     with open(SIDELINED_FILE) as f:
         raw = json.load(f)
