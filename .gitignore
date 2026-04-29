@@ -1,5 +1,6 @@
 .env
-data/raw/
+data/raw/*
+!data/raw/sidelined.json
 data/progress.json
 __pycache__/
 *.pyc
