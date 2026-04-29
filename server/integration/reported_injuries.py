@@ -8,6 +8,7 @@ class InjuryList(TypedDict):
     injury_date_end: str | None
     player_first_name: str
     player_last_name: str
+    player_photo: str | None
     team_name: str
     player_injury_diagnosis: str
     player_injury_region: str
@@ -24,6 +25,7 @@ def get_reported_injuries(session: Session) -> List[InjuryList]:
             "injury_date_end": str(row["player_injury_end"]) if row["player_injury_end"] else None,
             "player_first_name": row["player_first_name"],
             "player_last_name": row["player_last_name"],
+            "player_photo": row["player_photo"],
             "team_name": row["team_name"],
             "player_injury_diagnosis": row["player_injury_type"],
             "player_injury_region": row["player_injury_region"],
