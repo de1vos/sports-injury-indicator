@@ -1,6 +1,6 @@
 .env
-data/
-models/
+data/raw/
+data/progress.json
 __pycache__/
 *.pyc
 venv/

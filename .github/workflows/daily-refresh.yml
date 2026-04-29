@@ -1,0 +1,87 @@
+name: Daily ML Refresh
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore raw data cache
+        id: raw-cache
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: raw-data-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            raw-data-${{ runner.os }}-
+
+      - name: Refresh injuries
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          cd ml
+          python collect_injuries_season.py --force
+          python build_injuries.py
+
+      - name: Refresh current fixtures and match stats
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          cd ml
+          python collect_fixtures.py --force
+          python collect_fixtures_upcoming.py --force
+          python collect_match_stats.py
+
+      - name: Rebuild match_stats.csv (only if historical cache available)
+        if: steps.raw-cache.outputs.cache-hit == 'true'
+        run: |
+          cd ml
+          python build_match_stats.py
+
+      - name: Feature engineering
+        run: |
+          cd ml
+          python engineer_rolling_features.py
+          python engineer_season_features.py
+          python engineer_injury_features.py
+          python engineer_profile_features.py
+          python engineer_target.py
+
+      - name: Train model and generate predictions
+        run: |
+          cd ml
+          python train_model.py
+          python predict_players.py
+
+      - name: Update Supabase
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          cd server
+          python ingest_predictions.py
+
+      - name: Commit updated data and model
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/*.csv models/ output/
+          git diff --staged --quiet || git commit -m "chore: daily ML refresh $(date -u +%Y-%m-%d)"
+          git push
