@@ -4,9 +4,9 @@ from sqlalchemy.engine import Connection
 
 def create_all_views(conn: Connection) -> None:
     _create_mv_game_week_matches(conn)
+    _create_mv_teams_overview(conn)
     _create_mv_high_risk_players(conn)
     _create_mv_trending_risk_players(conn)
-    _create_mv_teams_overview(conn)
     _create_mv_search_players(conn)
     _create_mv_team_player_list(conn)
     _create_mv_player_card(conn)
@@ -53,11 +53,10 @@ def _create_mv_high_risk_players(conn: Connection) -> None:
             COALESCE(si.seasonal_injuries, 0) AS player_seasonal_injuries
         FROM player p
         JOIN team t ON t.team_id = p.team_id
+        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
         JOIN (
-            SELECT ps.player_id
-            FROM player_season ps
-            GROUP BY ps.player_id
-            HAVING MAX(ps.player_season_year) = (SELECT current_season_year FROM season_meta)
+            SELECT player_id FROM player_season
+            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
         ) active ON active.player_id = p.player_id
         LEFT JOIN (
             SELECT ps2.player_id, COUNT(pi.player_injury_id) AS seasonal_injuries
@@ -91,6 +90,11 @@ def _create_mv_trending_risk_players(conn: Connection) -> None:
         FROM player p
         JOIN team t ON t.team_id = p.team_id
         JOIN graph_data gd ON gd.player_id = p.player_id
+        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
+        JOIN (
+            SELECT player_id FROM player_season
+            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
+        ) active ON active.player_id = p.player_id
         LEFT JOIN (
             SELECT ps.player_id, COUNT(pi.player_injury_id) AS seasonal_injuries
             FROM player_season ps
@@ -117,6 +121,11 @@ def _create_mv_teams_overview(conn: Connection) -> None:
             ps.average_risk_of_injury,
             COALESCE(inj.active_injuries, 0)   AS active_injuries
         FROM team t
+        JOIN (
+            SELECT home_team_id AS team_id FROM match
+            UNION
+            SELECT away_team_id AS team_id FROM match
+        ) pl_teams ON pl_teams.team_id = t.team_id
         LEFT JOIN (
             SELECT
                 p.team_id,
@@ -157,11 +166,10 @@ def _create_mv_search_players(conn: Connection) -> None:
             p.player_injury_risk
         FROM player p
         JOIN team t ON t.team_id = p.team_id
+        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
         JOIN (
-            SELECT ps.player_id
-            FROM player_season ps
-            GROUP BY ps.player_id
-            HAVING MAX(ps.player_season_year) = (SELECT current_season_year FROM season_meta)
+            SELECT player_id FROM player_season
+            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
         ) active ON active.player_id = p.player_id
         ORDER BY p.player_last_name
     """))
@@ -177,11 +185,10 @@ def _create_mv_team_player_list(conn: Connection) -> None:
             p.player_last_name,
             p.player_injury_risk
         FROM player p
+        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
         JOIN (
-            SELECT ps.player_id
-            FROM player_season ps
-            GROUP BY ps.player_id
-            HAVING MAX(ps.player_season_year) = (SELECT current_season_year FROM season_meta)
+            SELECT player_id FROM player_season
+            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
         ) active ON active.player_id = p.player_id
         ORDER BY p.player_last_name
     """))
@@ -303,21 +310,18 @@ def _create_mv_reported_injuries(conn: Connection) -> None:
             p.player_last_name,
             p.player_position,
             p.player_photo,
-            t.team_name,
-            t.team_logo,
+            tov.team_name,
+            tov.team_logo,
             pi.player_injury_type,
             pi.player_injury_region,
             pi.player_injury_severity,
             pi.player_injury_days_out
         FROM player_injury pi
         JOIN player_season ps ON ps.player_season_id = pi.player_season_id
-        JOIN (
-            SELECT player_id, MAX(player_season_year) AS latest_year
-            FROM player_season
-            GROUP BY player_id
-        ) latest ON latest.player_id = ps.player_id
-                AND latest.latest_year = ps.player_season_year
         JOIN player p ON p.player_id = ps.player_id
-        JOIN team t   ON t.team_id = p.team_id
+        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
+        JOIN player_season ps_curr
+          ON ps_curr.player_id = p.player_id
+         AND ps_curr.player_season_year = (SELECT current_season_year FROM season_meta)
         ORDER BY pi.player_injury_start DESC
     """))
