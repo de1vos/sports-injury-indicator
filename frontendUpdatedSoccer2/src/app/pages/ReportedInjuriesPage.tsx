@@ -190,12 +190,12 @@ export function ReportedInjuriesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#1A1A2E] mb-1">Reported Injuries</h1>
-        <p className="text-[#6B7280]">Complete injury history across all Premier League squads.</p>
+        <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight mb-1">Reported Injuries</h1>
+        <p className="text-[#9CA3AF]">Complete injury history across all Premier League squads.</p>
       </div>
 
       {/* Filters + Sort */}
-      <div className="bg-white rounded-2xl shadow-sm border border-[rgba(0,0,0,0.06)] p-5 mb-6 space-y-4">
+      <div className="bg-white rounded-2xl shadow-sm shadow-black/[0.03] border border-[rgba(0,0,0,0.06)] p-5 mb-6 space-y-4">
         {/* Filter row 1: Team, Region, Severity, Ongoing */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">Filter</span>
@@ -289,7 +289,7 @@ export function ReportedInjuriesPage() {
                 <Link
                   key={`${injury.playerId}-${injury.startDate}-${idx}`}
                   to={href}
-                  className="flex items-center gap-4 bg-white rounded-2xl border border-[rgba(0,0,0,0.06)] px-5 py-4 hover:shadow-sm hover:border-[rgba(26,86,219,0.2)] transition-all"
+                  className="flex items-center gap-4 bg-white rounded-2xl border border-[rgba(0,0,0,0.06)] px-5 py-4 hover:shadow-md hover:shadow-black/[0.04] hover:border-[rgba(26,86,219,0.2)] transition-all duration-200"
                 >
                   {/* Avatar */}
                   <PlayerAvatar name={`${injury.firstName} ${injury.lastName}`} severity={injury.severity} photo={injury.photo} />

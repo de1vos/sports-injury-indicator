@@ -11,13 +11,43 @@ import type {
 
 // ── Teams ────────────────────────────────────────────────────────────────────
 
+const TEAM_COLORS: Record<number, string> = {
+  42:   '#EF0107', // Arsenal
+  66:   '#670E36', // Aston Villa
+  499:  '#1E71B8', // Atalanta
+  35:   '#DA291C', // Bournemouth
+  55:   '#E30613', // Brentford
+  51:   '#0057B8', // Brighton
+  44:   '#6C1D45', // Burnley
+  49:   '#034694', // Chelsea
+  52:   '#1B458F', // Crystal Palace
+  45:   '#003399', // Everton
+  36:   '#000000', // Fulham
+  57:   '#0044AA', // Ipswich
+  63:   '#1D428A', // Leeds
+  46:   '#003090', // Leicester
+  40:   '#C8102E', // Liverpool
+  1359: '#F78F1E', // Luton
+  50:   '#6CABDD', // Manchester City
+  33:   '#DA291C', // Manchester United
+  34:   '#241F20', // Newcastle
+  65:   '#DD0000', // Nottingham Forest
+  62:   '#EE2737', // Sheffield Utd
+  41:   '#D71920', // Southampton
+  746:  '#EB172B', // Sunderland
+  47:   '#132257', // Tottenham
+  200:  '#FFED00', // Vitesse
+  48:   '#7A263A', // West Ham
+  39:   '#FDB913', // Wolves
+};
+
 export type TeamOverviewItem = Omit<Team, 'players'>;
 
 export const mapTeamOverview = (t: ApiTeamOverview): TeamOverviewItem => ({
   id: String(t.team_id),
   name: t.team_name,
   abbreviation: t.team_name.slice(0, 3).toUpperCase(),
-  accentColor: '#1A56DB',
+  accentColor: TEAM_COLORS[t.team_id] ?? '#1A56DB',
   logo: t.team_logo,
   squadSize: t.amount_of_players,
   avgRisk: Math.round(t.average_risk_of_injury),

@@ -73,7 +73,7 @@ function TeamHalf({
 
 function MatchCard({ match, teamIdByName }: { match: DashboardMatch; teamIdByName: Record<string, string> }) {
   return (
-    <div className="flex-shrink-0 w-[240px] bg-white rounded-2xl border border-[rgba(0,0,0,0.06)] overflow-hidden hover:shadow-md transition-shadow">
+    <div className="flex-shrink-0 w-[240px] bg-white/95 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 transition-all duration-300">
       {/* Two halves */}
       <div className="flex">
         <TeamHalf
@@ -358,19 +358,16 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F6FA]">
-      {/* Hero */}
-      <div className="bg-gradient-to-b from-[#1A56DB] via-[#1A56DB] to-[#4A7FE8] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
-          <h1 className="text-4xl font-bold mb-2">Injury risk & match monitoring</h1>
-          <p className="text-blue-100 text-lg">
+      {/* Hero + Match Cards */}
+      <div className="hero-net bg-gradient-to-b from-[#1A56DB] via-[#2563EB] to-[#F5F6FA] text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-6">
+          <h1 className="text-4xl font-bold mb-2 tracking-tight">Injury risk & match monitoring</h1>
+          <p className="text-white/70 text-lg font-medium">
             Monitor predicted injury risk and view player availability & return-to-play data
           </p>
         </div>
-      </div>
 
-      {/* Match Cards */}
-      <div className="bg-gradient-to-b from-[#4A7FE8] via-[#6B9BF0] to-[#F5F6FA] py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
             {matchLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
@@ -395,8 +392,8 @@ export function HomePage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-[#1A1A2E]">HIGH RISK PLAYERS</h2>
-                <p className="text-sm text-[#6B7280] mt-1">Players with the highest predicted injury risk</p>
+                <h2 className="text-xl font-semibold text-[#1A1A2E] tracking-tight">High Risk Players</h2>
+                <p className="text-sm text-[#9CA3AF] mt-0.5">Players with the highest predicted injury risk</p>
               </div>
               <div className="flex items-center gap-3">
                 <FilterToggle value={riskFilter} onChange={setRiskFilter} />
@@ -406,7 +403,7 @@ export function HomePage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm shadow-black/[0.03] border border-[rgba(0,0,0,0.06)] overflow-hidden">
               {riskLoading ? (
                 <div className="divide-y divide-[rgba(0,0,0,0.06)]">
                   {Array.from({ length: 10 }).map((_, i) => (
@@ -478,13 +475,13 @@ export function HomePage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-[#1A1A2E]">RECENT INJURY RISK SPIKES</h2>
-                <p className="text-sm text-[#6B7280] mt-1">Players with the largest recent risk increases</p>
+                <h2 className="text-xl font-semibold text-[#1A1A2E] tracking-tight">Recent Injury Risk Spikes</h2>
+                <p className="text-sm text-[#9CA3AF] mt-0.5">Players with the largest recent risk increases</p>
               </div>
               <FilterToggle value={spikeFilter} onChange={setSpikeFilter} />
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-[rgba(0,0,0,0.06)] overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm shadow-black/[0.03] border border-[rgba(0,0,0,0.06)] overflow-hidden">
               {spikeLoading ? (
                 <div className="divide-y divide-[rgba(0,0,0,0.06)]">
                   {Array.from({ length: 10 }).map((_, i) => (

@@ -35,15 +35,15 @@ export function TeamsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#1A1A2E] mb-2">Teams</h1>
-        <p className="text-[#6B7280]">View all Premier League teams and their injury risk data.</p>
+        <h1 className="text-3xl font-bold text-[#1A1A2E] tracking-tight mb-1">Teams</h1>
+        <p className="text-[#9CA3AF]">View all Premier League teams and their injury risk data.</p>
       </div>
 
       {/* Injury Risk Rankings */}
-      <div className="bg-white rounded-3xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[rgba(0,0,0,0.06)] overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-sm shadow-black/[0.03] border border-[rgba(0,0,0,0.06)] overflow-hidden">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-[#1A1A2E]">
+            <h2 className="text-xl font-semibold text-[#1A1A2E] tracking-tight">
               Injury Risk Rankings
             </h2>
 
@@ -143,14 +143,14 @@ export function TeamsPage() {
                   key={team.id}
                   to={`/team/${team.id}`}
                   state={{ team }}
-                  className="block bg-gradient-to-r from-white to-[#F5F6FA] rounded-2xl p-5 border-2 border-[rgba(0,0,0,0.06)] hover:border-[#1A56DB] hover:shadow-md transition-all"
+                  className="block bg-white rounded-2xl p-5 border border-[rgba(0,0,0,0.06)] hover:border-[rgba(26,86,219,0.3)] hover:shadow-md hover:shadow-blue-500/[0.04] transition-all duration-200"
                 >
                   {rowContent}
                 </Link>
               ) : (
                 <div
                   key={team.id}
-                  className="block bg-gradient-to-r from-white to-[#F5F6FA] rounded-2xl p-5 border-2 border-[rgba(0,0,0,0.04)] opacity-60 cursor-default"
+                  className="block bg-[#FAFBFC] rounded-2xl p-5 border border-[rgba(0,0,0,0.04)] opacity-50 cursor-default"
                 >
                   {rowContent}
                 </div>
