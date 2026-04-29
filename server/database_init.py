@@ -1,12 +1,15 @@
+import os
 from datetime import date, time
 from decimal import Decimal
 from typing import ClassVar, List, Optional
 from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric
 from sqlmodel import Field, Relationship, SQLModel, create_engine
 
+_db_url = os.environ["DATABASE_URL"]
+if "sslmode" not in _db_url:
+    _db_url += ("&" if "?" in _db_url else "?") + "sslmode=require"
 
-# Testing engine for developer
-engine = create_engine('postgresql+psycopg://max@localhost:5432/test', echo=False)
+engine = create_engine(_db_url, echo=False)
 
 # 1. Nation
 class Nation(SQLModel, table=True):
