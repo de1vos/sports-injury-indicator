@@ -25,6 +25,7 @@ xgboost==3.2.0
 
 # ── FastAPI server ────────────────────────────────────────────────────────────
 PyJWT[cryptography]==2.10.1
+cryptography>=42.0.0
 fastapi==0.115.12
 uvicorn==0.34.2
 sqlmodel==0.0.24
