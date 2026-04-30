@@ -10,7 +10,7 @@ Writes (idempotent — safe to re-run):
   nation, team, player, player_season, player_injury, graph_data, match
 
 Preserves:
-  app_user, user_favourite
+  user_favourite
   (player_id / team_id are stable API-Football IDs, so FKs remain valid
    across re-ingestions as long as IDs don't change in the source data)
 

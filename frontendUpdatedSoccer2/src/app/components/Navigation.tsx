@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation, useSearchParams } from 'react-router';
 import { getRiskColor } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSearchData, searchPlayers, searchTeams } from '../hooks/useSearchData';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 import logo from '../../assets/logo.png';
 
 type SearchResult = {
@@ -32,6 +34,7 @@ export function Navigation() {
   const location = useLocation();
   const { favoriteCount } = useFavorites();
   const { data: searchData, load: loadSearch } = useSearchData();
+  const { session } = useAuth();
 
   useEffect(() => {
     if (searchParams.get('search') === 'open') {
@@ -238,11 +241,27 @@ export function Navigation() {
 
           {/* User Icon - Desktop */}
           <div className="hidden lg:flex items-center gap-4">
-            <Link to="/login" className="text-[#1A1A2E] hover:text-[#1A56DB] transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </Link>
+            {session ? (
+              <button
+                onClick={() => supabase.auth.signOut()}
+                title="Sign out"
+                className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden hover:ring-2 hover:ring-[#1A56DB] transition-all"
+              >
+                {session.user.user_metadata?.avatar_url ? (
+                  <img src={session.user.user_metadata.avatar_url} className="w-8 h-8 object-cover" alt="avatar" />
+                ) : (
+                  <div className="w-8 h-8 bg-[#1A56DB] flex items-center justify-center text-white text-xs font-bold">
+                    {session.user.email?.[0]?.toUpperCase() ?? 'U'}
+                  </div>
+                )}
+              </button>
+            ) : (
+              <Link to="/login" className="text-[#1A1A2E] hover:text-[#1A56DB] transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </Link>
+            )}
           </div>
 
           {/* Hamburger - Mobile */}
@@ -286,16 +305,32 @@ export function Navigation() {
                 </Link>
               ))}
               <div className="border-t border-[rgba(0,0,0,0.06)] mt-2 pt-4">
-                <Link
-                  to="/login"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-base font-medium text-[#6B7280] hover:text-[#1A56DB] hover:bg-[#F5F6FA] transition-colors px-4 py-2 flex items-center gap-3"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Login / Profile
-                </Link>
+                {session ? (
+                  <button
+                    onClick={() => { supabase.auth.signOut(); setMenuOpen(false); }}
+                    className="w-full text-base font-medium text-[#6B7280] hover:text-[#1A56DB] hover:bg-[#F5F6FA] transition-colors px-4 py-2 flex items-center gap-3"
+                  >
+                    {session.user.user_metadata?.avatar_url ? (
+                      <img src={session.user.user_metadata.avatar_url} className="w-6 h-6 rounded-full object-cover" alt="avatar" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-[#1A56DB] flex items-center justify-center text-white text-xs font-bold">
+                        {session.user.email?.[0]?.toUpperCase() ?? 'U'}
+                      </div>
+                    )}
+                    Sign out
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="text-base font-medium text-[#6B7280] hover:text-[#1A56DB] hover:bg-[#F5F6FA] transition-colors px-4 py-2 flex items-center gap-3"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Login / Profile
+                  </Link>
+                )}
               </div>
             </div>
           </div>
