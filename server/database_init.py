@@ -3,8 +3,10 @@ from datetime import date, time
 from decimal import Decimal
 from pathlib import Path
 from typing import ClassVar, List, Optional
+from uuid import UUID
 from dotenv import load_dotenv
 from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, Relationship, SQLModel, create_engine
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
@@ -65,19 +67,6 @@ class Team(SQLModel, table=True):
         back_populates="away_team",
         sa_relationship_kwargs={"foreign_keys": "[Match.away_team_id]"}
     )
-
-# 3. AppUser
-class AppUser(SQLModel, table=True):
-    __tablename__: ClassVar[str] = "app_user"
-    user_id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        sa_column_args=[Identity(always=True)]
-    )
-    user_mail: str = Field(max_length=200)
-    user_password: str = Field(max_length=500)
-
-    favourites: List["UserFavourite"] = Relationship(back_populates="user")
 
 # 4. Match
 class Match(SQLModel, table=True):
@@ -188,16 +177,12 @@ class PlayerSeason(SQLModel, table=True):
 # 9. UserFavourite
 class UserFavourite(SQLModel, table=True):
     __tablename__: ClassVar[str] = "user_favourite"
-    user_favourite_id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        sa_column_args=[Identity(always=True)]
+    user_id: UUID = Field(
+        sa_column=Column(PG_UUID(as_uuid=True), primary_key=True, nullable=False)
     )
-    player_id: int = Field(foreign_key="player.player_id")
-    user_id: int = Field(foreign_key="app_user.user_id")
+    player_id: int = Field(foreign_key="player.player_id", primary_key=True)
 
     player: Optional["Player"] = Relationship(back_populates="favourited_by")
-    user: Optional["AppUser"] = Relationship(back_populates="favourites")
 
 # 10. GraphData
 class GraphData(SQLModel, table=True):
