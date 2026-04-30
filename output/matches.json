@@ -721,6 +721,22 @@
         "logo": "https://media.api-sports.io/football/teams/63.png"
       },
       "venue": "Tottenham Hotspur Stadium"
+    },
+    {
+      "fixture_id": 1379275,
+      "date": "2026-05-13T19:00:00+00:00",
+      "round": "Regular Season - 31",
+      "home_team_id": 50,
+      "away_team_id": 52,
+      "home_team": {
+        "name": "Manchester City",
+        "logo": "https://media.api-sports.io/football/teams/50.png"
+      },
+      "away_team": {
+        "name": "Crystal Palace",
+        "logo": "https://media.api-sports.io/football/teams/52.png"
+      },
+      "venue": "Etihad Stadium"
     }
   ]
 }
