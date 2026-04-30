@@ -20,4 +20,14 @@ def current_user_id(authorization: str = Header(...)) -> UUID:
         )
     except jwt.PyJWTError as e:
         raise HTTPException(401, str(e))
+    except Exception as e:
+        raise HTTPException(401, f"Unexpected error: {type(e).__name__}: {e}")
     return UUID(payload["sub"])
+
+
+def decode_token_unverified(token: str) -> dict:
+    return jwt.decode(
+        token,
+        options={"verify_signature": False, "verify_aud": False},
+        algorithms=["ES256", "RS256", "HS256"],
+    )
