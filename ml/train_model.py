@@ -22,7 +22,7 @@ from sklearn.metrics import (
 )
 from xgboost import XGBClassifier
 from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV
-from model_utils import IsotonicCalibratedModel
+from model_utils import SigmoidCalibrator
 
 LOOKAHEAD_DAYS = 28
 TARGET_COL = f"injured_next_{LOOKAHEAD_DAYS}d"
@@ -93,11 +93,12 @@ def prepare(df, feature_cols):
     return X, y
 
 
-def train(X_train, y_train, scale_pos_weight):
+def train(X_train, y_train, X_val, y_val, scale_pos_weight):
     print(f"\nTraining XGBoost (scale_pos_weight={scale_pos_weight:.1f})...")
 
     model = XGBClassifier(
         n_estimators=500,
+        early_stopping_rounds=50,
         max_depth=3,
         learning_rate=0.05,
         subsample=0.7,
@@ -110,17 +111,15 @@ def train(X_train, y_train, scale_pos_weight):
         n_jobs=-1,
         verbosity=0,
     )
-    model.fit(X_train, y_train)
+    model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
     return model
 
 
 def calibrate(model, X_val, y_val):
-    from sklearn.isotonic import IsotonicRegression
-    print("\nCalibrating probabilities on validation set (isotonic)...")
-    raw_probs = model.predict_proba(X_val)[:, 1]
-    iso = IsotonicRegression(out_of_bounds="clip")
-    iso.fit(raw_probs, y_val)
-    return IsotonicCalibratedModel(model, iso)
+    print("\nCalibrating probabilities on validation set (sigmoid)...")
+    cal = SigmoidCalibrator(model)
+    cal.fit(X_val, y_val)
+    return cal
 
 
 def find_best_threshold(model, X_val, y_val):
@@ -195,7 +194,7 @@ def main():
     print(f"\nClass balance — neg: {neg}, pos: {pos}, ratio: {scale_pos_weight:.1f}")
 
     # Train
-    model = train(X_train, y_train, scale_pos_weight)
+    model = train(X_train, y_train, X_val, y_val, scale_pos_weight)
 
     # Calibrate on val set — corrects the train/live positive-rate distribution shift
     calibrated_model = calibrate(model, X_val, y_val)
