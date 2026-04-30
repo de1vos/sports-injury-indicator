@@ -1,9 +1,9 @@
-import os
 import jwt
 from uuid import UUID
 from fastapi import Header, HTTPException
 
-_JWT_SECRET = os.environ["SUPABASE_JWT_SECRET"]
+_JWKS_URL = "https://cbgumeemmcznxbypakxc.supabase.co/auth/v1/.well-known/jwks.json"
+_jwks_client = jwt.PyJWKClient(_JWKS_URL, cache_keys=True)
 
 
 def current_user_id(authorization: str = Header(...)) -> UUID:
@@ -11,9 +11,12 @@ def current_user_id(authorization: str = Header(...)) -> UUID:
         raise HTTPException(401, "Missing bearer token")
     token = authorization[7:]
     try:
+        signing_key = _jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
-            token, _JWT_SECRET,
-            algorithms=["HS256"], audience="authenticated",
+            token,
+            signing_key.key,
+            algorithms=["ES256", "RS256"],
+            audience="authenticated",
         )
     except jwt.PyJWTError as e:
         raise HTTPException(401, str(e))
