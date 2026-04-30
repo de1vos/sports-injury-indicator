@@ -21,7 +21,7 @@ from sklearn.metrics import (
     classification_report, average_precision_score,
 )
 from xgboost import XGBClassifier
-from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV
+from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV, PLAYERS_CSV
 from model_utils import SigmoidCalibrator
 
 LOOKAHEAD_DAYS = 28
@@ -41,8 +41,16 @@ NON_FEATURE_COLS = [
 def load_and_split(path):
     print("Loading ml_features.csv...")
     df = pd.read_csv(path, parse_dates=["date"])
-    print(f"  {len(df)} rows, {df['player_id'].nunique()} players")
+    print(f"  {len(df)} rows, {df['player_id'].nunique()} players (all competitions)")
     print(f"  Date range: {df['date'].min().date()} → {df['date'].max().date()}")
+
+    # Filter to PL players only — cup-opponent rows (UCL/FA Cup/EFL opponents) have
+    # almost no injury records (~1.8% coverage) producing false negatives that suppress
+    # model sensitivity. PL player rows from cup matches are preserved.
+    pl_player_ids = set(pd.read_csv(PLAYERS_CSV)["player_id"])
+    before = len(df)
+    df = df[df["player_id"].isin(pl_player_ids)]
+    print(f"  {len(df)} rows after filtering to PL players ({before - len(df)} cup-opponent rows removed)")
 
     # Label cutoff: rows beyond (max_injury_date - 90d) have incomplete labels.
     # Keep them in ml_features.csv for prediction, but exclude from val/test.

@@ -16,7 +16,7 @@ import json
 import pandas as pd
 from datetime import datetime
 from config import (
-    RAW_DIR, SIDELINED_FILE, INJURIES_CSV,
+    RAW_DIR, SIDELINED_FILE, INJURIES_CSV, MATCH_STATS_CSV,
     SEVERITY_THRESHOLDS, BODY_REGION_MAP, ALL_SEASONS,
 )
 
@@ -87,15 +87,27 @@ def load_sidelined() -> pd.DataFrame:
 
 # ── Source 2: injuries_season_{year}.json ─────────────────────────────────────
 
+def load_played_dates():
+    print("Loading match_stats.csv for appearance lookup...")
+    df = pd.read_csv(MATCH_STATS_CSV, parse_dates=["date"], encoding='latin1')
+    df["minutes"] = pd.to_numeric(df["minutes"], errors="coerce").fillna(0)
+    df_played = df[df["minutes"] > 0]
+    
+    played_dict = {}
+    for pid, group in df_played.groupby("player_id"):
+        played_dict[pid] = sorted(group["date"].tolist())
+    return played_dict
+
+
 def load_season_injuries() -> pd.DataFrame:
     """
     Convert per-fixture injury reports into injury events.
 
-    Strategy: for each player, cluster consecutive 'Missing Fixture' entries
-    (fixtures within 45 days of each other) into a single injury event.
-    start_date = first fixture date, end_date = last fixture date + 14 days.
-    If the player is still missing at the latest fixture we have → end_date = None.
+    Strategy: for each player, cluster missed matches into a single injury event.
+    Close cluster if player played > 0 minutes between missed fixtures or gap > 45 days.
     """
+    played_dict = load_played_dates()
+    
     all_rows = []
 
     for season in ALL_SEASONS:
@@ -110,9 +122,6 @@ def load_season_injuries() -> pd.DataFrame:
 
         for rec in records:
             ptype = rec.get("player", {}).get("type", "")
-            if ptype != "Missing Fixture":
-                continue  # skip Questionable / Doubtful
-
             pid    = rec.get("player", {}).get("id")
             reason = rec.get("player", {}).get("reason") or ""
             date   = rec.get("fixture", {}).get("date", "")[:10]
@@ -120,14 +129,26 @@ def load_season_injuries() -> pd.DataFrame:
             if not pid or not date:
                 continue
 
+            pid = int(pid)
+            date_ts = pd.Timestamp(date)
+            
+            played_dates = played_dict.get(pid, [])
+            
+            # Check if player actually played
+            if date_ts in played_dates:
+                continue
+                
+            if ptype not in ["Missing Fixture", "Questionable", "Doubtful"]:
+                continue
+
             # Skip suspensions
             if "suspen" in reason.lower() or "red card" in reason.lower():
                 continue
 
             all_rows.append({
-                "player_id":   int(pid),
+                "player_id":   pid,
                 "injury_type": reason,
-                "fixture_date": pd.Timestamp(date),
+                "fixture_date": date_ts,
             })
 
     if not all_rows:
@@ -148,17 +169,26 @@ def load_season_injuries() -> pd.DataFrame:
         cluster_start = dates[0]
         cluster_type  = types[0]
         prev_date     = dates[0]
+        played_dates  = played_dict.get(player_id, [])
 
         for i in range(1, len(dates)):
             gap = (dates[i] - prev_date).days
-            if gap > 45:
+            played_between = any(prev_date < pd_ts < dates[i] for pd_ts in played_dates)
+            
+            if gap > 45 or played_between:
                 # Close previous cluster
                 ongoing = (prev_date == latest_fixture)
+                next_played = [pd_ts for pd_ts in played_dates if pd_ts > prev_date]
+                if next_played:
+                    end_date = next_played[0] - pd.Timedelta(days=1)
+                else:
+                    end_date = None if ongoing else prev_date + pd.Timedelta(days=4)
+                    
                 injury_events.append({
                     "player_id":   player_id,
                     "injury_type": cluster_type,
                     "start_date":  cluster_start,
-                    "end_date":    None if ongoing else prev_date + pd.Timedelta(days=14),
+                    "end_date":    end_date,
                     "source":      "season_injuries",
                 })
                 cluster_start = dates[i]
@@ -168,11 +198,17 @@ def load_season_injuries() -> pd.DataFrame:
 
         # Final cluster
         ongoing = (prev_date == latest_fixture)
+        next_played = [pd_ts for pd_ts in played_dates if pd_ts > prev_date]
+        if next_played:
+            end_date = next_played[0] - pd.Timedelta(days=1)
+        else:
+            end_date = None if ongoing else prev_date + pd.Timedelta(days=4)
+            
         injury_events.append({
             "player_id":   player_id,
             "injury_type": cluster_type,
             "start_date":  cluster_start,
-            "end_date":    None if ongoing else prev_date + pd.Timedelta(days=14),
+            "end_date":    end_date,
             "source":      "season_injuries",
         })
 
@@ -181,17 +217,12 @@ def load_season_injuries() -> pd.DataFrame:
 
 # ── Deduplication ─────────────────────────────────────────────────────────────
 
-# Vague injury type strings from the /injuries endpoint that add no value
-VAGUE_TYPES = {"other", "fitness", "injured", "injury", "unknown", "ill", "doubtful", ""}
-
-
 def deduplicate(df: pd.DataFrame) -> pd.DataFrame:
     """
     Remove season_injuries rows already covered by a sidelined record.
 
     Uses temporal overlap (with a 14-day buffer) rather than type matching —
     the two sources use different terminology so type matching causes misses.
-    Also drops season_injuries rows with vague/uninformative injury types.
     """
     df["start_date"] = pd.to_datetime(df["start_date"], errors="coerce")
     df["end_date"]   = pd.to_datetime(df["end_date"],   errors="coerce")
@@ -203,11 +234,6 @@ def deduplicate(df: pd.DataFrame) -> pd.DataFrame:
 
     keep = []
     for _, row in season.iterrows():
-        # Drop vague types
-        itype = str(row.get("injury_type", "")).lower().strip()
-        if itype in VAGUE_TYPES:
-            continue
-
         pid         = row["player_id"]
         row_start   = row["start_date"]
         row_end     = row["end_date"] if pd.notna(row.get("end_date")) else row_start + pd.Timedelta(days=30)
