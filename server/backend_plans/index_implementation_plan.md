@@ -8,10 +8,11 @@
   - Add the new `mv_injury_history` MV. Its `SELECT` list must include `pi.player_injury_id` so we can build a UNIQUE index on it. Create both `idx_mv_ih_player_start` on `(player_id, player_injury_start DESC)` (query path) and `uq_mv_ih_injury_id` UNIQUE on `(player_injury_id)` (concurrent-refresh enabler — a unique index on `(player_id, player_injury_start)` is impossible because the data has 12 same-day duplicates).
   - **Merge `mv_high_risk_players` and `mv_trending_risk_players` into a single `mv_player_overview`** that carries both `player_injury_risk` and `player_injury_trend` alongside the shared identity columns (names, photo, team, position, seasonal_injuries). Drop `_create_mv_high_risk_players(...)`; rewrite `_create_mv_trending_risk_players(...)` as `_create_mv_player_overview(...)`. Keep `INNER JOIN graph_data` (data confirms zero orphans; ingest writes a graph row for every non-skipped player). The merged MV must use the more inclusive row set (i.e. *not* filter out `player_injury_risk >= 0.99` — currently only the high-risk MV does that, and applying it here would silently drop already-injured players from the trending and favourites endpoints). Add `uq_mv_po_player_id`, `idx_mv_po_risk`, `idx_mv_po_trend`.
   - Add the remaining MV indexes alongside the existing MV definitions: `idx_mv_tpl_team_risk` on `mv_team_player_list(team_id, player_injury_risk DESC)`, `idx_mv_sp_last_name` on `mv_search_players(player_last_name)`, `uq_mv_pc_player_id` on `mv_player_card`, `uq_mv_ia_player_id` on `mv_injury_analysis`, `idx_mv_ri_start_desc` on `mv_reported_injuries`.
-  - Wire `_create_mv_injury_history(...)` and `_create_mv_player_overview(...)` into `create_all_views(...)`; remove the dropped `_create_mv_high_risk_players(...)` / `_create_mv_trending_risk_players(...)` calls.
+  - Wire `_create_mv_injury_history(...)` and `_create_mv_player_overview(...)` into `create_all_views(...)`; remove the dropped `_create_mv_high_risk_players(...)` / `_create_mv_trending_risk_players(...)` calls. **Call order is load-bearing:** `_create_mv_player_overview` joins `mv_teams_overview`, so it must be placed **after** `_create_mv_teams_overview(conn)` — placing it before will cause `CREATE MATERIALIZED VIEW` to fail on the missing relation.
 
   **Step 0b — `server/ingest_predictions.py`** (must land before the next re-ingest, which is what builds the new MVs):
   - Update the MV drop list (lines 114–119) to match the new inventory: remove `"mv_high_risk_players"` and `"mv_trending_risk_players"`; add `"mv_player_overview"` and `"mv_injury_history"`. Without this fix the re-ingest in Step 0d will silently leak stale views.
+  - **Drop order is load-bearing:** `mv_player_overview` depends on `mv_teams_overview` (it joins it). Place `"mv_player_overview"` in the **first group** of the drop tuple — before `"mv_teams_overview"` — otherwise `DROP MATERIALIZED VIEW IF EXISTS mv_teams_overview` will fail with a dependency error (no CASCADE is used). `"mv_injury_history"` has no dependency on `mv_teams_overview` so its position is flexible.
 
   **Step 0c — integration layer** (now safe because Steps 0a + 0b are landed; the new MVs will exist as soon as the next ingest runs):
   - Switch `integration/player_page.get_injury_history(...)` to `SELECT * FROM mv_injury_history WHERE player_id = :pid`.
@@ -143,6 +144,24 @@ Raw output is preserved at `/tmp/explain_output.txt` (regenerable from `/tmp/exp
 
 **Before** (`database_init.py`): only PKs declared via `Field(primary_key=True)`.
 
+**Import prerequisite:** `Index` and `text` are not currently imported in `database_init.py`. Add both before writing any `__table_args__` entries:
+
+```python
+from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric, Index, text
+```
+
+**`__table_args__` extension rule:** `GraphData` already has a `__table_args__` tuple containing `CheckConstraint('chk_gw_risk_range')`. Adding `uq_gd_player_id` **must extend that tuple**, not replace it — overwriting `__table_args__` silently drops the check constraint from the schema on the next `database_init.py` run. Correct form:
+
+```python
+__table_args__: ClassVar[tuple] = (
+    CheckConstraint(
+        ' AND '.join(f'gw_{i} BETWEEN 0 AND 1' for i in range(1, 39)),
+        name='chk_gw_risk_range'
+    ),
+    Index("uq_gd_player_id", "player_id", unique=True),
+)
+```
+
 **After**: add `Index(...)` definitions inside each model's `__table_args__`, e.g.
 
 ```python
@@ -240,6 +259,9 @@ The composite `(player_id, player_injury_start DESC)` index lets Postgres satisf
 
 **Phase 0 — All materialized-view work** (`server/create_views.py` → `server/ingest_predictions.py` → integration layer → re-ingest)
 
+*Prerequisite — verify no duplicate `(player_id, season_year)` rows*
+- [ ] Run against the live DB: `SELECT player_id, player_season_year, COUNT(*) FROM player_season GROUP BY 1, 2 HAVING COUNT(*) > 1;` → must return 0 rows. If rows are returned, the ML pipeline is still emitting duplicate season entries (e.g. mid-season transfers, loan recalls). `CREATE UNIQUE INDEX uq_mv_pc_player_id` and `uq_mv_ia_player_id` will hard-fail at ingest time until this is clean, because both `mv_player_card` and `mv_injury_analysis` fan out on duplicate `player_season` rows and end up with two MV rows per affected `player_id`. Notify the ML team and wait for a clean `predictions.json` before proceeding.
+
 *Step 0a — `server/create_views.py`*
 - [ ] Add `_create_mv_injury_history(...)`. The MV's `SELECT` list **must include `pi.player_injury_id`** so we can build a UNIQUE index on it (a unique index on `(player_id, player_injury_start)` is impossible — data has 12 same-day duplicates).
 - [ ] Inside `_create_mv_injury_history(...)`, create both indexes: `idx_mv_ih_player_start` on `(player_id, player_injury_start DESC)` (query path) **and** `uq_mv_ih_injury_id` UNIQUE on `(player_injury_id)` (concurrent-refresh enabler).
@@ -250,10 +272,10 @@ The composite `(player_id, player_injury_start DESC)` index lets Postgres satisf
 - [ ] Add `uq_mv_pc_player_id` on `mv_player_card` inside `_create_mv_player_card(...)`.
 - [ ] Add `uq_mv_ia_player_id` on `mv_injury_analysis` inside `_create_mv_injury_analysis(...)`.
 - [ ] Add `idx_mv_ri_start_desc` on `mv_reported_injuries` inside `_create_mv_reported_injuries(...)` (preparatory — does not change today's plan; pays off once `/reported-injuries/` adds pagination, tracked as `FE-3` in `server/backend_plans/future_errors.md`).
-- [ ] Wire `_create_mv_injury_history(...)` and `_create_mv_player_overview(...)` into `create_all_views(...)`; remove the calls to the dropped `_create_mv_high_risk_players(...)` / `_create_mv_trending_risk_players(...)`.
+- [ ] Wire `_create_mv_injury_history(...)` and `_create_mv_player_overview(...)` into `create_all_views(...)`; remove the calls to the dropped `_create_mv_high_risk_players(...)` / `_create_mv_trending_risk_players(...)`. Place `_create_mv_player_overview` **after** `_create_mv_teams_overview` — it depends on that MV and will error if called first.
 
 *Step 0b — `server/ingest_predictions.py`*
-- [ ] Update the MV drop list (lines 114–119) to match the new inventory: remove `"mv_high_risk_players"` and `"mv_trending_risk_players"`, add `"mv_player_overview"` and `"mv_injury_history"`. Without this fix, the next re-ingest will fail to drop the new views and silently leak stale ones.
+- [ ] Update the MV drop list (lines 114–119) to match the new inventory: remove `"mv_high_risk_players"` and `"mv_trending_risk_players"`, add `"mv_player_overview"` and `"mv_injury_history"`. Without this fix, the next re-ingest will fail to drop the new views and silently leak stale ones. Place `"mv_player_overview"` in the **first group** of the drop tuple (before `"mv_teams_overview"`), since `mv_player_overview` joins `mv_teams_overview` — dropping `mv_teams_overview` first will fail without CASCADE. `"mv_injury_history"` has no such dependency and can go anywhere.
 
 *Step 0c — integration layer*
 - [ ] Switch `integration/player_page.get_injury_history(...)` to `SELECT * FROM mv_injury_history WHERE player_id = :pid`.
@@ -280,6 +302,8 @@ The composite `(player_id, player_injury_start DESC)` index lets Postgres satisf
 - [x] Capture `EXPLAIN ANALYZE` numbers for all 17 endpoints (section 3).
 
 **Phase 2 — Base-table indexes** (`server/database_init.py`)
+- [ ] Add `Index` and `text` to the SQLAlchemy import line (they are not currently imported; omitting them causes `NameError` at load time)
+- [ ] When adding `uq_gd_player_id` to `GraphData`, **extend** the existing `__table_args__` tuple — do not replace it. The existing `CheckConstraint('chk_gw_risk_range')` must be kept in the same tuple or it is silently dropped from the schema.
 - [ ] `idx_uf_user_id`, `idx_uf_player_id` on `user_favourite`
 - [ ] `idx_p_team_id` on `player`
 - [ ] `idx_ps_player_year` on `player_season(player_id, player_season_year DESC)`
