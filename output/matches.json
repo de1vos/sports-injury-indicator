@@ -1,6 +1,26 @@
 {
   "completed": [
     {
+      "fixture_id": 1379315,
+      "date": "2026-05-01T19:00:00+00:00",
+      "round": "Regular Season - 35",
+      "home_team_id": 63,
+      "away_team_id": 44,
+      "home_team": {
+        "name": "Leeds",
+        "logo": "https://media.api-sports.io/football/teams/63.png"
+      },
+      "away_team": {
+        "name": "Burnley",
+        "logo": "https://media.api-sports.io/football/teams/44.png"
+      },
+      "venue": "Elland Road",
+      "score": {
+        "home": 3,
+        "away": 1
+      }
+    },
+    {
       "fixture_id": 1379305,
       "date": "2026-04-27T19:00:00+00:00",
       "round": "Regular Season - 34",
@@ -402,22 +422,6 @@
     }
   ],
   "upcoming": [
-    {
-      "fixture_id": 1379315,
-      "date": "2026-05-01T19:00:00+00:00",
-      "round": "Regular Season - 35",
-      "home_team_id": 63,
-      "away_team_id": 44,
-      "home_team": {
-        "name": "Leeds",
-        "logo": "https://media.api-sports.io/football/teams/63.png"
-      },
-      "away_team": {
-        "name": "Burnley",
-        "logo": "https://media.api-sports.io/football/teams/44.png"
-      },
-      "venue": "Elland Road"
-    },
     {
       "fixture_id": 1379317,
       "date": "2026-05-02T14:00:00+00:00",
