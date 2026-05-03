@@ -16,10 +16,7 @@ Output: models/injury_predictor.pkl
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (
-    precision_recall_curve, auc, f1_score,
-    classification_report, average_precision_score,
-)
+from sklearn.metrics import average_precision_score, brier_score_loss
 from xgboost import XGBClassifier
 from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV, PLAYERS_CSV
 from model_utils import SigmoidCalibrator
@@ -56,6 +53,10 @@ def load_and_split(path):
     # Keep them in ml_features.csv for prediction, but exclude from val/test.
     injuries        = pd.read_csv(INJURIES_CSV, parse_dates=["start_date"])
     max_injury_date = injuries["start_date"].max()
+    # Label cutoff: intentionally larger than LOOKAHEAD_DAYS (28d) to account for
+    # API recording lag — injuries from the past ~60 days are often not yet in the
+    # database. Using only 28d adds rows with ~0.8% positive rate (vs 5.6% baseline),
+    # causing severe label noise. 90d = 28d lookahead + ~62d API completeness buffer.
     label_cutoff    = max_injury_date - pd.Timedelta(days=90)
     print(f"  Label cutoff: {label_cutoff.date()}  (max injury date: {max_injury_date.date()})")
 
@@ -130,44 +131,62 @@ def calibrate(model, X_val, y_val):
     return cal
 
 
-def find_best_threshold(model, X_val, y_val):
-    """Find threshold that maximises F1 on validation set."""
-    probs = model.predict_proba(X_val)[:, 1]
-    precision, recall, thresholds = precision_recall_curve(y_val, probs)
 
-    f1_scores = []
-    for p, r in zip(precision, recall):
-        f1_scores.append(2 * p * r / (p + r) if (p + r) > 0 else 0)
-
-    best_idx       = np.argmax(f1_scores)
-    best_threshold = thresholds[best_idx] if best_idx < len(thresholds) else 0.5
-    best_f1        = f1_scores[best_idx]
-
-    print(f"  Best threshold (val F1): {best_threshold:.3f}  →  F1={best_f1:.3f}")
-    return best_threshold
+def top_k_precision(probs, y, k):
+    """
+    Precision@K: of the K highest-risk rows, what fraction actually got injured?
+    This is the most clinically meaningful metric — it mirrors real usage where
+    a physio acts on the top N flagged players, not on a fixed threshold.
+    Also reports the lift over random (= base rate).
+    """
+    top_k_idx    = np.argsort(probs)[-k:]
+    precision_k  = y.iloc[top_k_idx].mean() if hasattr(y, "iloc") else y[top_k_idx].mean()
+    base_rate    = y.mean()
+    lift         = precision_k / base_rate if base_rate > 0 else float("nan")
+    return precision_k, lift
 
 
-def evaluate(model, X, y, label, threshold=0.5):
+def evaluate(model, X, y, label):
     probs  = model.predict_proba(X)[:, 1]
-    preds  = (probs >= threshold).astype(int)
     pr_auc = average_precision_score(y, probs)
-    f1     = f1_score(y, preds, zero_division=0)
+
+    # Brier Score: mean squared error of probabilities (lower = better)
+    # Brier Skill Score: improvement over naive baseline (always predict base rate)
+    #   BSS = 0 → no better than guessing; BSS = 1 → perfect
+    brier       = brier_score_loss(y, probs)
+    base_rate   = y.mean()
+    brier_naive = base_rate * (1 - base_rate)  # Brier score of always predicting base rate
+    brier_skill = 1 - (brier / brier_naive) if brier_naive > 0 else float("nan")
 
     print(f"\n── {label} ──────────────────────────────────────")
-    print(f"  PR-AUC:    {pr_auc:.4f}")
-    print(f"  F1:        {f1:.4f}  (threshold={threshold:.3f})")
-    print(f"\n  Classification report:")
-    print(classification_report(y, preds, target_names=["Not injured", "Injured"], zero_division=0))
+    print(f"  PR-AUC:       {pr_auc:.4f}")
+    print(f"  Brier Score:  {brier:.4f}  (naive baseline: {brier_naive:.4f})")
+    print(f"  Brier Skill:  {brier_skill:+.3f}  (0 = no better than random, 1 = perfect)")
 
-    # Calibration check
-    print(f"  Calibration (predicted risk bucket → actual injury rate):")
-    for bucket in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]:
-        mask = (probs >= bucket) & (probs < bucket + 0.1)
+    # Calibration: does a higher score actually mean a higher injury rate?
+    # Use percentile-based boundaries so buckets always populate regardless of
+    # how compressed the score distribution is (calibrated scores range ~1%–16%).
+    print(f"\n  Calibration (base rate = {base_rate:.1%}):")
+    print(f"    {'Risk bucket':>14}  {'N':>6}  {'Actual rate':>12}  {'Lift':>6}")
+    percentile_cuts = [0, 25, 50, 75, 90, 100]
+    boundaries = [np.percentile(probs, p) for p in percentile_cuts]
+    for lo, hi in zip(boundaries[:-1], boundaries[1:]):
+        mask = (probs >= lo) & (probs < hi) if hi < boundaries[-1] else (probs >= lo) & (probs <= hi)
         if mask.sum() > 0:
             actual = y[mask].mean()
-            print(f"    {bucket:.0%}–{bucket+0.1:.0%}:  {mask.sum():4d} players  →  {actual:.1%} actual")
+            lift   = actual / base_rate if base_rate > 0 else float("nan")
+            print(f"    {lo:.1%}–{hi:.1%}:  {mask.sum():6d}  {actual:>12.1%}  {lift:>5.2f}×")
 
-    return pr_auc, f1
+    # Top-K Precision: of my N highest-risk flags, how many actually got injured?
+    print(f"\n  Top-K Precision:")
+    print(f"    {'K':>6}  {'Precision':>10}  {'Lift':>8}")
+    for k in [10, 20, 50, 100]:
+        if k > len(probs):
+            continue
+        p_k, lift = top_k_precision(probs, y, k)
+        print(f"    {k:>6}  {p_k:>10.1%}  {lift:>7.2f}×")
+
+    return pr_auc
 
 
 def save_feature_importance(model, feature_cols):
@@ -207,13 +226,11 @@ def main():
     # Calibrate on val set — corrects the train/live positive-rate distribution shift
     calibrated_model = calibrate(model, X_val, y_val)
 
-    # Find best threshold on calibrated val predictions
-    threshold = find_best_threshold(calibrated_model, X_val, y_val)
-
-    # Evaluate on all splits (use calibrated model for val + test)
-    evaluate(model,            X_train, y_train, "Training set (raw)",        threshold)
-    evaluate(calibrated_model, X_val,   y_val,   "Validation set (cal.)",     threshold)
-    pr_auc, f1 = evaluate(calibrated_model, X_test, y_test, "Test set (cal.)", threshold)
+    # Evaluate on all three splits
+    # Training: raw model (calibration was fit on val, so don't apply it here)
+    evaluate(model,            X_train, y_train, "Training set (raw — overfitting check)")
+    evaluate(calibrated_model, X_val,   y_val,   "Validation set (calibrated)")
+    pr_auc = evaluate(calibrated_model, X_test,  y_test,  "Test set (calibrated)")
 
     # Feature importance (from uncalibrated model — calibrator doesn't change importances)
     save_feature_importance(model, feature_cols)
@@ -223,9 +240,7 @@ def main():
         "model":        calibrated_model,   # calibrated — used for all predictions
         "raw_model":    model,              # raw XGBoost — for SHAP / feature importance
         "feature_cols": feature_cols,
-        "threshold":    threshold,
         "pr_auc":       pr_auc,
-        "f1":           f1,
     }
     with open(MODEL_FILE, "wb") as f:
         pickle.dump(bundle, f)
@@ -233,7 +248,6 @@ def main():
     print(f"\n{'─'*50}")
     print(f"Model saved:   {MODEL_FILE}")
     print(f"PR-AUC (test): {pr_auc:.4f}")
-    print(f"F1 (test):     {f1:.4f}")
 
 
 if __name__ == "__main__":
