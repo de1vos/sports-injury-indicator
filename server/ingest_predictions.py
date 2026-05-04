@@ -196,10 +196,16 @@ def main():
         # ── 5. Player seasons ─────────────────────────────────────────────────
         print("\nInserting player seasons...")
         season_rows = []
+        seen_season_keys: set[tuple[int, int]] = set()
         for p in players:
             if p["player_id"] in skipped_players:
                 continue
             for s in p.get("season_stats", []):
+                key = (p["player_id"], s.get("season") or 0)
+                if key in seen_season_keys:
+                    print(f"  [WARN] duplicate season skipped: player={p['player_id']} season={s.get('season')}")
+                    continue
+                seen_season_keys.add(key)
                 season_rows.append({
                     "player_id":                    p["player_id"],
                     "player_season_year":           s.get("season") or 0,

@@ -265,9 +265,20 @@ def get_all_season_stats(
     injuries_df: pd.DataFrame,
     team_to_fixtures: dict,
 ) -> list[dict]:
-    rows = season_stats_df[season_stats_df["player_id"] == player_id].sort_values(
-        "season", ascending=False
-    )
+    rows = season_stats_df[season_stats_df["player_id"] == player_id].copy()
+    if rows.empty:
+        return []
+
+    # Aggregate across teams within the same season (handles mid-season transfers).
+    # Counting stats are summed; rating is averaged across stints.
+    count_cols  = [c for c in SEASON_STATS_COLS if c != "rating"]
+    agg_funcs   = {c: "sum" for c in count_cols if c in rows.columns}
+    if "rating" in rows.columns:
+        agg_funcs["rating"] = "mean"
+
+    rows = rows.groupby("season", as_index=False).agg(agg_funcs)
+    rows = rows.sort_values("season", ascending=False)
+
     result = []
     for _, row in rows.iterrows():
         season = int(row["season"])
@@ -345,13 +356,7 @@ def get_next_match(team_id: int, upcoming_fixtures: list) -> dict | None:
 # ── Matches JSON ──────────────────────────────────────────────────────────────
 
 def build_matches_json(fixtures_2025: list, fixtures_upcoming: list) -> dict:
-    now             = datetime.now(timezone.utc)
-    two_weeks_ago   = now - TWO_WEEKS
-    two_weeks_ahead = now + TWO_WEEKS
-
-    def parse_dt(d: str) -> datetime:
-        dt = datetime.fromisoformat(d)
-        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    """Return all completed + upcoming fixtures for the current season (no date window filter)."""
 
     def fmt(fx: dict, include_score: bool) -> dict:
         out = {
@@ -369,22 +374,20 @@ def build_matches_json(fixtures_2025: list, fixtures_upcoming: list) -> dict:
             out["score"] = {"home": g.get("home"), "away": g.get("away")}
         return out
 
+    # All completed fixtures for the season (status=FT), sorted newest first
     completed = []
     for fx in fixtures_2025:
         try:
-            d = parse_dt(fx["fixture"]["date"])
-            if two_weeks_ago <= d <= now:
-                completed.append(fmt(fx, include_score=True))
+            completed.append(fmt(fx, include_score=True))
         except Exception:
             continue
     completed.sort(key=lambda x: x["date"], reverse=True)
 
+    # All upcoming fixtures (status=NS), sorted soonest first
     upcoming = []
     for fx in fixtures_upcoming:
         try:
-            d = parse_dt(fx["fixture"]["date"])
-            if now < d <= two_weeks_ahead:
-                upcoming.append(fmt(fx, include_score=False))
+            upcoming.append(fmt(fx, include_score=False))
         except Exception:
             continue
     upcoming.sort(key=lambda x: x["date"])

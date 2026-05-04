@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import ClassVar, List, Optional
 from uuid import UUID
 from dotenv import load_dotenv
-from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric
+from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, Relationship, SQLModel, create_engine
 
@@ -150,6 +150,9 @@ class PlayerInjury(SQLModel, table=True):
 # 8. PlayerSeason
 class PlayerSeason(SQLModel, table=True):
     __tablename__: ClassVar[str] = "player_season"
+    __table_args__: ClassVar[tuple] = (
+        UniqueConstraint("player_id", "player_season_year", name="uq_player_season_year"),
+    )
     player_season_id: Optional[int] = Field(
         default=None,
         primary_key=True,
