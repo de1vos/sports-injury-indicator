@@ -557,5 +557,3 @@ export function HomePage() {
     </div>
   );
 }
-
-
