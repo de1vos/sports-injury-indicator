@@ -17,6 +17,7 @@ POSITION_ENCODING = {
     "Defender":   1,
     "Midfielder": 2,
     "Attacker":   3,
+    "Forward":    3,   # some API responses use "Forward" instead of "Attacker"
 }
 
 

@@ -13,7 +13,7 @@ import pandas as pd
 from scipy import stats as scipy_stats
 from config import (
     INJURIES_CSV, MATCH_STATS_CSV, DATA_DIR, BODY_REGION_MAP,
-    INJURY_REGIONS_FOR_MODEL,
+    HISTORICAL_EXCLUSIONS,
 )
 
 OUTPUT_FILE = DATA_DIR / "injury_features.csv"
@@ -46,7 +46,7 @@ def compute_injury_features(df_player_injuries, ref_date):
             body_region=df_player_injuries["injury_type"].apply(get_body_region)
         )
     injuries = df_player_injuries[
-        ~df_player_injuries["body_region"].isin(INJURY_REGIONS_FOR_MODEL)
+        ~df_player_injuries["body_region"].isin(HISTORICAL_EXCLUSIONS)
     ].copy()
 
     # Only look at injuries that started before ref_date
