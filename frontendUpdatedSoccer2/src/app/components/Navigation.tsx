@@ -240,21 +240,25 @@ export function Navigation() {
           </div>
 
           {/* User Icon - Desktop */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-3">
             {session ? (
-              <button
-                onClick={() => supabase.auth.signOut()}
-                title="Sign out"
-                className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden hover:ring-2 hover:ring-[#1A56DB] transition-all"
-              >
-                {session.user.user_metadata?.avatar_url ? (
-                  <img src={session.user.user_metadata.avatar_url} className="w-8 h-8 object-cover" alt="avatar" />
-                ) : (
-                  <div className="w-8 h-8 bg-[#1A56DB] flex items-center justify-center text-white text-xs font-bold">
-                    {session.user.email?.[0]?.toUpperCase() ?? 'U'}
-                  </div>
-                )}
-              </button>
+              <>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden ring-2 ring-[rgba(0,0,0,0.08)]">
+                  {session.user.user_metadata?.avatar_url ? (
+                    <img src={session.user.user_metadata.avatar_url} className="w-8 h-8 object-cover" alt="avatar" />
+                  ) : (
+                    <div className="w-8 h-8 bg-[#1A56DB] flex items-center justify-center text-white text-xs font-bold">
+                      {session.user.email?.[0]?.toUpperCase() ?? 'U'}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => supabase.auth.signOut()}
+                  className="text-sm font-medium text-[#6B7280] hover:text-[#1A56DB] transition-colors"
+                >
+                  Sign out
+                </button>
+              </>
             ) : (
               <Link to="/login" className="text-[#1A1A2E] hover:text-[#1A56DB] transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
