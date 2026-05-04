@@ -90,6 +90,7 @@ def compute_features(df_player, ref_date, df_schedule, team):
 
     w7   = rolling_window(df_player, ref_date, 7)
     w14  = rolling_window(df_player, ref_date, 14)
+    w28  = rolling_window(df_player, ref_date, 28)
     w30  = rolling_window(df_player, ref_date, 30)
     w60  = rolling_window(df_player, ref_date, 60)
     prev30 = rolling_window(
@@ -102,6 +103,7 @@ def compute_features(df_player, ref_date, df_schedule, team):
 
     # ── Minutes ──────────────────────────────────────────────────────────────
     minutes_7d  = w7["minutes"].sum()
+    minutes_28d = w28["minutes"].sum()
     minutes_30d = w30["minutes"].sum()
     minutes_60d = w60["minutes"].sum()
     prev_minutes_30d = prev30["minutes"].sum()
@@ -127,12 +129,15 @@ def compute_features(df_player, ref_date, df_schedule, team):
         workload_trend = None
 
     # ── Acute:Chronic Workload Ratio ─────────────────────────────────────────
-    avg_weekly_28d = minutes_60d / 4 if minutes_60d > 0 else None
+    # Acute  = total minutes in the last 7 days
+    # Chronic = average weekly load over the last 28 days (28d / 4 weeks)
+    # Standard clinical formula — using 28d window avoids the 60d dilution.
+    avg_weekly_28d = minutes_28d / 4 if minutes_28d > 0 else None
     if avg_weekly_28d and avg_weekly_28d > 0:
         acwr = minutes_7d / avg_weekly_28d
     else:
         acwr = None
-        
+
     is_acwr_danger_zone = int(acwr > 1.5) if acwr is not None else 0
 
     # ── Per-90 rolling stats (last 5 matches) ────────────────────────────────

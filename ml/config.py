@@ -147,6 +147,13 @@ BODY_REGION_MAP = {
     "virus":         "Illness",
     "covid":         "Illness",
     "fever":         "Illness",
+    "broken leg":    "Leg",
+    "heel":          "Foot",
+    "jumpers knee":  "Knee",
+    "knock":         "Unknown/Minor",
+    "injured":       "Unknown/Minor",
+    "injury":        "Unknown/Minor",
+    "unknown":       "Unknown/Minor",
     "suspended":     "Disciplinary",
     "yellow card":   "Disciplinary",
     "red card":      "Disciplinary",
@@ -156,8 +163,15 @@ BODY_REGION_MAP = {
     "personal":      "Administrative",
 }
 
-# Regions that aren't real injuries — excluded from injury counts and the model target.
+# Regions that aren't physical trauma — excluded from historical injury feature counts.
+# (Red cards, loans, international duty, illness are not musculoskeletal events.)
+HISTORICAL_EXCLUSIONS = {"Disciplinary", "Administrative", "Illness"}
+
+# Target exclusions — everything above PLUS vague/minor knocks.
+# Knocks stay in the historical features (so the model sees wear-and-tear)
+# but are NOT something we ask the model to predict.
+TARGET_EXCLUSIONS = HISTORICAL_EXCLUSIONS | {"Unknown/Minor"}
+
+# Legacy alias kept for any other code that references it.
 NON_INJURY_REGIONS       = {"Disciplinary", "Administrative"}
-# Illness is unavailability but not musculoskeletal — exclude from the prediction target,
-# but the user-facing "matches missed" stats may still want to include it.
-INJURY_REGIONS_FOR_MODEL = NON_INJURY_REGIONS | {"Illness"}
+INJURY_REGIONS_FOR_MODEL = TARGET_EXCLUSIONS

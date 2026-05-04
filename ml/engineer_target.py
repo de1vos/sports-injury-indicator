@@ -12,7 +12,7 @@ Output: data/ml_features.csv — one row per player per match, all features + ta
 import pandas as pd
 from config import (
     INJURIES_CSV, MATCH_STATS_CSV, ML_FEATURES_CSV, DATA_DIR, ALL_SEASONS, CURRENT_SEASON,
-    INJURY_REGIONS_FOR_MODEL,
+    TARGET_EXCLUSIONS,
 )
 
 ROLLING_FILE  = DATA_DIR / "rolling_features.csv"
@@ -33,7 +33,7 @@ def compute_target(player_injuries, ref_date):
     future_injuries = player_injuries[
         (player_injuries["start_date"] > ref_date) &
         (player_injuries["start_date"] <= future_cutoff) &
-        (~player_injuries["body_region"].isin(INJURY_REGIONS_FOR_MODEL))
+        (~player_injuries["body_region"].isin(TARGET_EXCLUSIONS))
     ]
     return int(len(future_injuries) > 0)
 
@@ -99,14 +99,22 @@ def main():
         how="left",
     )
 
+    # Add season column from match_stats to enable joining with season-specific features
+    df = df.merge(
+        matches[["player_id", "fixture_id", "season"]],
+        on=["player_id", "fixture_id"],
+        how="left",
+    )
+
     # Join season features (on player_id)
     season_cols = [
         "player_id",
+        "season",
         "minutes_vs_last_season",
         "duels_per_90_vs_last_season",
         "appearances_pace",
     ]
-    df = df.merge(season[season_cols], on="player_id", how="left")
+    df = df.merge(season[season_cols], on=["player_id", "season"], how="left")
 
     profile_cols = [
         "player_id", "age_squared",
@@ -121,12 +129,7 @@ def main():
         how="left",
     )
 
-    # ── Add season label from match_stats (correct 2022/2023/2024/2025) ─────────
-    df = df.merge(
-        matches[["player_id", "fixture_id", "season"]].drop_duplicates(),
-        on=["player_id", "fixture_id"],
-        how="left",
-    )
+    # Season column is already added before joining season features
 
     # ── Drop rows whose 90-day forward window hasn't closed yet ───────────────
     # Only applies to historical training seasons — current season rows are kept

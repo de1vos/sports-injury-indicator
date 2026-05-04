@@ -112,7 +112,7 @@ def main():
         # ── 1. Drop materialized views (must happen before table wipe) ────────
         print("\nDropping materialized views...")
         for view in (
-            "mv_high_risk_players", "mv_trending_risk_players",
+            "mv_player_overview", "mv_injury_history",
             "mv_search_players", "mv_team_player_list", "mv_reported_injuries",
             "mv_teams_overview",
             "mv_player_card", "mv_injury_analysis", "mv_game_week_matches",
@@ -196,10 +196,16 @@ def main():
         # ── 5. Player seasons ─────────────────────────────────────────────────
         print("\nInserting player seasons...")
         season_rows = []
+        seen_season_keys: set[tuple[int, int]] = set()
         for p in players:
             if p["player_id"] in skipped_players:
                 continue
             for s in p.get("season_stats", []):
+                key = (p["player_id"], s.get("season") or 0)
+                if key in seen_season_keys:
+                    print(f"  [WARN] duplicate season skipped: player={p['player_id']} season={s.get('season')}")
+                    continue
+                seen_season_keys.add(key)
                 season_rows.append({
                     "player_id":                    p["player_id"],
                     "player_season_year":           s.get("season") or 0,
