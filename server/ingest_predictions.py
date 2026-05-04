@@ -112,6 +112,7 @@ def main():
         # ── 1. Drop materialized views (must happen before table wipe) ────────
         print("\nDropping materialized views...")
         for view in (
+            "mv_high_risk_players", "mv_trending_risk_players",
             "mv_player_overview", "mv_injury_history",
             "mv_search_players", "mv_team_player_list", "mv_reported_injuries",
             "mv_teams_overview",
