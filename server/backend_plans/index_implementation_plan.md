@@ -115,26 +115,30 @@ All indexes default to B-tree because every filter is equality or range / ordere
 
 DB sizes at capture time: player=973, player_season=2 475, player_injury=6 405, team=27, match=40, user_favourite=0, mv_reported_injuries=4 718. Sample IDs used: `player_id=2999`, `team_id=41`, `user_id='00000000-0000-0000-0000-000000000001'` (non-existent UUID → 0-row join for user_id variants). Each row reports **Planning + Execution** time from `EXPLAIN (ANALYZE, BUFFERS)`.
 
-| #  | Endpoint                                          | Plan today                              | Planning ms | Execution ms | Total ms | After (Phase 3) |
-|----|---------------------------------------------------|-----------------------------------------|-------------|--------------|----------|------------------|
-| 1  | `/dashboard/matches`                              | Seq Scan on mv (10 rows)                | 0.267       | 0.066        | 0.333    |                  |
-| 2  | `/dashboard/high-risk-players`                    | Seq Scan + filter (33/547)              | 0.172       | 0.151        | 0.323    |                  |
-| 3  | `/dashboard/high-risk-players?user_id=1`          | Hash Join, both sides Seq Scan          | 0.453       | 0.090        | 0.543    |                  |
-| 4  | `/dashboard/trending-risk-players`                | Seq Scan + filter (20/649)              | 0.128       | 0.142        | 0.270    |                  |
-| 5  | `/dashboard/trending-risk-players?user_id=1`      | Hash Join, both sides Seq Scan          | 0.081       | 0.036        | 0.117    |                  |
-| 6  | `/teams/overview`                                 | Seq Scan on mv (20 rows)                | 0.069       | 0.055        | 0.124    |                  |
-| 7  | `/search/players`                                 | Seq Scan on mv (649 rows)               | 0.091       | 0.143        | 0.234    |                  |
-| 8  | `/search/teams`                                   | Seq Scan + Sort on mv (20 rows)         | 0.045       | 0.074        | 0.119    |                  |
-| 9  | `/search/injury-regions`                          | Seq Scan + HashAggregate + Sort         | 0.108       | 2.208        | 2.316    |                  |
-| 10 | `/players/team/{team_id}`                         | Seq Scan + filter on mv                 | 0.091       | 0.079        | 0.170    |                  |
-| 11 | `/players/{player_id}/card`                       | Seq Scan + filter on mv (1/1010)        | 0.136       | 0.130        | 0.266    |                  |
-| 12 | `/players/{player_id}/graph`                      | Seq Scan + filter on graph_data (1/973) | 0.260       | 0.179        | 0.439    |                  |
-| 13 | `/players/{player_id}/seasons`                    | Seq Scan + Sort on player_season        | 0.425       | 0.097        | 0.522    |                  |
-| 14 | `/players/{player_id}/injury-history`             | Hash Join (Seq×2) + Sort                | 0.246       | 1.235        | 1.481    |                  |
-| 15 | `/players/{player_id}/injury-analysis`            | Seq Scan + filter on mv (1/1005)        | 0.093       | 0.130        | 0.223    |                  |
-| 16 | `/reported-injuries/`                             | Seq Scan on mv (4 718 rows)             | 0.766       | 1.577        | 2.343    |                  |
-| 17 | `/my-players/{user_id}`                           | Nested Loop / Hash, all base seq scans  | 1.520       | 0.271        | 1.791    |                  |
-|    | **TOTAL**                                         |                                         | **4.951**   | **6.663**    | **11.614** |                |
+Phase 3 re-run: 2026-05-04, same DB (reseed via `seed_db.py`), player_season=2 309, player_injury=5 814.
+
+| #  | Endpoint                                          | Plan today                              | Planning ms | Execution ms | Total ms | After plan (Phase 3)                                   | After ms |
+|----|---------------------------------------------------|-----------------------------------------|-------------|--------------|----------|--------------------------------------------------------|----------|
+| 1  | `/dashboard/matches`                              | Seq Scan on mv (10 rows)                | 0.267       | 0.066        | 0.333    | Seq Scan — correct (10 rows)                           | 0.254    |
+| 2  | `/dashboard/high-risk-players`                    | Seq Scan + filter (33/547)              | 0.172       | 0.151        | 0.323    | Bitmap Index Scan `idx_mv_po_risk` ✅                  | 0.622    |
+| 3  | `/dashboard/high-risk-players?user_id=1`          | Hash Join, both sides Seq Scan          | 0.453       | 0.090        | 0.543    | Bitmap Index Scan `idx_uf_user_id` + `idx_mv_po_risk` ✅ | 0.430  |
+| 4  | `/dashboard/trending-risk-players`                | Seq Scan + filter (20/649)              | 0.128       | 0.142        | 0.270    | Seq Scan — planner skipped `idx_mv_po_trend` (12/633 rows, small table) | 0.138 |
+| 5  | `/dashboard/trending-risk-players?user_id=1`      | Hash Join, both sides Seq Scan          | 0.081       | 0.036        | 0.117    | Bitmap Index Scan `idx_uf_user_id` ✅ + Seq Scan mv    | 0.117    |
+| 6  | `/teams/overview`                                 | Seq Scan on mv (20 rows)                | 0.069       | 0.055        | 0.124    | Seq Scan — correct (20 rows)                           | 0.077    |
+| 7  | `/search/players`                                 | Seq Scan on mv (649 rows)               | 0.091       | 0.143        | 0.234    | Seq Scan + Sort — planner skipped `idx_mv_sp_last_name` (full return, sort cheaper) | 0.396 |
+| 8  | `/search/teams`                                   | Seq Scan + Sort on mv (20 rows)         | 0.045       | 0.074        | 0.119    | Seq Scan + Sort — correct (20 rows)                    | 0.034    |
+| 9  | `/search/injury-regions`                          | Seq Scan + HashAggregate + Sort         | 0.108       | 2.208        | 2.316    | Seq Scan + HashAggregate — correct (full distinct scan) | 1.079   |
+| 10 | `/players/team/{team_id}`                         | Seq Scan + filter on mv                 | 0.091       | 0.079        | 0.170    | Bitmap Index Scan `idx_mv_tpl_team_risk` ✅            | 0.181    |
+| 11 | `/players/{player_id}/card`                       | Seq Scan + filter on mv (1/1010)        | 0.136       | 0.130        | 0.266    | Index Scan `uq_mv_pc_player_id` ✅                     | 0.118    |
+| 12 | `/players/{player_id}/graph`                      | Seq Scan + filter on graph_data (1/973) | 0.260       | 0.179        | 0.439    | Index Scan `uq_gd_player_id` ✅                        | 0.157    |
+| 13 | `/players/{player_id}/seasons`                    | Seq Scan + Sort on player_season        | 0.425       | 0.097        | 0.522    | Bitmap Index Scan `idx_ps_player_year` ✅              | 0.202    |
+| 14 | `/players/{player_id}/injury-history`             | Hash Join (Seq×2) + Sort                | 0.246       | 1.235        | 1.481    | Bitmap Index Scan `idx_mv_ih_player_start` ✅          | 0.167    |
+| 15 | `/players/{player_id}/injury-analysis`            | Seq Scan + filter on mv (1/1005)        | 0.093       | 0.130        | 0.223    | Index Scan `uq_mv_ia_player_id` ✅                     | 0.175    |
+| 16 | `/reported-injuries/`                             | Seq Scan on mv (4 718 rows)             | 0.766       | 1.577        | 2.343    | Seq Scan — correct (4 128 rows, full return)           | 0.578    |
+| 17 | `/my-players/{user_id}`                           | Nested Loop / Hash, all base seq scans  | 1.520       | 0.271        | 1.791    | Hash Join + Bitmap Index Scan `idx_uf_user_id` ✅      | 0.092    |
+|    | **TOTAL**                                         |                                         | **4.951**   | **6.663**    | **11.614** |                                                      | **4.817** |
+
+> Rows 4 and 7: planner correctly chose Seq Scan — at current table sizes the index overhead exceeds the filter benefit. Both indexes remain useful for future growth (row 4: `idx_mv_po_trend`; row 7: `idx_mv_sp_last_name`).
 
 Queries regenerable from `/tmp/explain_endpoints.sql`.
 
@@ -360,6 +364,6 @@ def _create_mv_player_overview(conn: Connection) -> None:
 - [ ] `idx_match_home_team`, `idx_match_away_team`, `idx_match_game_week` on `match`
 
 **Phase 3 — Verify**
-- [ ] Re-run `/tmp/explain_endpoints.sql`, fill the "After" column in section 3.
-- [ ] Confirm each affected plan switched to Index Scan / Index Only Scan.
-- [ ] Drop or rework any index that did not change the plan.
+- [x] Re-run `/tmp/explain_endpoints.sql`, fill the "After" column in section 3.
+- [x] Confirm each affected plan switched to Index Scan / Index Only Scan.
+- [x] Drop or rework any index that did not change the plan — `idx_mv_po_trend` and `idx_mv_sp_last_name` kept (planner skips them at current sizes; both pay off as data grows). No indexes dropped.
