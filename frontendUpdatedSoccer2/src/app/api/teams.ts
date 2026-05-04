@@ -1,17 +1,25 @@
 import { apiFetch } from './client';
 import type { ApiTeamOverview } from './types';
-import { mapTeamOverview, type TeamOverviewItem } from './mappers';
+import { mapTeamOverview } from './mappers';
+import { mockTeams } from '../data/mockData';
 
 export type { TeamOverviewItem } from './mappers';
 
-// Module-level cache — fetched once per session, reused on every subsequent call
-let _cache: TeamOverviewItem[] | null = null;
-
 export const teamsApi = {
   getOverview: async () => {
-    if (_cache) return _cache;
-    const data = await apiFetch<ApiTeamOverview[]>('/teams/overview');
-    _cache = data.map(mapTeamOverview);
-    return _cache;
+    // For testing, return mock data
+    return mockTeams.map(team => ({
+      id: team.id,
+      name: team.name,
+      abbreviation: team.abbreviation,
+      accentColor: team.accentColor,
+      logo: team.logo,
+      squadSize: team.squadSize,
+      avgRisk: team.avgRisk,
+      totalInjuries: team.totalInjuries,
+      totalMinutesLost: team.totalMinutesLost,
+    }));
+    // const data = await apiFetch<ApiTeamOverview[]>('/teams/overview');
+    // return data.map(mapTeamOverview);
   },
 };

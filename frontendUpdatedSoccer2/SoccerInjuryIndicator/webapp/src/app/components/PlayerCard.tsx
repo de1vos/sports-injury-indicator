@@ -1,5 +1,4 @@
 import { Player, getRiskColor } from '../data/mockData';
-import { StarIcon } from './StarIcon';
 
 interface PlayerCardProps {
   player: Player;
@@ -9,13 +8,7 @@ interface PlayerCardProps {
   onToggleFavorite?: () => void;
 }
 
-function getSeverityColor(risk: number): string {
-  if (risk >= 70) return '#DC2626'; // High - Red
-  if (risk >= 50) return '#EA580C'; // Elevated - Orange
-  if (risk >= 35) return '#0D9488'; // Moderate - Teal
-  return '#1A56DB'; // Low - Blue
-}
-
+// Helper function to lighten a color
 function lightenColor(color: string, percent: number): string {
   const num = parseInt(color.replace("#", ""), 16);
   const amt = Math.round(2.55 * percent);
@@ -32,15 +25,13 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
   const trendColor = player.riskTrend > 0 ? '#DC2626' : '#0D9488';
   const trendArrow = player.riskTrend > 0 ? '↑' : '↓';
 
-  const today = new Date().toISOString().split('T')[0];
-  const isInjured = (player.injuryHistory ?? []).some(entry => entry.until >= today);
-
+  // Create gradient using team color
   const lighterColor = lightenColor(teamColor, 20);
   const gradient = `linear-gradient(135deg, ${teamColor} 0%, ${lighterColor} 100%)`;
 
   return (
     <div
-      className="relative w-[320px] h-[450px] rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.25)] transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+      className="relative w-[320px] h-[450px] rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.15)]"
       style={{ background: gradient }}
     >
       {/* Favorite Star */}
@@ -49,10 +40,15 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           onClick={onToggleFavorite}
           className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all"
         >
-          <StarIcon
-            filled={!!isFavorite}
-            className={isFavorite ? 'w-6 h-6 text-[#F59E0B] fill-current' : 'w-6 h-6 text-white'}
-          />
+          {isFavorite ? (
+            <svg className="w-6 h-6 text-[#F59E0B] fill-current" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          )}
         </button>
       )}
 
@@ -86,15 +82,9 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           <div className="text-5xl font-bold mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
             {player.injuryRisk}%
           </div>
-          <div className="text-[9px] uppercase tracking-wider opacity-80 mb-1.5" style={{ fontFamily: 'var(--font-mono)' }}>
+          <div className="text-[9px] uppercase tracking-wider opacity-80" style={{ fontFamily: 'var(--font-mono)' }}>
             INJURY RISK
           </div>
-          <span
-            className="px-2 py-0.5 rounded-full text-xs font-bold bg-white"
-            style={{ color: getSeverityColor(player.injuryRisk) }}
-          >
-            {isInjured ? 'Injured' : 'Fit'}
-          </span>
         </div>
 
         {/* Stats Grid */}
@@ -109,18 +99,18 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           </div>
           <div>
             <div className="text-[10px] uppercase opacity-70 mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              MISSED MATCHES
+              HEIGHT
             </div>
             <div className="text-base font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
-              {player.injurySummaryData?.matches_missed_this_season ?? Math.round((player.minutesMissed ?? 0) / 90)}
+              {player.height || '-'}
             </div>
           </div>
           <div>
             <div className="text-[10px] uppercase opacity-70 mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              MINS PLAYED
+              WEIGHT
             </div>
             <div className="text-base font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
-              {player.minutesPlayed?.toLocaleString() ?? '-'}
+              {player.weight || '-'}
             </div>
           </div>
           <div>
@@ -154,12 +144,9 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-white/20 flex justify-between items-end">
+        <div className="pt-3 border-t border-white/20">
           <div className="text-2xl opacity-90">
             {player.nationality}
-          </div>
-          <div className="text-[8px] opacity-60 text-right">
-            * Data based on this season
           </div>
         </div>
       </div>

@@ -25,77 +25,14 @@ export interface Player {
   weight?: string;
   dateOfBirth?: string;
   preferredFoot?: string;
-  photo?: string;
-  riskLevel?: string;
-  riskFactors?: string[];
-  injuryRiskTrend?: RiskTrendEntry[];
-  seasonStats?: SeasonStat[];
-  workloadData?: WorkloadData;
-  injurySummaryData?: InjurySummaryData;
-  nextMatch?: NextMatchData;
 }
 
 export interface InjuryRecord {
+  date: string;
   diagnosis: string;
   region: string;
-  from: string;
-  until: string | null;
-  severity?: string;
-  daysOut?: number;
-}
-
-export interface RiskTrendEntry {
-  gw: string;
-  season: number;
-  risk: number | 'Injured';
-}
-
-export interface SeasonStat {
-  season: number;
-  appearances: number;
-  minutes: number;
-  rating: number;
-  goals: number;
-  assists: number;
-  tackles: number;
-  interceptions: number | null;
-  duels_total: number;
-  duels_won: number;
-  dribbles_attempts: number;
-  dribbles_success: number;
-  fouls_committed: number;
-  fouls_drawn: number | null;
-  yellow_cards: number;
-  red_cards: number;
-}
-
-export interface WorkloadData {
-  minutes_last_30d: number;
-  matches_last_30d: number;
-  acute_chronic_ratio: number;
-  match_density_14d: number;
-  fouls_against_per_90: number;
-  consecutive_90min_starts: number;
-}
-
-export interface InjurySummaryData {
-  career_total_injuries: number;
-  injuries_this_season: number;
-  days_since_last_injury: number;
-  matches_missed_this_season: number;
-  minutes_missed_this_season: number;
-  matches_missed_career: number;
-}
-
-export interface NextMatchData {
-  fixture_id: number;
-  date: string;
-  home_team: string;
-  home_logo: string;
-  away_team: string;
-  away_logo: string;
-  venue: string;
-  round: string;
+  duration: string;
+  severity: 'Mild' | 'Moderate' | 'Severe';
 }
 
 export interface Team {
@@ -103,33 +40,6 @@ export interface Team {
   name: string;
   abbreviation: string;
   accentColor: string;
-  logo: string;
-  squadSize: number;
-  avgRisk: number;
-  totalInjuries: number;   // active injuries
-  percentInjured: number;  // 0–100
-  totalMinutesLost: number;
-  players: Player[];
-}
-
-export interface Match {
-  id: string;
-  homeTeamId: string;
-  awayTeamId: string;
-  date: string;
-  time: string;
-  venue: string;
-  status: 'upcoming' | 'live' | 'finished';
-  homeGoals?: number;
-  awayGoals?: number;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-  abbreviation: string;
-  accentColor: string;
-  logo: string;
   squadSize: number;
   avgRisk: number;
   totalInjuries: number;
@@ -158,7 +68,6 @@ export const teams: Team[] = [
     name: 'Arsenal',
     abbreviation: 'ARS',
     accentColor: '#EF0107',
-    logo: 'https://media.api-sports.io/football/teams/42.png',
     squadSize: 25,
     avgRisk: 38,
     totalInjuries: 12,
@@ -190,8 +99,8 @@ export const teams: Team[] = [
         dateOfBirth: '05 Sep 2001',
         preferredFoot: 'Left',
         injuryHistory: [
-          { diagnosis: 'Hamstring strain', region: 'Posterior thigh', from: '2026-03-28', until: '2026-04-18' },
-          { diagnosis: 'Ankle sprain', region: 'Left ankle', from: '2026-01-14', until: '2026-01-24' },
+          { date: '2026-03-28', diagnosis: 'Hamstring strain', region: 'Posterior thigh', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2026-01-14', diagnosis: 'Ankle sprain', region: 'Left ankle', duration: '10 days', severity: 'Mild' },
         ]
       },
       {
@@ -216,7 +125,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 45,
         matchDensity: 0.88,
         injuryHistory: [
-          { diagnosis: 'Calf tightness', region: 'Right calf', from: '2026-02-20', until: '2026-03-06' },
+          { date: '2026-02-20', diagnosis: 'Calf tightness', region: 'Right calf', duration: '2 weeks', severity: 'Mild' },
         ]
       },
       {
@@ -287,8 +196,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 8,
         matchDensity: 0.78,
         injuryHistory: [
-          { diagnosis: 'Knee contusion', region: 'Right knee', from: '2026-04-02', until: '2026-04-09' },
-          { diagnosis: 'Hamstring tear', region: 'Left hamstring', from: '2025-12-10', until: '2026-02-04' },
+          { date: '2026-04-02', diagnosis: 'Knee contusion', region: 'Right knee', duration: '1 week', severity: 'Mild' },
+          { date: '2025-12-10', diagnosis: 'Hamstring tear', region: 'Left hamstring', duration: '8 weeks', severity: 'Severe' },
         ]
       },
       {
@@ -313,7 +222,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 28,
         matchDensity: 0.86,
         injuryHistory: [
-          { diagnosis: 'Groin strain', region: 'Adductor', from: '2026-03-05', until: '2026-03-26' },
+          { date: '2026-03-05', diagnosis: 'Groin strain', region: 'Adductor', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -338,7 +247,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 52,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Hip flexor strain', region: 'Hip', from: '2026-02-08', until: '2026-03-08' },
+          { date: '2026-02-08', diagnosis: 'Hip flexor strain', region: 'Hip', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -363,8 +272,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 18,
         matchDensity: 0.89,
         injuryHistory: [
-          { diagnosis: 'Quadriceps strain', region: 'Right quad', from: '2026-03-18', until: '2026-04-01' },
-          { diagnosis: 'Foot injury', region: 'Left foot', from: '2026-01-25', until: '2026-03-01' },
+          { date: '2026-03-18', diagnosis: 'Quadriceps strain', region: 'Right quad', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-25', diagnosis: 'Foot injury', region: 'Left foot', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
     ]
@@ -374,7 +283,6 @@ export const teams: Team[] = [
     name: 'Chelsea',
     abbreviation: 'CHE',
     accentColor: '#034694',
-    logo: 'https://media.api-sports.io/football/teams/49.png',
     squadSize: 27,
     avgRisk: 44,
     totalInjuries: 15,
@@ -402,7 +310,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 38,
         matchDensity: 0.87,
         injuryHistory: [
-          { diagnosis: 'Ankle knock', region: 'Left ankle', from: '2026-02-28', until: '2026-03-14' },
+          { date: '2026-02-28', diagnosis: 'Ankle knock', region: 'Left ankle', duration: '2 weeks', severity: 'Mild' },
         ]
       },
       {
@@ -427,9 +335,9 @@ export const teams: Team[] = [
         daysSinceLastInjury: 9,
         matchDensity: 0.91,
         injuryHistory: [
-          { diagnosis: 'Muscle fatigue', region: 'Thigh', from: '2026-03-30', until: '2026-04-06' },
-          { diagnosis: 'Hamstring pull', region: 'Right hamstring', from: '2026-02-12', until: '2026-03-12' },
-          { diagnosis: 'Calf strain', region: 'Left calf', from: '2025-12-18', until: '2026-01-08' },
+          { date: '2026-03-30', diagnosis: 'Muscle fatigue', region: 'Thigh', duration: '1 week', severity: 'Mild' },
+          { date: '2026-02-12', diagnosis: 'Hamstring pull', region: 'Right hamstring', duration: '4 weeks', severity: 'Moderate' },
+          { date: '2025-12-18', diagnosis: 'Calf strain', region: 'Left calf', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -454,7 +362,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 55,
         matchDensity: 0.83,
         injuryHistory: [
-          { diagnosis: 'Hip injury', region: 'Right hip', from: '2026-02-05', until: '2026-02-26' },
+          { date: '2026-02-05', diagnosis: 'Hip injury', region: 'Right hip', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -479,10 +387,10 @@ export const teams: Team[] = [
         daysSinceLastInjury: 5,
         matchDensity: 0.76,
         injuryHistory: [
-          { diagnosis: 'Hamstring tightness', region: 'Right hamstring', from: '2026-04-05', until: '2026-04-19' },
-          { diagnosis: 'Hamstring tear', region: 'Right hamstring', from: '2026-01-22', until: '2026-03-05' },
-          { diagnosis: 'Knee injury', region: 'Right knee', from: '2025-11-10', until: '2025-12-15' },
-          { diagnosis: 'Calf strain', region: 'Left calf', from: '2025-09-15', until: '2025-10-06' },
+          { date: '2026-04-05', diagnosis: 'Hamstring tightness', region: 'Right hamstring', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-22', diagnosis: 'Hamstring tear', region: 'Right hamstring', duration: '6 weeks', severity: 'Severe' },
+          { date: '2025-11-10', diagnosis: 'Knee injury', region: 'Right knee', duration: '5 weeks', severity: 'Moderate' },
+          { date: '2025-09-15', diagnosis: 'Calf strain', region: 'Left calf', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -553,9 +461,9 @@ export const teams: Team[] = [
         daysSinceLastInjury: 14,
         matchDensity: 0.88,
         injuryHistory: [
-          { diagnosis: 'Muscle injury', region: 'Thigh', from: '2026-03-22', until: '2026-04-12' },
-          { diagnosis: 'Knee problem', region: 'Left knee', from: '2026-01-08', until: '2026-02-26' },
-          { diagnosis: 'Hamstring strain', region: 'Left hamstring', from: '2025-10-28', until: '2025-11-25' },
+          { date: '2026-03-22', diagnosis: 'Muscle injury', region: 'Thigh', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2026-01-08', diagnosis: 'Knee problem', region: 'Left knee', duration: '7 weeks', severity: 'Severe' },
+          { date: '2025-10-28', diagnosis: 'Hamstring strain', region: 'Left hamstring', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -580,8 +488,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 22,
         matchDensity: 0.86,
         injuryHistory: [
-          { diagnosis: 'Ankle sprain', region: 'Right ankle', from: '2026-03-10', until: '2026-03-24' },
-          { diagnosis: 'Thigh strain', region: 'Left thigh', from: '2026-01-18', until: '2026-02-15' },
+          { date: '2026-03-10', diagnosis: 'Ankle sprain', region: 'Right ankle', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-18', diagnosis: 'Thigh strain', region: 'Left thigh', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
     ]
@@ -591,7 +499,6 @@ export const teams: Team[] = [
     name: 'Liverpool',
     abbreviation: 'LIV',
     accentColor: '#C8102E',
-    logo: 'https://media.api-sports.io/football/teams/40.png',
     squadSize: 25,
     avgRisk: 32,
     totalInjuries: 9,
@@ -619,7 +526,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 32,
         matchDensity: 0.89,
         injuryHistory: [
-          { diagnosis: 'Hamstring tightness', region: 'Right hamstring', from: '2026-02-18', until: '2026-03-18' },
+          { date: '2026-02-18', diagnosis: 'Hamstring tightness', region: 'Right hamstring', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -667,7 +574,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 68,
         matchDensity: 0.82,
         injuryHistory: [
-          { diagnosis: 'Hip issue', region: 'Right hip', from: '2026-01-28', until: '2026-02-18' },
+          { date: '2026-01-28', diagnosis: 'Hip issue', region: 'Right hip', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -715,8 +622,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 25,
         matchDensity: 0.87,
         injuryHistory: [
-          { diagnosis: 'Groin strain', region: 'Groin', from: '2026-03-08', until: '2026-03-22' },
-          { diagnosis: 'Knee injury', region: 'Left knee', from: '2026-01-05', until: '2026-02-09' },
+          { date: '2026-03-08', diagnosis: 'Groin strain', region: 'Groin', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-05', diagnosis: 'Knee injury', region: 'Left knee', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -764,7 +671,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 48,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Muscle strain', region: 'Thigh', from: '2026-02-12', until: '2026-03-12' },
+          { date: '2026-02-12', diagnosis: 'Muscle strain', region: 'Thigh', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -789,155 +696,34 @@ export const teams: Team[] = [
         daysSinceLastInjury: 42,
         matchDensity: 0.86,
         injuryHistory: [
-          { diagnosis: 'Knee knock', region: 'Right knee', from: '2026-02-24', until: '2026-03-10' },
+          { date: '2026-02-24', diagnosis: 'Knee knock', region: 'Right knee', duration: '2 weeks', severity: 'Mild' },
         ]
       },
       {
         id: 'isak-liverpool',
         firstName: 'Alexander',
         lastName: 'Isak',
-        position: 'Attacker',
-        kitNumber: 9,
+        position: 'ST',
+        kitNumber: 14,
         age: 26,
         nationality: '🇸🇪',
         marketValue: '€90M',
-        injuryRisk: 35,
-        gamesPlayed: 11,
-        minutesPlayed: 540,
-        injuries: 3,
-        minutesMissed: 1350,
-        riskTrend: -10,
+        injuryRisk: 43,
+        gamesPlayed: 30,
+        minutesPlayed: 2550,
+        injuries: 1,
+        minutesMissed: 540,
+        riskTrend: 7,
         avgDistance: 10.4,
         sprintsPerMatch: 36,
-        foulsAgainst: 0.0,
-        acuteChronicRatio: 0.19,
-        daysSinceLastInjury: 7,
-        matchDensity: 0.0,
-        photo: 'https://media.api-sports.io/football/players/2864.png',
-        riskLevel: 'Medium',
-        riskFactors: [
-          'History of recurring Groin Injury',
-          '12 injuries in last 24 months',
-          'Recovery times trending longer',
-        ],
-        injuryRiskTrend: [
-          { gw: 'GW33', season: 2024, risk: 0.3533 },
-          { gw: 'GW34', season: 2024, risk: 0.3533 },
-          { gw: 'GW35', season: 2024, risk: 0.3533 },
-          { gw: 'GW36', season: 2024, risk: 0.3533 },
-          { gw: 'GW37', season: 2024, risk: 'Injured' },
-          { gw: 'GW38', season: 2024, risk: 0.3533 },
-          { gw: 'GW1',  season: 2025, risk: 0.3533 },
-          { gw: 'GW2',  season: 2025, risk: 'Injured' },
-          { gw: 'GW3',  season: 2025, risk: 'Injured' },
-          { gw: 'GW4',  season: 2025, risk: 0.3533 },
-          { gw: 'GW5',  season: 2025, risk: 0.4477 },
-          { gw: 'GW6',  season: 2025, risk: 0.4546 },
-          { gw: 'GW7',  season: 2025, risk: 0.4527 },
-          { gw: 'GW8',  season: 2025, risk: 0.4490 },
-          { gw: 'GW9',  season: 2025, risk: 0.4490 },
-          { gw: 'GW10', season: 2025, risk: 'Injured' },
-          { gw: 'GW11', season: 2025, risk: 'Injured' },
-          { gw: 'GW12', season: 2025, risk: 0.4398 },
-          { gw: 'GW13', season: 2025, risk: 0.4446 },
-          { gw: 'GW14', season: 2025, risk: 0.4451 },
-          { gw: 'GW15', season: 2025, risk: 0.4445 },
-          { gw: 'GW16', season: 2025, risk: 0.4449 },
-          { gw: 'GW17', season: 2025, risk: 0.4433 },
-          { gw: 'GW18', season: 2025, risk: 'Injured' },
-          { gw: 'GW19', season: 2025, risk: 'Injured' },
-          { gw: 'GW20', season: 2025, risk: 'Injured' },
-          { gw: 'GW21', season: 2025, risk: 'Injured' },
-          { gw: 'GW22', season: 2025, risk: 'Injured' },
-          { gw: 'GW23', season: 2025, risk: 'Injured' },
-          { gw: 'GW24', season: 2025, risk: 'Injured' },
-          { gw: 'GW25', season: 2025, risk: 'Injured' },
-          { gw: 'GW26', season: 2025, risk: 'Injured' },
-          { gw: 'GW27', season: 2025, risk: 'Injured' },
-          { gw: 'GW28', season: 2025, risk: 'Injured' },
-          { gw: 'GW29', season: 2025, risk: 'Injured' },
-          { gw: 'GW30', season: 2025, risk: 'Injured' },
-          { gw: 'GW31', season: 2025, risk: 'Injured' },
-          { gw: 'GW32', season: 2025, risk: 0.3372 },
-        ],
-        seasonStats: [
-          {
-            season: 2025, appearances: 11, minutes: 540, rating: 6.43,
-            goals: 2, assists: 1, tackles: 6, interceptions: null,
-            duels_total: 43, duels_won: 12, dribbles_attempts: 8, dribbles_success: 1,
-            fouls_committed: 5, fouls_drawn: null, yellow_cards: 0, red_cards: 0,
-          },
-          {
-            season: 2024, appearances: 34, minutes: 2769, rating: 7.28,
-            goals: 23, assists: 6, tackles: 12, interceptions: 3,
-            duels_total: 285, duels_won: 94, dribbles_attempts: 89, dribbles_success: 42,
-            fouls_committed: 27, fouls_drawn: 14, yellow_cards: 1, red_cards: 0,
-          },
-          {
-            season: 2023, appearances: 31, minutes: 2265, rating: 7.17,
-            goals: 21, assists: 2, tackles: 5, interceptions: 6,
-            duels_total: 180, duels_won: 71, dribbles_attempts: 70, dribbles_success: 42,
-            fouls_committed: 14, fouls_drawn: 15, yellow_cards: 1, red_cards: 0,
-          },
-          {
-            season: 2022, appearances: 22, minutes: 1527, rating: 7.01,
-            goals: 10, assists: 1, tackles: 18, interceptions: 4,
-            duels_total: 207, duels_won: 87, dribbles_attempts: 62, dribbles_success: 32,
-            fouls_committed: 19, fouls_drawn: 15, yellow_cards: 3, red_cards: 0,
-          },
-        ],
-        workloadData: {
-          minutes_last_30d: 0,
-          matches_last_30d: 0,
-          acute_chronic_ratio: 0.19,
-          match_density_14d: 0,
-          fouls_against_per_90: 0.0,
-          consecutive_90min_starts: 0,
-        },
-        injurySummaryData: {
-          career_total_injuries: 24,
-          injuries_this_season: 3,
-          days_since_last_injury: 7,
-          matches_missed_this_season: 15,
-          minutes_missed_this_season: 1350,
-          matches_missed_career: 62,
-        },
-        nextMatch: {
-          fixture_id: 1379293,
-          date: '2026-04-19T13:00:00+00:00',
-          home_team: 'Everton',
-          home_logo: 'https://media.api-sports.io/football/teams/45.png',
-          away_team: 'Liverpool',
-          away_logo: 'https://media.api-sports.io/football/teams/40.png',
-          venue: 'Hill Dickinson Stadium',
-          round: 'Regular Season - 33',
-        },
+        foulsAgainst: 2.2,
+        acuteChronicRatio: 1.18,
+        daysSinceLastInjury: 33,
+        matchDensity: 0.86,
+        image: '/src/imports/509348_alexander_isak_20251204163904.png',
         injuryHistory: [
-          { diagnosis: 'Broken Leg',    region: 'Other', from: '2025-12-27', until: '2026-04-04', severity: 'Long-term',  daysOut: 98  },
-          { diagnosis: 'Groin Injury',  region: 'Groin', from: '2025-11-01', until: '2025-11-15', severity: 'Moderate',   daysOut: 14  },
-          { diagnosis: 'Other',         region: 'Other', from: '2025-08-16', until: '2025-09-08', severity: 'Moderate',   daysOut: 23  },
-          { diagnosis: 'Thigh Injury',  region: 'Thigh', from: '2025-07-27', until: '2025-08-14', severity: 'Moderate',   daysOut: 18  },
-          { diagnosis: 'Groin Injury',  region: 'Groin', from: '2025-05-17', until: '2025-05-24', severity: 'Minor',      daysOut: 7   },
-          { diagnosis: 'Groin Injury',  region: 'Groin', from: '2025-04-03', until: '2025-04-06', severity: 'Minor',      daysOut: 3   },
-          { diagnosis: 'Hamstring',     region: 'Thigh', from: '2025-01-08', until: '2025-01-14', severity: 'Minor',      daysOut: 6   },
-          { diagnosis: 'Hip Injury',    region: 'Hip',   from: '2024-12-01', until: '2024-12-03', severity: 'Minor',      daysOut: 2   },
-          { diagnosis: 'Finger Injury', region: 'Other', from: '2024-10-05', until: '2024-10-19', severity: 'Moderate',   daysOut: 14  },
-          { diagnosis: 'Toe Injury',    region: 'Other', from: '2024-09-22', until: '2024-10-18', severity: 'Moderate',   daysOut: 26  },
-          { diagnosis: 'Eye Injury',    region: 'Other', from: '2024-09-16', until: '2024-09-20', severity: 'Minor',      daysOut: 4   },
-          { diagnosis: 'Illness',       region: 'Illness', from: '2024-05-12', until: '2024-05-14', severity: 'Minor',   daysOut: 2   },
-          { diagnosis: 'Groin Injury',  region: 'Groin', from: '2024-01-31', until: '2024-02-23', severity: 'Moderate',   daysOut: 23  },
-          { diagnosis: 'Groin Injury',  region: 'Groin', from: '2023-12-21', until: '2023-12-22', severity: 'Minor',      daysOut: 1   },
-          { diagnosis: 'Groin Injury',  region: 'Groin', from: '2023-10-27', until: '2023-11-24', severity: 'Moderate',   daysOut: 28  },
-          { diagnosis: 'Knee Injury',   region: 'Knee',  from: '2023-10-09', until: '2023-10-20', severity: 'Moderate',   daysOut: 11  },
-          { diagnosis: 'Calf Injury',   region: 'Calf',  from: '2023-09-28', until: '2023-09-29', severity: 'Minor',      daysOut: 1   },
-          { diagnosis: 'Head Injury',   region: 'Head',  from: '2023-02-03', until: '2023-02-10', severity: 'Minor',      daysOut: 7   },
-          { diagnosis: 'Injury',        region: 'Other', from: '2022-10-01', until: '2023-01-17', severity: 'Long-term',  daysOut: 108 },
-          { diagnosis: 'Thigh Injury',  region: 'Thigh', from: '2022-09-22', until: '2023-01-08', severity: 'Long-term',  daysOut: 108 },
-          { diagnosis: 'Thigh Injury',  region: 'Thigh', from: '2022-09-01', until: '2022-09-02', severity: 'Minor',      daysOut: 1   },
-          { diagnosis: 'Knock',         region: 'Other', from: '2022-08-23', until: '2022-08-30', severity: 'Minor',      daysOut: 7   },
-          { diagnosis: 'Hamstring',     region: 'Thigh', from: '2021-09-20', until: '2021-10-02', severity: 'Moderate',   daysOut: 12  },
-          { diagnosis: 'Knee Injury',   region: 'Knee',  from: '2021-08-12', until: '2021-08-21', severity: 'Moderate',   daysOut: 9   },
-        ],
+          { date: '2026-02-18', diagnosis: 'Thigh injury', region: 'Left thigh', duration: '5 weeks', severity: 'Moderate' },
+        ]
       },
     ]
   },
@@ -946,7 +732,6 @@ export const teams: Team[] = [
     name: 'Manchester City',
     abbreviation: 'MCI',
     accentColor: '#6CABDD',
-    logo: 'https://media.api-sports.io/football/teams/50.png',
     squadSize: 23,
     avgRisk: 35,
     totalInjuries: 10,
@@ -974,7 +759,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 35,
         matchDensity: 0.88,
         injuryHistory: [
-          { diagnosis: 'Foot injury', region: 'Right foot', from: '2026-02-15', until: '2026-03-15' },
+          { date: '2026-02-15', diagnosis: 'Foot injury', region: 'Right foot', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -999,9 +784,9 @@ export const teams: Team[] = [
         daysSinceLastInjury: 11,
         matchDensity: 0.79,
         injuryHistory: [
-          { diagnosis: 'Hamstring issue', region: 'Left hamstring', from: '2026-03-26', until: '2026-04-09' },
-          { diagnosis: 'Muscle injury', region: 'Thigh', from: '2026-01-12', until: '2026-02-23' },
-          { diagnosis: 'Calf strain', region: 'Right calf', from: '2025-11-05', until: '2025-11-26' },
+          { date: '2026-03-26', diagnosis: 'Hamstring issue', region: 'Left hamstring', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-12', diagnosis: 'Muscle injury', region: 'Thigh', duration: '6 weeks', severity: 'Severe' },
+          { date: '2025-11-05', diagnosis: 'Calf strain', region: 'Right calf', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1072,8 +857,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 20,
         matchDensity: 0.85,
         injuryHistory: [
-          { diagnosis: 'Groin injury', region: 'Groin', from: '2026-03-15', until: '2026-03-29' },
-          { diagnosis: 'Hamstring strain', region: 'Left hamstring', from: '2026-01-20', until: '2026-02-24' },
+          { date: '2026-03-15', diagnosis: 'Groin injury', region: 'Groin', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-20', diagnosis: 'Hamstring strain', region: 'Left hamstring', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1121,8 +906,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 28,
         matchDensity: 0.83,
         injuryHistory: [
-          { diagnosis: 'Muscle fatigue', region: 'Thigh', from: '2026-03-05', until: '2026-03-12' },
-          { diagnosis: 'Back injury', region: 'Lower back', from: '2026-01-15', until: '2026-02-12' },
+          { date: '2026-03-05', diagnosis: 'Muscle fatigue', region: 'Thigh', duration: '1 week', severity: 'Mild' },
+          { date: '2026-01-15', diagnosis: 'Back injury', region: 'Lower back', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1147,7 +932,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 58,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Ankle sprain', region: 'Right ankle', from: '2026-02-02', until: '2026-02-23' },
+          { date: '2026-02-02', diagnosis: 'Ankle sprain', region: 'Right ankle', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
     ]
@@ -1157,7 +942,6 @@ export const teams: Team[] = [
     name: 'Tottenham Hotspur',
     abbreviation: 'TOT',
     accentColor: '#132257',
-    logo: 'https://media.api-sports.io/football/teams/47.png',
     squadSize: 26,
     avgRisk: 41,
     totalInjuries: 14,
@@ -1185,8 +969,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 16,
         matchDensity: 0.88,
         injuryHistory: [
-          { diagnosis: 'Hamstring tightness', region: 'Left hamstring', from: '2026-03-20', until: '2026-04-03' },
-          { diagnosis: 'Thigh injury', region: 'Right thigh', from: '2026-01-08', until: '2026-02-19' },
+          { date: '2026-03-20', diagnosis: 'Hamstring tightness', region: 'Left hamstring', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-08', diagnosis: 'Thigh injury', region: 'Right thigh', duration: '6 weeks', severity: 'Severe' },
         ]
       },
       {
@@ -1211,7 +995,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 50,
         matchDensity: 0.85,
         injuryHistory: [
-          { diagnosis: 'Ankle injury', region: 'Left ankle', from: '2026-02-10', until: '2026-03-03' },
+          { date: '2026-02-10', diagnosis: 'Ankle injury', region: 'Left ankle', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1236,9 +1020,9 @@ export const teams: Team[] = [
         daysSinceLastInjury: 10,
         matchDensity: 0.77,
         injuryHistory: [
-          { diagnosis: 'Ankle problem', region: 'Right ankle', from: '2026-03-28', until: '2026-04-11' },
-          { diagnosis: 'Groin strain', region: 'Groin', from: '2026-01-18', until: '2026-02-22' },
-          { diagnosis: 'Hamstring injury', region: 'Left hamstring', from: '2025-11-22', until: '2025-12-20' },
+          { date: '2026-03-28', diagnosis: 'Ankle problem', region: 'Right ankle', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-18', diagnosis: 'Groin strain', region: 'Groin', duration: '5 weeks', severity: 'Moderate' },
+          { date: '2025-11-22', diagnosis: 'Hamstring injury', region: 'Left hamstring', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1286,8 +1070,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 24,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Foot injury', region: 'Left foot', from: '2026-03-12', until: '2026-03-26' },
-          { diagnosis: 'Hamstring strain', region: 'Right hamstring', from: '2026-01-25', until: '2026-03-01' },
+          { date: '2026-03-12', diagnosis: 'Foot injury', region: 'Left foot', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-25', diagnosis: 'Hamstring strain', region: 'Right hamstring', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1312,7 +1096,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 38,
         matchDensity: 0.83,
         injuryHistory: [
-          { diagnosis: 'Knee injury', region: 'Right knee', from: '2026-02-16', until: '2026-03-16' },
+          { date: '2026-02-16', diagnosis: 'Knee injury', region: 'Right knee', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1337,7 +1121,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 46,
         matchDensity: 0.85,
         injuryHistory: [
-          { diagnosis: 'Muscle strain', region: 'Thigh', from: '2026-02-22', until: '2026-03-15' },
+          { date: '2026-02-22', diagnosis: 'Muscle strain', region: 'Thigh', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1370,7 +1154,6 @@ export const teams: Team[] = [
     name: 'Manchester United',
     abbreviation: 'MUN',
     accentColor: '#DA291C',
-    logo: 'https://media.api-sports.io/football/teams/33.png',
     squadSize: 26,
     avgRisk: 49,
     totalInjuries: 18,
@@ -1398,8 +1181,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 15,
         matchDensity: 0.86,
         injuryHistory: [
-          { diagnosis: 'Shoulder injury', region: 'Left shoulder', from: '2026-03-22', until: '2026-04-12' },
-          { diagnosis: 'Groin strain', region: 'Groin', from: '2026-01-10', until: '2026-02-07' },
+          { date: '2026-03-22', diagnosis: 'Shoulder injury', region: 'Left shoulder', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2026-01-10', diagnosis: 'Groin strain', region: 'Groin', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1447,10 +1230,10 @@ export const teams: Team[] = [
         daysSinceLastInjury: 7,
         matchDensity: 0.78,
         injuryHistory: [
-          { diagnosis: 'Muscle fatigue', region: 'Thigh', from: '2026-04-01', until: '2026-04-15' },
-          { diagnosis: 'Hamstring tear', region: 'Left hamstring', from: '2026-02-08', until: '2026-03-22' },
-          { diagnosis: 'Ankle injury', region: 'Right ankle', from: '2025-12-15', until: '2026-01-12' },
-          { diagnosis: 'Back pain', region: 'Lower back', from: '2025-10-20', until: '2025-11-03' },
+          { date: '2026-04-01', diagnosis: 'Muscle fatigue', region: 'Thigh', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-02-08', diagnosis: 'Hamstring tear', region: 'Left hamstring', duration: '6 weeks', severity: 'Severe' },
+          { date: '2025-12-15', diagnosis: 'Ankle injury', region: 'Right ankle', duration: '4 weeks', severity: 'Moderate' },
+          { date: '2025-10-20', diagnosis: 'Back pain', region: 'Lower back', duration: '2 weeks', severity: 'Mild' },
         ]
       },
       {
@@ -1475,8 +1258,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 26,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Back strain', region: 'Lower back', from: '2026-03-10', until: '2026-03-24' },
-          { diagnosis: 'Muscle injury', region: 'Thigh', from: '2026-01-22', until: '2026-02-26' },
+          { date: '2026-03-10', diagnosis: 'Back strain', region: 'Lower back', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-22', diagnosis: 'Muscle injury', region: 'Thigh', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1501,11 +1284,11 @@ export const teams: Team[] = [
         daysSinceLastInjury: 3,
         matchDensity: 0.72,
         injuryHistory: [
-          { diagnosis: 'Hamstring tightness', region: 'Left hamstring', from: '2026-04-08', until: '2026-04-22' },
-          { diagnosis: 'Muscle tear', region: 'Thigh', from: '2026-02-25', until: '2026-04-15' },
-          { diagnosis: 'Calf injury', region: 'Right calf', from: '2025-12-05', until: '2026-01-02' },
-          { diagnosis: 'Hamstring strain', region: 'Left hamstring', from: '2025-10-18', until: '2025-11-22' },
-          { diagnosis: 'Ankle sprain', region: 'Left ankle', from: '2025-09-08', until: '2025-09-29' },
+          { date: '2026-04-08', diagnosis: 'Hamstring tightness', region: 'Left hamstring', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-02-25', diagnosis: 'Muscle tear', region: 'Thigh', duration: '7 weeks', severity: 'Severe' },
+          { date: '2025-12-05', diagnosis: 'Calf injury', region: 'Right calf', duration: '4 weeks', severity: 'Moderate' },
+          { date: '2025-10-18', diagnosis: 'Hamstring strain', region: 'Left hamstring', duration: '5 weeks', severity: 'Moderate' },
+          { date: '2025-09-08', diagnosis: 'Ankle sprain', region: 'Left ankle', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1530,8 +1313,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 19,
         matchDensity: 0.81,
         injuryHistory: [
-          { diagnosis: 'Foot injury', region: 'Right foot', from: '2026-03-18', until: '2026-04-08' },
-          { diagnosis: 'Knee injury', region: 'Left knee', from: '2025-12-28', until: '2026-02-08' },
+          { date: '2026-03-18', diagnosis: 'Foot injury', region: 'Right foot', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2025-12-28', diagnosis: 'Knee injury', region: 'Left knee', duration: '6 weeks', severity: 'Severe' },
         ]
       },
       {
@@ -1579,7 +1362,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 52,
         matchDensity: 0.83,
         injuryHistory: [
-          { diagnosis: 'Ankle knock', region: 'Right ankle', from: '2026-02-04', until: '2026-02-25' },
+          { date: '2026-02-04', diagnosis: 'Ankle knock', region: 'Right ankle', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
     ]
@@ -1589,7 +1372,6 @@ export const teams: Team[] = [
     name: 'Newcastle United',
     abbreviation: 'NEW',
     accentColor: '#241F20',
-    logo: 'https://media.api-sports.io/football/teams/34.png',
     squadSize: 25,
     avgRisk: 40,
     totalInjuries: 13,
@@ -1618,7 +1400,7 @@ export const teams: Team[] = [
         matchDensity: 0.86,
         image: '/src/imports/509348_alexander_isak_20251204163904.png',
         injuryHistory: [
-          { diagnosis: 'Thigh injury', region: 'Left thigh', from: '2026-02-18', until: '2026-03-25' },
+          { date: '2026-02-18', diagnosis: 'Thigh injury', region: 'Left thigh', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1689,9 +1471,9 @@ export const teams: Team[] = [
         daysSinceLastInjury: 13,
         matchDensity: 0.79,
         injuryHistory: [
-          { diagnosis: 'Thigh strain', region: 'Right thigh', from: '2026-03-25', until: '2026-04-08' },
-          { diagnosis: 'Groin injury', region: 'Groin', from: '2026-01-30', until: '2026-03-06' },
-          { diagnosis: 'Hamstring strain', region: 'Left hamstring', from: '2025-11-28', until: '2025-12-26' },
+          { date: '2026-03-25', diagnosis: 'Thigh strain', region: 'Right thigh', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-30', diagnosis: 'Groin injury', region: 'Groin', duration: '5 weeks', severity: 'Moderate' },
+          { date: '2025-11-28', diagnosis: 'Hamstring strain', region: 'Left hamstring', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1716,9 +1498,9 @@ export const teams: Team[] = [
         daysSinceLastInjury: 12,
         matchDensity: 0.77,
         injuryHistory: [
-          { diagnosis: 'Knee issue', region: 'Left knee', from: '2026-03-26', until: '2026-04-16' },
-          { diagnosis: 'ACL injury', region: 'Right knee', from: '2026-01-15', until: '2026-03-12' },
-          { diagnosis: 'Ankle sprain', region: 'Right ankle', from: '2025-10-30', until: '2025-11-13' },
+          { date: '2026-03-26', diagnosis: 'Knee issue', region: 'Left knee', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2026-01-15', diagnosis: 'ACL injury', region: 'Right knee', duration: '8 weeks', severity: 'Severe' },
+          { date: '2025-10-30', diagnosis: 'Ankle sprain', region: 'Right ankle', duration: '2 weeks', severity: 'Mild' },
         ]
       },
       {
@@ -1743,8 +1525,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 21,
         matchDensity: 0.82,
         injuryHistory: [
-          { diagnosis: 'Calf strain', region: 'Right calf', from: '2026-03-14', until: '2026-04-04' },
-          { diagnosis: 'Hamstring tightness', region: 'Left hamstring', from: '2026-01-05', until: '2026-02-02' },
+          { date: '2026-03-14', diagnosis: 'Calf strain', region: 'Right calf', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2026-01-05', diagnosis: 'Hamstring tightness', region: 'Left hamstring', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1769,7 +1551,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 44,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Foot injury', region: 'Left foot', from: '2026-02-14', until: '2026-03-14' },
+          { date: '2026-02-14', diagnosis: 'Foot injury', region: 'Left foot', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1794,7 +1576,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 36,
         matchDensity: 0.83,
         injuryHistory: [
-          { diagnosis: 'Back injury', region: 'Lower back', from: '2026-02-20', until: '2026-03-20' },
+          { date: '2026-02-20', diagnosis: 'Back injury', region: 'Lower back', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
     ]
@@ -1804,7 +1586,6 @@ export const teams: Team[] = [
     name: 'Aston Villa',
     abbreviation: 'AVL',
     accentColor: '#95BFE5',
-    logo: 'https://media.api-sports.io/football/teams/66.png',
     squadSize: 24,
     avgRisk: 36,
     totalInjuries: 11,
@@ -1832,7 +1613,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 48,
         matchDensity: 0.88,
         injuryHistory: [
-          { diagnosis: 'Ankle knock', region: 'Right ankle', from: '2026-02-12', until: '2026-03-05' },
+          { date: '2026-02-12', diagnosis: 'Ankle knock', region: 'Right ankle', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1857,8 +1638,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 18,
         matchDensity: 0.82,
         injuryHistory: [
-          { diagnosis: 'Hamstring tightness', region: 'Right hamstring', from: '2026-03-20', until: '2026-04-03' },
-          { diagnosis: 'Thigh strain', region: 'Left thigh', from: '2026-01-12', until: '2026-02-23' },
+          { date: '2026-03-20', diagnosis: 'Hamstring tightness', region: 'Right hamstring', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-12', diagnosis: 'Thigh strain', region: 'Left thigh', duration: '6 weeks', severity: 'Severe' },
         ]
       },
       {
@@ -1906,7 +1687,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 54,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Hip injury', region: 'Right hip', from: '2026-02-06', until: '2026-02-27' },
+          { date: '2026-02-06', diagnosis: 'Hip injury', region: 'Right hip', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -1931,7 +1712,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 30,
         matchDensity: 0.83,
         injuryHistory: [
-          { diagnosis: 'Hamstring strain', region: 'Left hamstring', from: '2026-02-25', until: '2026-04-01' },
+          { date: '2026-02-25', diagnosis: 'Hamstring strain', region: 'Left hamstring', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2002,8 +1783,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 27,
         matchDensity: 0.81,
         injuryHistory: [
-          { diagnosis: 'Ankle sprain', region: 'Left ankle', from: '2026-03-08', until: '2026-03-22' },
-          { diagnosis: 'Calf strain', region: 'Right calf', from: '2026-01-18', until: '2026-02-22' },
+          { date: '2026-03-08', diagnosis: 'Ankle sprain', region: 'Left ankle', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-18', diagnosis: 'Calf strain', region: 'Right calf', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
     ]
@@ -2013,7 +1794,6 @@ export const teams: Team[] = [
     name: 'Brighton & Hove Albion',
     abbreviation: 'BHA',
     accentColor: '#0057B8',
-    logo: 'https://media.api-sports.io/football/teams/51.png',
     squadSize: 25,
     avgRisk: 33,
     totalInjuries: 9,
@@ -2041,7 +1821,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 40,
         matchDensity: 0.85,
         injuryHistory: [
-          { diagnosis: 'Ankle injury', region: 'Left ankle', from: '2026-02-16', until: '2026-03-16' },
+          { date: '2026-02-16', diagnosis: 'Ankle injury', region: 'Left ankle', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2066,8 +1846,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 23,
         matchDensity: 0.83,
         injuryHistory: [
-          { diagnosis: 'Ankle problem', region: 'Right ankle', from: '2026-03-12', until: '2026-04-02' },
-          { diagnosis: 'Knee injury', region: 'Left knee', from: '2026-01-08', until: '2026-02-12' },
+          { date: '2026-03-12', diagnosis: 'Ankle problem', region: 'Right ankle', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2026-01-08', diagnosis: 'Knee injury', region: 'Left knee', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2115,7 +1895,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 50,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Hip injury', region: 'Left hip', from: '2026-02-10', until: '2026-03-03' },
+          { date: '2026-02-10', diagnosis: 'Hip injury', region: 'Left hip', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2163,8 +1943,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 29,
         matchDensity: 0.81,
         injuryHistory: [
-          { diagnosis: 'Muscle strain', region: 'Thigh', from: '2026-03-06', until: '2026-03-20' },
-          { diagnosis: 'Hamstring injury', region: 'Right hamstring', from: '2026-01-22', until: '2026-02-19' },
+          { date: '2026-03-06', diagnosis: 'Muscle strain', region: 'Thigh', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-22', diagnosis: 'Hamstring injury', region: 'Right hamstring', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2218,9 +1998,7 @@ export const teams: Team[] = [
   {
     id: 'westham',
     name: 'West Ham United',
-    abbreviation: 'WHU',
     accentColor: '#7A263A',
-    logo: 'https://media.api-sports.io/football/teams/48.png',
     squadSize: 26,
     avgRisk: 43,
     totalInjuries: 14,
@@ -2248,7 +2026,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 46,
         matchDensity: 0.86,
         injuryHistory: [
-          { diagnosis: 'Foot injury', region: 'Left foot', from: '2026-02-14', until: '2026-03-07' },
+          { date: '2026-02-14', diagnosis: 'Foot injury', region: 'Left foot', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2273,7 +2051,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 34,
         matchDensity: 0.84,
         injuryHistory: [
-          { diagnosis: 'Knee knock', region: 'Right knee', from: '2026-02-20', until: '2026-03-27' },
+          { date: '2026-02-20', diagnosis: 'Knee knock', region: 'Right knee', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2298,8 +2076,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 22,
         matchDensity: 0.82,
         injuryHistory: [
-          { diagnosis: 'Calf strain', region: 'Left calf', from: '2026-03-12', until: '2026-04-02' },
-          { diagnosis: 'Shoulder injury', region: 'Right shoulder', from: '2026-01-05', until: '2026-02-09' },
+          { date: '2026-03-12', diagnosis: 'Calf strain', region: 'Left calf', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2026-01-05', diagnosis: 'Shoulder injury', region: 'Right shoulder', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2347,10 +2125,10 @@ export const teams: Team[] = [
         daysSinceLastInjury: 6,
         matchDensity: 0.75,
         injuryHistory: [
-          { diagnosis: 'Hamstring tightness', region: 'Right hamstring', from: '2026-04-03', until: '2026-04-17' },
-          { diagnosis: 'Knee injury', region: 'Left knee', from: '2026-02-18', until: '2026-04-01' },
-          { diagnosis: 'Hamstring strain', region: 'Left hamstring', from: '2025-12-10', until: '2026-01-07' },
-          { diagnosis: 'Calf injury', region: 'Right calf', from: '2025-10-05', until: '2025-10-26' },
+          { date: '2026-04-03', diagnosis: 'Hamstring tightness', region: 'Right hamstring', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-02-18', diagnosis: 'Knee injury', region: 'Left knee', duration: '6 weeks', severity: 'Severe' },
+          { date: '2025-12-10', diagnosis: 'Hamstring strain', region: 'Left hamstring', duration: '4 weeks', severity: 'Moderate' },
+          { date: '2025-10-05', diagnosis: 'Calf injury', region: 'Right calf', duration: '3 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2375,9 +2153,9 @@ export const teams: Team[] = [
         daysSinceLastInjury: 14,
         matchDensity: 0.79,
         injuryHistory: [
-          { diagnosis: 'Hamstring issue', region: 'Right hamstring', from: '2026-03-24', until: '2026-04-14' },
-          { diagnosis: 'Knee problem', region: 'Left knee', from: '2026-01-28', until: '2026-03-04' },
-          { diagnosis: 'Ankle sprain', region: 'Right ankle', from: '2025-11-15', until: '2025-11-29' },
+          { date: '2026-03-24', diagnosis: 'Hamstring issue', region: 'Right hamstring', duration: '3 weeks', severity: 'Moderate' },
+          { date: '2026-01-28', diagnosis: 'Knee problem', region: 'Left knee', duration: '5 weeks', severity: 'Moderate' },
+          { date: '2025-11-15', diagnosis: 'Ankle sprain', region: 'Right ankle', duration: '2 weeks', severity: 'Mild' },
         ]
       },
       {
@@ -2402,7 +2180,7 @@ export const teams: Team[] = [
         daysSinceLastInjury: 38,
         matchDensity: 0.83,
         injuryHistory: [
-          { diagnosis: 'Groin strain', region: 'Groin', from: '2026-02-18', until: '2026-03-18' },
+          { date: '2026-02-18', diagnosis: 'Groin strain', region: 'Groin', duration: '4 weeks', severity: 'Moderate' },
         ]
       },
       {
@@ -2427,8 +2205,8 @@ export const teams: Team[] = [
         daysSinceLastInjury: 25,
         matchDensity: 0.81,
         injuryHistory: [
-          { diagnosis: 'Thigh strain', region: 'Left thigh', from: '2026-03-10', until: '2026-03-24' },
-          { diagnosis: 'Calf injury', region: 'Right calf', from: '2026-01-15', until: '2026-02-19' },
+          { date: '2026-03-10', diagnosis: 'Thigh strain', region: 'Left thigh', duration: '2 weeks', severity: 'Mild' },
+          { date: '2026-01-15', diagnosis: 'Calf injury', region: 'Right calf', duration: '5 weeks', severity: 'Moderate' },
         ]
       },
     ]
@@ -2442,12 +2220,18 @@ export function getRiskColor(risk: number): string {
   return '#DC2626'; // red - high
 }
 
-export const MATCH_DURATION = 90;
+export function getRiskLabel(risk: number): string {
+  if (risk <= 25) return 'Low';
+  if (risk <= 45) return 'Moderate';
+  if (risk <= 65) return 'Elevated';
+  return 'High';
+}
 
-export function getAllPlayers() {
-  return teams.flatMap(team =>
-    team.players.map(p => ({ ...p, teamName: team.name, teamId: team.id, teamColor: team.accentColor }))
-  );
+export function getCardGradient(risk: number): string {
+  if (risk <= 25) return 'linear-gradient(135deg, #1A56DB 0%, #2563EB 100%)'; // blue
+  if (risk <= 45) return 'linear-gradient(135deg, #0D9488 0%, #14B8A6 100%)'; // teal
+  if (risk <= 65) return 'linear-gradient(135deg, #EA580C 0%, #F97316 100%)'; // orange
+  return 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)'; // red
 }
 
 export const matches: Match[] = [
@@ -2583,330 +2367,5 @@ export const matches: Match[] = [
     time: '20:00',
     venue: 'London Stadium',
     status: 'upcoming'
-  },
-];
-
-export const mockTrendingPlayers = [
-  {
-    id: 'player-1',
-    firstName: 'Harry',
-    lastName: 'Kane',
-    photo: 'https://example.com/harry-kane.jpg',
-    teamName: 'Tottenham',
-    position: 'Forward',
-    injuryTrend: 15.2,
-    seasonalInjuries: 2,
-  },
-  {
-    id: 'player-2',
-    firstName: 'Kevin',
-    lastName: 'De Bruyne',
-    photo: 'https://example.com/kevin-de-bruyne.jpg',
-    teamName: 'Manchester City',
-    position: 'Midfielder',
-    injuryTrend: 12.8,
-    seasonalInjuries: 1,
-  },
-  {
-    id: 'player-3',
-    firstName: 'Mohamed',
-    lastName: 'Salah',
-    photo: 'https://example.com/mohamed-salah.jpg',
-    teamName: 'Liverpool',
-    position: 'Forward',
-    injuryTrend: 10.5,
-    seasonalInjuries: 3,
-  },
-  {
-    id: 'player-4',
-    firstName: 'Bruno',
-    lastName: 'Fernandes',
-    photo: 'https://example.com/bruno-fernandes.jpg',
-    teamName: 'Manchester United',
-    position: 'Midfielder',
-    injuryTrend: 8.9,
-    seasonalInjuries: 0,
-  },
-  {
-    id: 'player-5',
-    firstName: 'Virgil',
-    lastName: 'van Dijk',
-    photo: 'https://example.com/virgil-van-dijk.jpg',
-    teamName: 'Liverpool',
-    position: 'Defender',
-    injuryTrend: 7.3,
-    seasonalInjuries: 1,
-  },
-];
-
-export const mockPlayers: Player[] = [
-  {
-    id: 'kane',
-    firstName: 'Harry',
-    lastName: 'Kane',
-    position: 'ST',
-    kitNumber: 10,
-    age: 30,
-    nationality: '🏴',
-    marketValue: '€100M',
-    injuryRisk: 45,
-    gamesPlayed: 28,
-    minutesPlayed: 2520,
-    injuries: 1,
-    minutesMissed: 270,
-    riskTrend: 5,
-    avgDistance: 10.5,
-    sprintsPerMatch: 35,
-    foulsAgainst: 2.1,
-    acuteChronicRatio: 1.15,
-    daysSinceLastInjury: 45,
-    matchDensity: 0.89,
-    injuryHistory: [
-      { diagnosis: 'Ankle sprain', region: 'Right ankle', from: '2026-02-15', until: '2026-03-01' },
-    ],
-    photo: 'https://example.com/harry-kane.jpg',
-    riskLevel: 'moderate',
-    riskFactors: ['High match density', 'Recent injury'],
-    injuryRiskTrend: [
-      { gw: 'GW20', season: 2026, risk: 40 },
-      { gw: 'GW21', season: 2026, risk: 42 },
-      { gw: 'GW22', season: 2026, risk: 45 },
-    ],
-    seasonStats: [
-      {
-        season: 2025,
-        appearances: 28,
-        minutes: 2520,
-        rating: 8.2,
-        goals: 15,
-        assists: 8,
-        tackles: 25,
-        interceptions: 12,
-        duels_total: 180,
-        duels_won: 95,
-        dribbles_attempts: 45,
-        dribbles_success: 30,
-        fouls_committed: 28,
-        fouls_drawn: 35,
-        yellow_cards: 2,
-        red_cards: 0,
-      },
-    ],
-    workloadData: {
-      minutes_last_30d: 540,
-      matches_last_30d: 6,
-      acute_chronic_ratio: 1.15,
-      match_density_14d: 0.89,
-      fouls_against_per_90: 2.1,
-      consecutive_90min_starts: 4,
-    },
-    injurySummaryData: {
-      career_total_injuries: 12,
-      injuries_this_season: 1,
-      days_since_last_injury: 45,
-      matches_missed_this_season: 3,
-      minutes_missed_this_season: 270,
-      matches_missed_career: 25,
-    },
-    nextMatch: {
-      fixture_id: 12345,
-      date: '2026-04-25',
-      home_team: 'Tottenham',
-      home_logo: 'https://example.com/tottenham-logo.png',
-      away_team: 'Chelsea',
-      away_logo: 'https://example.com/chelsea-logo.png',
-      venue: 'Tottenham Hotspur Stadium',
-      round: 'GW35',
-    },
-  },
-  {
-    id: 'salah',
-    firstName: 'Mohamed',
-    lastName: 'Salah',
-    position: 'RW',
-    kitNumber: 11,
-    age: 31,
-    nationality: '🇪🇬',
-    marketValue: '€80M',
-    injuryRisk: 38,
-    gamesPlayed: 30,
-    minutesPlayed: 2700,
-    injuries: 2,
-    minutesMissed: 180,
-    riskTrend: -3,
-    avgDistance: 10.8,
-    sprintsPerMatch: 42,
-    foulsAgainst: 1.8,
-    acuteChronicRatio: 1.05,
-    daysSinceLastInjury: 60,
-    matchDensity: 0.92,
-    injuryHistory: [
-      { diagnosis: 'Hamstring strain', region: 'Left hamstring', from: '2026-01-20', until: '2026-02-05' },
-      { diagnosis: 'Shoulder injury', region: 'Right shoulder', from: '2025-11-10', until: '2025-11-25' },
-      { diagnosis: 'Ankle sprain', region: 'Right ankle', from: '2026-04-15', until: '' },
-      { diagnosis: 'Calf strain', region: 'Right calf', from: '2025-12-01', until: '2025-12-08' },
-    ],
-    photo: 'https://example.com/mohamed-salah.jpg',
-    riskLevel: 'Injured',
-    riskFactors: ['Good recovery', 'Low acute load'],
-    injuryRiskTrend: [
-      { gw: 'GW20', season: 2026, risk: 42 },
-      { gw: 'GW21', season: 2026, risk: 'Injured' },
-      { gw: 'GW22', season: 2026, risk: 'Injured' },
-    ],
-    seasonStats: [
-      {
-        season: 2025,
-        appearances: 30,
-        minutes: 2700,
-        rating: 8.5,
-        goals: 22,
-        assists: 12,
-        tackles: 30,
-        interceptions: 15,
-        duels_total: 200,
-        duels_won: 110,
-        dribbles_attempts: 80,
-        dribbles_success: 55,
-        fouls_committed: 20,
-        fouls_drawn: 40,
-        yellow_cards: 1,
-        red_cards: 0,
-      },
-    ],
-    workloadData: {
-      minutes_last_30d: 630,
-      matches_last_30d: 7,
-      acute_chronic_ratio: 1.05,
-      match_density_14d: 0.92,
-      fouls_against_per_90: 1.8,
-      consecutive_90min_starts: 5,
-    },
-    injurySummaryData: {
-      career_total_injuries: 8,
-      injuries_this_season: 2,
-      days_since_last_injury: 60,
-      matches_missed_this_season: 2,
-      minutes_missed_this_season: 180,
-      matches_missed_career: 15,
-    },
-    nextMatch: {
-      fixture_id: 12346,
-      date: '2026-04-26',
-      home_team: 'Liverpool',
-      home_logo: 'https://example.com/liverpool-logo.png',
-      away_team: 'Manchester City',
-      away_logo: 'https://example.com/man-city-logo.png',
-      venue: 'Anfield',
-      round: 'GW35',
-    },
-  },
-  {
-    id: 'vandijk',
-    firstName: 'Virgil',
-    lastName: 'van Dijk',
-    position: 'CB',
-    kitNumber: 4,
-    age: 32,
-    nationality: '🇳🇱',
-    marketValue: '€45M',
-    injuryRisk: 52,
-    gamesPlayed: 25,
-    minutesPlayed: 2250,
-    injuries: 3,
-    minutesMissed: 450,
-    riskTrend: 8,
-    avgDistance: 9.2,
-    sprintsPerMatch: 15,
-    foulsAgainst: 1.2,
-    acuteChronicRatio: 1.25,
-    daysSinceLastInjury: 30,
-    matchDensity: 0.85,
-    injuryHistory: [
-      { diagnosis: 'Knee injury', region: 'Right knee', from: '2026-03-01', until: '2026-03-20' },
-      { diagnosis: 'Back strain', region: 'Lower back', from: '2025-12-10', until: '2025-12-28' },
-      { diagnosis: 'Ankle sprain', region: 'Left ankle', from: '2025-09-15', until: '2025-10-05' },
-    ],
-    photo: 'https://example.com/virgil-van-dijk.jpg',
-    riskLevel: 'moderate',
-    riskFactors: ['Recent injury', 'Age-related concerns'],
-    injuryRiskTrend: [
-      { gw: 'GW20', season: 2026, risk: 48 },
-      { gw: 'GW21', season: 2026, risk: 50 },
-      { gw: 'GW22', season: 2026, risk: 52 },
-    ],
-    seasonStats: [
-      {
-        season: 2025,
-        appearances: 25,
-        minutes: 2250,
-        rating: 7.8,
-        goals: 2,
-        assists: 1,
-        tackles: 45,
-        interceptions: 35,
-        duels_total: 150,
-        duels_won: 110,
-        dribbles_attempts: 10,
-        dribbles_success: 8,
-        fouls_committed: 15,
-        fouls_drawn: 8,
-        yellow_cards: 3,
-        red_cards: 0,
-      },
-    ],
-    workloadData: {
-      minutes_last_30d: 540,
-      matches_last_30d: 6,
-      acute_chronic_ratio: 1.25,
-      match_density_14d: 0.85,
-      fouls_against_per_90: 1.2,
-      consecutive_90min_starts: 4,
-    },
-    injurySummaryData: {
-      career_total_injuries: 15,
-      injuries_this_season: 3,
-      days_since_last_injury: 30,
-      matches_missed_this_season: 5,
-      minutes_missed_this_season: 450,
-      matches_missed_career: 40,
-    },
-    nextMatch: {
-      fixture_id: 12346,
-      date: '2026-04-26',
-      home_team: 'Liverpool',
-      home_logo: 'https://example.com/liverpool-logo.png',
-      away_team: 'Manchester City',
-      away_logo: 'https://example.com/man-city-logo.png',
-      venue: 'Anfield',
-      round: 'GW35',
-    },
-  },
-];
-
-export const mockTeams: Team[] = [
-  {
-    id: 'tottenham',
-    name: 'Tottenham Hotspur',
-    abbreviation: 'TOT',
-    accentColor: '#132257',
-    logo: 'https://example.com/tottenham-logo.png',
-    squadSize: 25,
-    avgRisk: 42,
-    totalInjuries: 8,
-    totalMinutesLost: 2160,
-    players: [mockPlayers[0]], // Harry Kane
-  },
-  {
-    id: 'liverpool',
-    name: 'Liverpool',
-    abbreviation: 'LIV',
-    accentColor: '#C8102E',
-    logo: 'https://example.com/liverpool-logo.png',
-    squadSize: 28,
-    avgRisk: 35,
-    totalInjuries: 5,
-    totalMinutesLost: 1350,
-    players: [mockPlayers[1], mockPlayers[2]], // Mohamed Salah, Virgil van Dijk
   },
 ];
