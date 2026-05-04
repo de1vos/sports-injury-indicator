@@ -725,7 +725,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 280,Hamstring,2024-10-06,2024-12-09,64.0,Severe,Thigh
 280,Concussion,2025-03-22,2025-04-10,19.0,Moderate,Head
 280,Groin Injury,2025-10-04,2025-11-23,50.0,Severe,Groin
-280,Muscle Injury,2026-03-21,2026-05-09,49.0,Severe,Other
+280,Muscle Injury,2026-03-21,2026-05-17,57.0,Severe,Other
 281,Knock,2021-02-18,2021-05-12,83.0,Severe,Other
 281,Groin Injury,2022-08-05,2022-09-30,56.0,Severe,Groin
 281,Knee Injury,2023-10-05,2023-10-20,15.0,Moderate,Knee
@@ -1310,7 +1310,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 567,Muscle Injury,2024-12-16,2025-01-15,30.0,Severe,Other
 567,Muscle Injury,2025-01-23,2025-02-10,18.0,Moderate,Other
 567,Thigh Injury,2026-01-17,2026-02-15,29.0,Severe,Thigh
-567,Muscle Injury,2026-04-12,,,Long-term,Other
+567,Muscle Injury,2026-04-12,2026-05-06,24.0,Moderate,Other
 575,Virus,2021-01-05,2021-01-20,15.0,Moderate,Illness
 575,Thigh Injury,2025-02-16,2025-03-10,22.0,Moderate,Thigh
 575,Shoulder Injury,2025-06-18,2025-06-23,5.0,Minor,Shoulder
@@ -4041,7 +4041,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 2864,Groin Injury,2025-05-17,2025-05-24,7.0,Minor,Groin
 2864,Thigh Injury,2025-07-27,2025-08-14,18.0,Moderate,Thigh
 2864,Groin Injury,2025-11-01,2025-11-15,14.0,Moderate,Groin
-2864,Broken Leg,2025-12-27,2026-04-04,98.0,Long-term,Other
+2864,Broken Leg,2025-12-27,2026-05-17,141.0,Long-term,Other
 2869,Knock,2019-11-21,2019-11-22,1.0,Minor,Other
 2869,Knock,2023-09-17,2023-09-23,6.0,Minor,Other
 2869,Illness,2023-11-26,2023-12-02,6.0,Minor,Illness
@@ -8094,6 +8094,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 22265,Knock,2025-01-14,2025-02-04,21.0,Moderate,Other
 22265,Knock,2025-08-29,2025-09-12,14.0,Moderate,Other
 24760,Thigh Injury,2024-12-08,2025-01-08,31.0,Severe,Thigh
+24760,Knee Injury,2026-04-25,2026-05-17,22.0,Moderate,Knee
 24882,Thigh Injury,2021-03-15,2021-06-30,107.0,Long-term,Thigh
 24882,Knock,2021-07-14,2021-09-11,59.0,Severe,Other
 24882,Thigh Injury,2022-03-04,2022-03-04,0.0,Long-term,Thigh
@@ -10302,7 +10303,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 286894,Ankle Injury,2024-11-03,2024-11-04,1.0,Minor,Ankle
 286894,Knock,2024-11-14,2024-11-22,8.0,Moderate,Other
 286894,Illness,2025-06-25,2025-07-30,35.0,Severe,Illness
-286894,Muscle Injury,2026-02-07,,,Long-term,Other
+286894,Muscle Injury,2026-02-07,2026-05-05,87.0,Severe,Other
 288006,Back Injury,2023-07-01,2023-09-02,63.0,Severe,Back
 288006,Muscle Injury,2023-11-13,2023-11-28,15.0,Moderate,Other
 288006,Illness,2023-12-30,2024-01-13,14.0,Moderate,Illness
@@ -10641,7 +10642,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 363695,Hamstring,2025-05-06,2025-05-17,11.0,Moderate,Thigh
 363695,Ankle Injury,2025-05-19,2025-05-24,5.0,Minor,Ankle
 363695,Knock,2025-09-14,,,Long-term,Other
-363695,Muscle Injury,2026-04-24,,,Long-term,Other
+363695,Muscle Injury,2026-04-24,2026-05-08,14.0,Moderate,Other
 364809,ACL Knee Injury,2023-11-01,2024-07-01,243.0,Long-term,Knee
 364809,Ankle Injury,2025-03-06,2025-04-05,30.0,Severe,Ankle
 364809,Unknown,2025-05-14,2025-07-23,70.0,Severe,Other
