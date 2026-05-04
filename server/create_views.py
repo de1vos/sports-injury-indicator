@@ -5,8 +5,8 @@ from sqlalchemy.engine import Connection
 def create_all_views(conn: Connection) -> None:
     _create_mv_game_week_matches(conn)
     _create_mv_teams_overview(conn)
-    _create_mv_high_risk_players(conn)
-    _create_mv_trending_risk_players(conn)
+    _create_mv_player_overview(conn)
+    _create_mv_injury_history(conn)
     _create_mv_search_players(conn)
     _create_mv_team_player_list(conn)
     _create_mv_player_card(conn)
@@ -35,78 +35,6 @@ def _create_mv_game_week_matches(conn: Connection) -> None:
         JOIN team at ON at.team_id = m.away_team_id
         JOIN season_meta sm ON m.match_game_week = sm.current_game_week
         ORDER BY m.match_date, m.match_time
-    """))
-
-
-def _create_mv_high_risk_players(conn: Connection) -> None:
-    conn.execute(text("""
-        CREATE MATERIALIZED VIEW mv_high_risk_players AS
-        SELECT
-            p.player_id,
-            p.player_first_name,
-            p.player_last_name,
-            p.player_photo,
-            t.team_id,
-            t.team_name,
-            p.player_position,
-            p.player_injury_risk,
-            COALESCE(si.seasonal_injuries, 0) AS player_seasonal_injuries
-        FROM player p
-        JOIN team t ON t.team_id = p.team_id
-        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
-        JOIN (
-            SELECT player_id FROM player_season
-            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
-        ) active ON active.player_id = p.player_id
-        LEFT JOIN (
-            SELECT ps2.player_id, COUNT(pi.player_injury_id) AS seasonal_injuries
-            FROM player_season ps2
-            JOIN (
-                SELECT player_id, MAX(player_season_year) AS latest_year
-                FROM player_season GROUP BY player_id
-            ) latest ON latest.player_id = ps2.player_id
-                   AND latest.latest_year = ps2.player_season_year
-            JOIN player_injury pi ON pi.player_season_id = ps2.player_season_id
-            GROUP BY ps2.player_id
-        ) si ON si.player_id = p.player_id
-        WHERE p.player_injury_risk < 0.99
-        ORDER BY p.player_injury_risk DESC
-    """))
-
-
-def _create_mv_trending_risk_players(conn: Connection) -> None:
-    conn.execute(text("""
-        CREATE MATERIALIZED VIEW mv_trending_risk_players AS
-        SELECT
-            p.player_id,
-            p.player_first_name,
-            p.player_last_name,
-            p.player_photo,
-            t.team_id,
-            t.team_name,
-            p.player_position,
-            gd.player_injury_trend,
-            COALESCE(si.seasonal_injuries, 0) AS player_seasonal_injuries
-        FROM player p
-        JOIN team t ON t.team_id = p.team_id
-        JOIN graph_data gd ON gd.player_id = p.player_id
-        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
-        JOIN (
-            SELECT player_id FROM player_season
-            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
-        ) active ON active.player_id = p.player_id
-        LEFT JOIN (
-            SELECT ps.player_id, COUNT(pi.player_injury_id) AS seasonal_injuries
-            FROM player_season ps
-            JOIN (
-                SELECT player_id, MAX(player_season_year) AS latest_year
-                FROM player_season GROUP BY player_id
-            ) latest ON latest.player_id = ps.player_id
-                   AND latest.latest_year = ps.player_season_year
-            JOIN player_injury pi ON pi.player_season_id = ps.player_season_id
-            GROUP BY ps.player_id
-        ) si ON si.player_id = p.player_id
-        ORDER BY gd.player_injury_trend DESC
     """))
 
 
@@ -154,6 +82,77 @@ def _create_mv_teams_overview(conn: Connection) -> None:
     """))
 
 
+def _create_mv_player_overview(conn: Connection) -> None:
+    conn.execute(text("""
+        CREATE MATERIALIZED VIEW mv_player_overview AS
+        SELECT
+            p.player_id,
+            p.player_first_name,
+            p.player_last_name,
+            p.player_photo,
+            t.team_id,
+            t.team_name,
+            p.player_position,
+            p.player_injury_risk,
+            gd.player_injury_trend,
+            COALESCE(si.seasonal_injuries, 0)        AS player_seasonal_injuries,
+            COALESCE(ps_curr.player_season_minutes, 0) AS player_season_minutes
+        FROM player p
+        JOIN team t              ON t.team_id    = p.team_id
+        JOIN graph_data gd       ON gd.player_id = p.player_id
+        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
+        JOIN (
+            SELECT player_id FROM player_season
+            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
+        ) active ON active.player_id = p.player_id
+        LEFT JOIN (
+            SELECT ps2.player_id, COUNT(pi.player_injury_id) AS seasonal_injuries
+            FROM player_season ps2
+            JOIN (
+                SELECT player_id, MAX(player_season_year) AS latest_year
+                FROM player_season GROUP BY player_id
+            ) latest ON latest.player_id = ps2.player_id
+                   AND latest.latest_year = ps2.player_season_year
+            JOIN player_injury pi ON pi.player_season_id = ps2.player_season_id
+            GROUP BY ps2.player_id
+        ) si ON si.player_id = p.player_id
+        LEFT JOIN (
+            SELECT player_id, player_season_minutes
+            FROM player_season
+            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
+        ) ps_curr ON ps_curr.player_id = p.player_id
+    """))
+    conn.execute(text("CREATE UNIQUE INDEX uq_mv_po_player_id ON mv_player_overview (player_id)"))
+    conn.execute(text("CREATE INDEX idx_mv_po_risk  ON mv_player_overview (player_injury_risk DESC)"))
+    conn.execute(text("CREATE INDEX idx_mv_po_trend ON mv_player_overview (player_injury_trend DESC)"))
+
+
+def _create_mv_injury_history(conn: Connection) -> None:
+    conn.execute(text("""
+        CREATE MATERIALIZED VIEW mv_injury_history AS
+        SELECT
+            pi.player_injury_id,
+            ps.player_id,
+            pi.player_injury_type,
+            pi.player_injury_region,
+            pi.player_injury_start,
+            pi.player_injury_end,
+            pi.player_injury_severity,
+            pi.player_injury_days_out
+        FROM player_injury pi
+        JOIN player_season ps ON ps.player_season_id = pi.player_season_id
+        ORDER BY pi.player_injury_start DESC
+    """))
+    conn.execute(text(
+        "CREATE INDEX idx_mv_ih_player_start "
+        "ON mv_injury_history (player_id, player_injury_start DESC)"
+    ))
+    conn.execute(text(
+        "CREATE UNIQUE INDEX uq_mv_ih_injury_id "
+        "ON mv_injury_history (player_injury_id)"
+    ))
+
+
 def _create_mv_search_players(conn: Connection) -> None:
     conn.execute(text("""
         CREATE MATERIALIZED VIEW mv_search_players AS
@@ -173,6 +172,7 @@ def _create_mv_search_players(conn: Connection) -> None:
         ) active ON active.player_id = p.player_id
         ORDER BY p.player_last_name
     """))
+    conn.execute(text("CREATE INDEX idx_mv_sp_last_name ON mv_search_players (player_last_name)"))
 
 
 def _create_mv_team_player_list(conn: Connection) -> None:
@@ -192,6 +192,10 @@ def _create_mv_team_player_list(conn: Connection) -> None:
         ) active ON active.player_id = p.player_id
         ORDER BY p.player_last_name
     """))
+    conn.execute(text(
+        "CREATE INDEX idx_mv_tpl_team_risk "
+        "ON mv_team_player_list (team_id, player_injury_risk DESC)"
+    ))
 
 
 def _create_mv_player_card(conn: Connection) -> None:
@@ -240,6 +244,7 @@ def _create_mv_player_card(conn: Connection) -> None:
         LEFT JOIN latest_season_stats lss ON lss.player_id = p.player_id
         LEFT JOIN season_injuries si ON si.player_id = p.player_id
     """))
+    conn.execute(text("CREATE UNIQUE INDEX uq_mv_pc_player_id ON mv_player_card (player_id)"))
 
 
 def _create_mv_injury_analysis(conn: Connection) -> None:
@@ -298,6 +303,7 @@ def _create_mv_injury_analysis(conn: Connection) -> None:
                  lss.player_season_appearences, lss.player_season_games_missed,
                  lss.player_season_minutes
     """))
+    conn.execute(text("CREATE UNIQUE INDEX uq_mv_ia_player_id ON mv_injury_analysis (player_id)"))
 
 
 def _create_mv_reported_injuries(conn: Connection) -> None:
@@ -325,3 +331,6 @@ def _create_mv_reported_injuries(conn: Connection) -> None:
          AND ps_curr.player_season_year = (SELECT current_season_year FROM season_meta)
         ORDER BY pi.player_injury_start DESC
     """))
+    conn.execute(text(
+        "CREATE INDEX idx_mv_ri_start_desc ON mv_reported_injuries (player_injury_start DESC)"
+    ))

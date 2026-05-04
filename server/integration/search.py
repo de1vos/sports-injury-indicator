@@ -20,7 +20,7 @@ class SearchTeam(TypedDict):
 
 
 def get_search_players(session: Session) -> List[SearchPlayer]:
-    rows = session.execute(text("SELECT * FROM mv_search_players")).mappings().all()
+    rows = session.execute(text("SELECT * FROM mv_search_players ORDER BY player_last_name")).mappings().all()
     return [
         {
             "player_id": row["player_id"],
