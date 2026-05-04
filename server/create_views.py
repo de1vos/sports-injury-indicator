@@ -94,6 +94,7 @@ def _create_mv_player_overview(conn: Connection) -> None:
             t.team_name,
             p.player_position,
             p.player_injury_risk,
+            p.player_relative_risk,
             gd.player_injury_trend,
             COALESCE(si.seasonal_injuries, 0)        AS player_seasonal_injuries,
             COALESCE(ps_curr.player_season_minutes, 0) AS player_season_minutes
@@ -183,7 +184,8 @@ def _create_mv_team_player_list(conn: Connection) -> None:
             p.team_id,
             p.player_first_name,
             p.player_last_name,
-            p.player_injury_risk
+            p.player_injury_risk,
+            p.player_relative_risk
         FROM player p
         JOIN mv_teams_overview tov ON tov.team_id = p.team_id
         JOIN (
@@ -233,6 +235,7 @@ def _create_mv_player_card(conn: Connection) -> None:
             p.player_position,
             p.player_kit_number,
             p.player_injury_risk,
+            p.player_relative_risk,
             n.nation_name,
             gd.player_injury_trend,
             lss.player_season_minutes,

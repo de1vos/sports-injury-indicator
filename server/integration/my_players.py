@@ -15,6 +15,7 @@ class FavouritePlayer(TypedDict):
     team_name: str
     player_position: str
     player_injury_risk: int
+    player_relative_risk: float | None
     player_is_injured: bool
     player_injury_trend: int
     player_seasonal_injuries: int
@@ -39,6 +40,7 @@ def get_favourite_players(user_id: UUID, session: Session) -> List[FavouritePlay
             "team_name": row["team_name"],
             "player_position": row["player_position"],
             "player_injury_risk": round(float(row["player_injury_risk"]) * 100),
+            "player_relative_risk": float(row["player_relative_risk"]) if row["player_relative_risk"] is not None else None,
             "player_is_injured": float(row["player_injury_risk"]) >= 0.99,
             "player_injury_trend": round(float(row["player_injury_trend"])),
             "player_seasonal_injuries": row["player_seasonal_injuries"],

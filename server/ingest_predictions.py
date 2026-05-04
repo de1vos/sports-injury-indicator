@@ -186,6 +186,7 @@ def main():
                 "player_photo":       safe_str(p.get("photo"), max_len=500),
                 "player_kit_number":  p.get("kit_number") or 0,
                 "player_injury_risk": clamp_risk(p.get("injury_risk", 0)),
+                "player_relative_risk": Decimal(str(p["relative_risk"])) if p.get("relative_risk") is not None else None,
                 "player_risk_factor_1": safe_str(p.get("risk_factor_1"), max_len=100),
                 "player_risk_factor_2": safe_str(p.get("risk_factor_2"), max_len=100),
                 "player_risk_factor_3": safe_str(p.get("risk_factor_3"), max_len=100),

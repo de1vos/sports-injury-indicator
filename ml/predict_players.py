@@ -29,7 +29,7 @@ from config import (
     PLAYERS_CSV, SEASON_STATS_CSV, INJURIES_CSV, ML_FEATURES_CSV,
     FIXTURES_FILE, FIXTURES_UPCOMING_FILE,
     MODEL_FILE, OUTPUT_DIR, RISK_THRESHOLDS, CURRENT_SEASON,
-    INJURY_REGIONS_FOR_MODEL, BODY_REGION_MAP,
+    INJURY_REGIONS_FOR_MODEL, BODY_REGION_MAP, MIN_MINUTES_LAST_30,
 )
 from model_utils import SigmoidCalibrator  # required for pickle deserialization
 from nation_flags import write_nations_json
@@ -658,6 +658,25 @@ def main():
 
     records.sort(key=lambda x: x["injury_risk"], reverse=True)
     print(f"  Built {len(records)} player records")
+
+    # ── Relative risk multiplier ──────────────────────────────────────────────
+    eligible_pool = [
+        r for r in records
+        if (r["workload"]["minutes_last_30d"] or 0) >= MIN_MINUTES_LAST_30
+        and r["injury_risk"] < 0.99
+    ]
+    if eligible_pool:
+        league_avg_risk = sum(r["injury_risk"] for r in eligible_pool) / len(eligible_pool)
+        print(f"  League average risk: {league_avg_risk:.4f}  (pool: {len(eligible_pool)} players)")
+        for r in records:
+            if r["injury_risk"] >= 0.99:
+                r["relative_risk"] = None
+            else:
+                r["relative_risk"] = round(r["injury_risk"] / league_avg_risk, 3)
+    else:
+        print("  WARNING: eligible pool for relative risk is empty — relative_risk set to None for all")
+        for r in records:
+            r["relative_risk"] = None
 
     # ── Matches JSON ──────────────────────────────────────────────────────────
     print("Building matches JSON...")

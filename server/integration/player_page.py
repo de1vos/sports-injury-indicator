@@ -10,6 +10,7 @@ class TeamPlayerList(TypedDict):
     player_first_name: str
     player_last_name: str
     player_injury_risk: int | str
+    player_relative_risk: float | None
 
 
 class PlayerCard(TypedDict):
@@ -23,6 +24,7 @@ class PlayerCard(TypedDict):
     player_kit_number: int
     nation_name: str
     player_injury_risk: int
+    player_relative_risk: float | None
     player_injury_status: str
     player_injury_trend: int
     player_season_injuries: int
@@ -116,6 +118,7 @@ def get_team_player_list(team_id: int, session: Session) -> List[TeamPlayerList]
             "player_first_name": row["player_first_name"],
             "player_last_name": row["player_last_name"],
             "player_injury_risk": "injured" if float(row["player_injury_risk"]) >= 0.99 else round(float(row["player_injury_risk"]) * 100),
+            "player_relative_risk": float(row["player_relative_risk"]) if row["player_relative_risk"] is not None else None,
         }
         for row in rows
     ]
@@ -140,6 +143,7 @@ def get_player_card(player_id: int, session: Session) -> PlayerCard | None:
         "player_kit_number": row["player_kit_number"],
         "nation_name": row["nation_name"],
         "player_injury_risk": round(injury_risk * 100),
+        "player_relative_risk": float(row["player_relative_risk"]) if row["player_relative_risk"] is not None else None,
         "player_injury_status": "injured" if injury_risk >= 0.99 else "available",
         "player_injury_trend": round(float(row["player_injury_trend"])) if row["player_injury_trend"] else 0,
         "player_season_injuries": row["player_season_injuries"],
