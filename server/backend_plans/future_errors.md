@@ -35,3 +35,27 @@ Known business-logic gaps that are not blocking current work but should be addre
 **Why not fixed now:** The frontend currently renders the whole list at once and re-introducing pagination is a UI change, not a DB change. The index is shipped now so the DB side is ready as soon as the API/UI gain a `?limit=&offset=` (or cursor) parameter.
 
 **Suggested fix:** Add `?limit` and `?offset` (or a cursor on `player_injury_start`) to `GET /reported-injuries/`, append `ORDER BY player_injury_start DESC LIMIT … OFFSET …` to the integration query, and verify the planner switches to `Index Scan using idx_mv_ri_start_desc`.
+
+---
+
+## FE-5 — `GET /my-players` uses a direct SQLAlchemy column select instead of a view
+
+**File:** `server/integration/my_players.py` — `get_favourite_players` (line ~67)
+
+**Problem:** Unlike every other integration layer, My Players queries the `Player` table directly via a SQLAlchemy column select rather than going through a materialized view. This means new columns added to the `Player` model (such as `player_relative_risk`) must be explicitly added to that query — they are not automatically included by view updates. It also means the query misses the pre-aggregated and pre-filtered data available in views like `mv_high_risk_players`.
+
+**Why not fixed now:** Migrating My Players to a dedicated materialized view is a standalone refactor. The current relative risk plan works around it by explicitly adding `Player.player_relative_risk` to the direct query (Phase 3.7).
+
+**Suggested fix:** Create a `mv_my_players` materialized view joining `Player`, `Team`, `GraphData`, and `Nation` with the same shape as the existing integration response. Update `get_favourite_players` to query the view. Apply the same refresh pattern used by other views.
+
+---
+
+## FE-4 — Frontend `FavouritePlayer` type drift after Phase 0 of the index plan
+
+**File:** frontend `FavouritePlayer` TypeScript type (consumer of `GET /my-players/{user_id}`)
+
+**Problem:** Phase 0 of `index_implementation_plan.md` extends the `/my-players/{user_id}` response to include `player_injury_risk` alongside the existing `player_injury_trend`. The backend `FavouritePlayer` TypedDict is updated in the same change, but the frontend's TypeScript type is not — strict consumers will either not see the new field or fail type-checking depending on how the type is declared.
+
+**Why not fixed now:** The index-implementation plan is scoped to backend/DB. The frontend update is a separate touch in a different repo path and is best handled as a follow-up commit by whoever owns the My Players page.
+
+**Suggested fix:** Update the frontend `FavouritePlayer` type to include `player_injury_risk: number` (mirror the backend TypedDict shape), and surface the new field in the My Players UI consistent with how `/dashboard/high-risk-players` already renders the same value.
