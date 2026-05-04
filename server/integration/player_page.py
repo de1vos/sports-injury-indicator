@@ -107,7 +107,7 @@ class InjuryAnalysis(TypedDict):
 
 def get_team_player_list(team_id: int, session: Session) -> List[TeamPlayerList]:
     rows = session.execute(
-        text("SELECT * FROM mv_team_player_list WHERE team_id = :tid"),
+        text("SELECT * FROM mv_team_player_list WHERE team_id = :tid ORDER BY player_injury_risk DESC"),
         {"tid": team_id}
     ).mappings().all()
     return [
@@ -208,27 +208,18 @@ def get_season_statistics(player_id: int, session: Session) -> List[SeasonStatis
 
 def get_injury_history(player_id: int, session: Session) -> List[InjuryHistory]:
     rows = session.execute(
-        sa_select(  # type: ignore[call-overload, arg-type]
-            PlayerInjury.player_injury_type,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_region,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_start,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_end,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_severity,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_days_out,  # type: ignore[arg-type]
-        )
-        .join(PlayerSeason, PlayerInjury.player_season_id == PlayerSeason.player_season_id)  # type: ignore[arg-type]
-        .where(PlayerSeason.player_id == player_id)  # type: ignore[arg-type]
-        .order_by(PlayerInjury.player_injury_start.desc())  # type: ignore[attr-defined]
-    ).all()
+        text("SELECT * FROM mv_injury_history WHERE player_id = :pid"),
+        {"pid": player_id}
+    ).mappings().all()
 
     return [
         {
-            "player_injury_type": row.player_injury_type,
-            "player_injury_region": row.player_injury_region,
-            "player_injury_start": str(row.player_injury_start),
-            "player_injury_end": str(row.player_injury_end) if row.player_injury_end else None,
-            "player_injury_severity": row.player_injury_severity,
-            "player_injury_days_out": row.player_injury_days_out,
+            "player_injury_type": row["player_injury_type"],
+            "player_injury_region": row["player_injury_region"],
+            "player_injury_start": str(row["player_injury_start"]),
+            "player_injury_end": str(row["player_injury_end"]) if row["player_injury_end"] else None,
+            "player_injury_severity": row["player_injury_severity"],
+            "player_injury_days_out": row["player_injury_days_out"],
         }
         for row in rows
     ]

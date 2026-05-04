@@ -65,15 +65,21 @@ def get_high_risk_players(session: Session, user_id: int | None = None) -> List[
     if user_id is not None:
         rows = session.execute(
             text("""
-                SELECT mv.* FROM mv_high_risk_players mv
+                SELECT mv.* FROM mv_player_overview mv
                 JOIN user_favourite uf
                   ON uf.player_id = mv.player_id AND uf.user_id = :uid
+                WHERE mv.player_injury_risk > 0.10 AND mv.player_injury_risk < 0.99
+                ORDER BY mv.player_injury_risk DESC
             """),
             {"uid": user_id}
         ).mappings().all()
     else:
         rows = session.execute(
-            text("SELECT * FROM mv_high_risk_players WHERE player_injury_risk > 0.10")
+            text("""
+                SELECT * FROM mv_player_overview
+                WHERE player_injury_risk > 0.10 AND player_injury_risk < 0.99
+                ORDER BY player_injury_risk DESC
+            """)
         ).mappings().all()
     return [
         {
@@ -95,15 +101,21 @@ def get_trending_risk_players(session: Session, user_id: int | None = None) -> L
     if user_id is not None:
         rows = session.execute(
             text("""
-                SELECT mv.* FROM mv_trending_risk_players mv
+                SELECT mv.* FROM mv_player_overview mv
                 JOIN user_favourite uf
                   ON uf.player_id = mv.player_id AND uf.user_id = :uid
+                WHERE mv.player_injury_trend > 30
+                ORDER BY mv.player_injury_trend DESC
             """),
             {"uid": user_id}
         ).mappings().all()
     else:
         rows = session.execute(
-            text("SELECT * FROM mv_trending_risk_players WHERE player_injury_trend > 30")
+            text("""
+                SELECT * FROM mv_player_overview
+                WHERE player_injury_trend > 30
+                ORDER BY player_injury_trend DESC
+            """)
         ).mappings().all()
     return [
         {
