@@ -41,16 +41,23 @@ export const playersApi = {
     // return mapPlayerCard(data, playerId);
   },
 
-  /** Gameweek risk graph → { trend: RiskTrendEntry[] } */
+  /** Gameweek risk graph → { trend: RiskTrendEntry[], currentGw: string | null } */
   getGraph: async (playerId: string) => {
     // For testing, return mock data
     const player = mockPlayers.find(p => p.id === playerId);
-    if (player && player.injuryRiskTrend) {
-      return { trend: player.injuryRiskTrend };
+    if (player?.injuryRiskTrend?.length) {
+      const sorted = [...player.injuryRiskTrend].sort((a, b) => {
+        if (a.season !== b.season) return a.season - b.season;
+        return parseInt(a.gw.replace('GW', '')) - parseInt(b.gw.replace('GW', ''));
+      });
+      const maxSeason = Math.max(...sorted.map(e => e.season));
+      const currentGw = sorted.filter(e => e.season === maxSeason).at(-1)?.gw ?? null;
+      return { trend: player.injuryRiskTrend, currentGw };
     }
-    return { trend: [] };
+    return { trend: [], currentGw: null };
     // const data = await apiFetch<ApiPlayerGraph>(`/players/${playerId}/graph`);
-    // return { trend: mapGraph(data) };
+    // const { entries, currentGw } = mapGraph(data);
+    // return { trend: entries, currentGw };
   },
 
   /** Season stats → { seasons: SeasonStat[] } */

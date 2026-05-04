@@ -208,6 +208,7 @@ export function TeamPage() {
 
   const { data: playerCard, loading: cardLoading } = usePlayerCard(currentPlayerId);
   const { data: graphData } = usePlayerGraph(currentPlayerId);
+  const currentGw = graphData?.currentGw ?? null;
   const { data: seasonsData } = usePlayerSeasons(currentPlayerId);
   const { data: injuryHistoryData } = usePlayerInjuryHistory(currentPlayerId);
   const { data: injuryAnalysisData } = usePlayerInjuryAnalysis(currentPlayerId);
@@ -500,7 +501,7 @@ export function TeamPage() {
 
             {/* ── Right column: Chart · Performance/Stats toggle · Risk factors ── */}
             <div className="space-y-8">
-              <PlayerInjuryRiskChart player={currentPlayer} />
+              <PlayerInjuryRiskChart player={currentPlayer} currentGw={currentGw} />
 
               {/* Season Performance / Statistics toggle */}
               <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">

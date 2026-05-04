@@ -4,55 +4,45 @@ import { Player } from '../data/mockData';
 
 interface ChartPoint { week: string; risk: number | null; injured?: boolean; }
 
-// GW1 of 2025/26 season started ~Aug 16 2025
-const SEASON_START = new Date('2025-08-16');
+const TOTAL_GWS = 38;
 
-function gwToDateRange(gw: number): [Date, Date] {
-  const start = new Date(SEASON_START);
-  start.setDate(start.getDate() + (gw - 1) * 7);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 7);
-  return [start, end];
-}
+function buildTrendData(
+  player: Player,
+  currentGw: string | null | undefined,
+): { points: ChartPoint[]; prevCount: number } {
+  const trend = player.injuryRiskTrend;
+  if (!trend?.length) return { points: [], prevCount: 0 };
 
-function generateGWData(player: Player): ChartPoint[] {
-  const startGW = 13;
-  const endGW = 32;
-  const data: ChartPoint[] = [];
+  const sorted = [...trend].sort((a, b) => {
+    if (a.season !== b.season) return a.season - b.season;
+    return parseInt(a.gw.replace('GW', '')) - parseInt(b.gw.replace('GW', ''));
+  });
 
-  for (let gw = startGW; gw <= endGW; gw++) {
-    const [gwStart, gwEnd] = gwToDateRange(gw);
+  const maxSeason = Math.max(...sorted.map(e => e.season));
 
-    const isInjured = player.injuryHistory.some(inj => {
-      const from = new Date(inj.from);
-      const until = new Date(inj.until);
-      return from < gwEnd && until >= gwStart;
-    });
+  // Cap current season at the supplied currentGw, or the last entry of max season
+  const currentGwNum = currentGw
+    ? parseInt(currentGw.replace('GW', ''))
+    : parseInt(sorted.filter(e => e.season === maxSeason).at(-1)?.gw.replace('GW', '') ?? '38');
 
-    if (isInjured) {
-      data.push({ week: `GW${gw}`, risk: null, injured: true });
-    } else {
-      const progress = (gw - startGW) / (endGW - startGW);
-      const baseRisk = player.injuryRisk - player.riskTrend * (1 - progress);
-      const variation = (Math.random() - 0.5) * 4;
-      data.push({
-        week: `GW${gw}`,
-        risk: Math.round(Math.max(0, Math.min(100, baseRisk + variation)) * 10) / 10,
-      });
-    }
-  }
+  const currentSeasonEntries = sorted.filter(
+    e => e.season === maxSeason && parseInt(e.gw.replace('GW', '')) <= currentGwNum,
+  );
 
-  return data;
-}
+  const prevNeeded = Math.max(0, TOTAL_GWS - currentSeasonEntries.length);
+  const prevSeasonEntries = prevNeeded > 0
+    ? sorted.filter(e => e.season < maxSeason).slice(-prevNeeded)
+    : [];
 
-function buildTrendData(player: Player): ChartPoint[] {
-  if (!player.injuryRiskTrend?.length) return generateGWData(player);
-  const entries = player.injuryRiskTrend.slice(-20);
-  return entries.map(e => ({
+  const allEntries = [...prevSeasonEntries, ...currentSeasonEntries];
+
+  const points: ChartPoint[] = allEntries.map(e => ({
     week: e.gw,
-    risk: e.risk === 'Injured' ? null : Math.round(e.risk * 10) / 10,
+    risk: e.risk === 'Injured' ? null : Math.round((e.risk as number) * 10) / 10,
     injured: e.risk === 'Injured' ? true : undefined,
   }));
+
+  return { points, prevCount: prevSeasonEntries.length };
 }
 
 function getInjurySpans(data: ChartPoint[]): Array<{ x1: string; x2: string }> {
@@ -73,14 +63,20 @@ const getRiskZoneColor = (risk: number) => {
   return '#1A56DB';
 };
 
-export function PlayerInjuryRiskChart({ player }: { player: Player }) {
+export function PlayerInjuryRiskChart({
+  player,
+  currentGw,
+}: {
+  player: Player;
+  currentGw?: string | null;
+}) {
   const [animatedRisk, setAnimatedRisk] = useState(0);
 
   useEffect(() => {
     setAnimatedRisk(0);
     const target = player.injuryRisk;
-    const duration = 1500; // 1.5 seconds
-    const steps = 60; // 60 fps
+    const duration = 1500;
+    const steps = 60;
     const increment = target / steps;
     const interval = duration / steps;
 
@@ -98,16 +94,27 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
     return () => clearInterval(timer);
   }, [player.injuryRisk]);
 
-  const chartData = useMemo(
-    () => buildTrendData(player),
+  const { points: chartData, prevCount } = useMemo(
+    () => buildTrendData(player, currentGw),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [player.id, player.injuryRisk, player.riskTrend, player.injuryRiskTrend],
+    [player.id, player.injuryRisk, player.riskTrend, player.injuryRiskTrend, currentGw],
   );
-  const color = getRiskZoneColor(player.injuryRisk);
-  const isRealData = !!player.injuryRiskTrend?.length;
-  const hasGaps = chartData.some(d => d.risk === null);
 
+  const color = getRiskZoneColor(player.injuryRisk);
+  const hasGaps = chartData.some(d => d.risk === null);
   const gwsMissed = hasGaps ? chartData.filter(d => d.risk === null).length : 0;
+
+  const prevSeasonEnd = prevCount > 0 ? chartData[prevCount - 1]?.week : null;
+  const prevSeasonStart = prevCount > 0 ? chartData[0]?.week : null;
+
+  if (!chartData.length) {
+    return (
+      <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
+        <h3 className="text-xl font-bold text-[#1A1A2E] mb-2">Injury Risk Trend</h3>
+        <p className="text-sm text-[#6B7280]">No graph data available for this player.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
@@ -176,13 +183,25 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
               contentStyle={{ backgroundColor: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', padding: '8px 12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
               labelStyle={{ color: '#1A1A2E', fontWeight: 600, marginBottom: '4px' }}
               itemStyle={{ color: color, fontFamily: 'var(--font-mono)' }}
-              formatter={(value: number | null, name: string, props: any) => {
-                if (value === null || props?.payload?.injured) {
+              formatter={(value: unknown, _name: unknown, props: any) => {
+                if (value === null || value === undefined || props?.payload?.injured) {
                   return ['Injured', ''];
                 }
                 return [`${value}%`, 'Risk'];
               }}
             />
+            {/* Previous season yellow background */}
+            {prevSeasonStart && prevSeasonEnd && (
+              <ReferenceArea
+                x1={prevSeasonStart}
+                x2={prevSeasonEnd}
+                fill="#F59E0B"
+                fillOpacity={0.12}
+                stroke="#F59E0B"
+                strokeOpacity={0.3}
+              />
+            )}
+            {/* Injury period red background */}
             {getInjurySpans(chartData).map(({ x1, x2 }, i) => (
               <ReferenceArea key={i} x1={x1} x2={x2} fill="#DC2626" fillOpacity={0.4} stroke="#DC2626" strokeOpacity={0.5} />
             ))}
@@ -219,6 +238,12 @@ export function PlayerInjuryRiskChart({ player }: { player: Player }) {
           <div className="w-3 h-3 rounded-full bg-[#6B7280]" />
           <span className="text-[#6B7280]">Shaded = Injured</span>
         </div>
+        {prevCount > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#F59E0B', opacity: 0.7 }} />
+            <span className="text-[#6B7280]">Previous season</span>
+          </div>
+        )}
       </div>
     </div>
   );

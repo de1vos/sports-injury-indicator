@@ -87,8 +87,9 @@ export const mapPlayerCard = (p: ApiPlayerCard, playerId?: string): Player => ({
 
 // ── Risk trend graph ─────────────────────────────────────────────────────────
 
-export const mapGraph = (data: ApiPlayerGraph): RiskTrendEntry[] =>
-  Object.entries(data)
+export const mapGraph = (data: ApiPlayerGraph): { entries: RiskTrendEntry[]; currentGw: string | null } => {
+  const currentGw = typeof data.graph_data_current_gw === 'string' ? data.graph_data_current_gw : null;
+  const entries = Object.entries(data)
     .filter(([key]) => /^gw_\d+$/.test(key))
     .map(([key, value]) => ({
       gw: `GW${key.replace('gw_', '')}`,
@@ -100,6 +101,8 @@ export const mapGraph = (data: ApiPlayerGraph): RiskTrendEntry[] =>
     .sort((a, b) =>
       parseInt(a.gw.replace('GW', '')) - parseInt(b.gw.replace('GW', ''))
     );
+  return { entries, currentGw };
+};
 
 // ── Season stats ─────────────────────────────────────────────────────────────
 
