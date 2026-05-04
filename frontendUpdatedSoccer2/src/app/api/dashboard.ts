@@ -1,5 +1,5 @@
 import { apiFetch } from './client';
-import type { ApiDashboardMatch, ApiHighRiskPlayer, ApiTrendingRiskPlayer } from './types';
+import { mockTrendingPlayers } from '../data/mockData';
 
 // ── Internal types returned to pages ────────────────────────────────────────
 
@@ -113,10 +113,12 @@ export const dashboardApi = {
    * Without userId → global; with userId → user's watchlist.
    */
   getTrendingPlayers: async (userId?: string): Promise<DashboardTrendingPlayer[]> => {
-    const url = userId
-      ? `/dashboard/trending-risk-players?user_id=${userId}`
-      : '/dashboard/trending-risk-players';
-    const data = await apiFetch<ApiTrendingRiskPlayer[]>(url);
-    return data.map(mapTrending);
+    // For testing, return mock data
+    return mockTrendingPlayers;
+    // const url = userId
+    //   ? `/dashboard/trending-risk-players?user_id=${userId}`
+    //   : '/dashboard/trending-risk-players';
+    // const data = await apiFetch<ApiTrendingRiskPlayer[]>(url);
+    // return data.map(mapTrending);
   },
 };
