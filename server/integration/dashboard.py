@@ -26,6 +26,7 @@ class HighRiskPlayer(TypedDict):
     team_name: str
     player_position: str
     player_injury_risk: int
+    player_relative_risk: float
     player_seasonal_injuries: int
 
 
@@ -68,8 +69,8 @@ def get_high_risk_players(session: Session, user_id: int | None = None) -> List[
                 SELECT mv.* FROM mv_player_overview mv
                 JOIN user_favourite uf
                   ON uf.player_id = mv.player_id AND uf.user_id = :uid
-                WHERE mv.player_injury_risk > 0.10 AND mv.player_injury_risk < 0.99
-                ORDER BY mv.player_injury_risk DESC
+                WHERE mv.player_relative_risk > 2.0
+                ORDER BY mv.player_relative_risk DESC
             """),
             {"uid": user_id}
         ).mappings().all()
@@ -77,8 +78,8 @@ def get_high_risk_players(session: Session, user_id: int | None = None) -> List[
         rows = session.execute(
             text("""
                 SELECT * FROM mv_player_overview
-                WHERE player_injury_risk > 0.10 AND player_injury_risk < 0.99
-                ORDER BY player_injury_risk DESC
+                WHERE player_relative_risk > 2.0
+                ORDER BY player_relative_risk DESC
             """)
         ).mappings().all()
     return [
@@ -91,6 +92,7 @@ def get_high_risk_players(session: Session, user_id: int | None = None) -> List[
             "team_name": row["team_name"],
             "player_position": row["player_position"],
             "player_injury_risk": round(float(row["player_injury_risk"]) * 100),
+            "player_relative_risk": float(row["player_relative_risk"]),
             "player_seasonal_injuries": row["player_seasonal_injuries"],
         }
         for row in rows

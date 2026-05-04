@@ -38,15 +38,9 @@ Known business-logic gaps that are not blocking current work but should be addre
 
 ---
 
-## FE-5 — `GET /my-players` uses a direct SQLAlchemy column select instead of a view
+## ~~FE-5~~ — RESOLVED: `GET /my-players` now uses `mv_player_overview`
 
-**File:** `server/integration/my_players.py` — `get_favourite_players` (line ~67)
-
-**Problem:** Unlike every other integration layer, My Players queries the `Player` table directly via a SQLAlchemy column select rather than going through a materialized view. This means new columns added to the `Player` model (such as `player_relative_risk`) must be explicitly added to that query — they are not automatically included by view updates. It also means the query misses the pre-aggregated and pre-filtered data available in views like `mv_high_risk_players`.
-
-**Why not fixed now:** Migrating My Players to a dedicated materialized view is a standalone refactor. The current relative risk plan works around it by explicitly adding `Player.player_relative_risk` to the direct query (Phase 3.7).
-
-**Suggested fix:** Create a `mv_my_players` materialized view joining `Player`, `Team`, `GraphData`, and `Nation` with the same shape as the existing integration response. Update `get_favourite_players` to query the view. Apply the same refresh pattern used by other views.
+**Resolved by index implementation PR (#73).** `get_favourite_players` now queries `mv_player_overview` — the direct column select was removed. New columns added to `mv_player_overview` are automatically available to My Players.
 
 ---
 

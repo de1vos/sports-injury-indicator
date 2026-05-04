@@ -127,6 +127,7 @@ class Player(SQLModel, table=True):
     player_photo: str = Field(max_length=500)
     player_kit_number: int
     player_injury_risk: Decimal = Field(sa_column=Column(Numeric(4, 3), CheckConstraint('player_injury_risk BETWEEN 0 AND 1'), nullable=False))
+    player_relative_risk: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(6, 3)))
     player_risk_factor_1: str = Field(max_length=100)
     player_risk_factor_2: str = Field(max_length=100)
     player_risk_factor_3: str = Field(max_length=100)

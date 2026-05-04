@@ -72,6 +72,9 @@ MODEL_FILE              = ROOT / "models" / "injury_predictor.pkl"
 PREDICTIONS_OUTPUT_FILE = ROOT / "output" / "player_predictions.json"
 MATCHES_OUTPUT_FILE     = ROOT / "output" / "matches.json"
 
+# Relative risk multiplier
+MIN_MINUTES_LAST_30 = 90
+
 # Risk level thresholds
 RISK_THRESHOLDS = {
     "Low":      (0.00, 0.20),
