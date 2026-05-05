@@ -35,11 +35,14 @@ function ProtectedMyPlayers() {
 function RootLayout() {
   return (
     <FavoritesProvider>
-      <div className="min-h-screen bg-[#F5F6FA]">
+      <div className="min-h-screen bg-[#F5F6FA] flex flex-col">
         <Navigation />
-        <main className="pt-16">
+        <main className="pt-16 flex-1">
           <Outlet />
         </main>
+        <footer className="bg-yellow-50 border-t-2 border-yellow-400 px-6 py-4 text-center text-sm text-gray-700">
+          <strong>Disclaimer:</strong> Predictive data is for decision-support only. Use of this tool constitutes an acknowledgement that predictive data does not constitute medical advice or a substitute for clinical judgment and that final judgment rests with the user.
+        </footer>
       </div>
     </FavoritesProvider>
   );
