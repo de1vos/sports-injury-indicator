@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { useFavorites } from '../hooks/useFavorites';
-import { getRiskColor } from '../data/mockData';
+import { getRelativeRiskMeta } from '../utils/risk';
 
 export function MyPlayersPage() {
-  const { favoritePlayers: rawPlayers, toggleFavorite } = useFavorites();
+  const { favoritePlayers: rawPlayers, toggleFavorite, refresh } = useFavorites();
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
+
+  useEffect(() => { refresh(); }, []);
 
   const players = [...rawPlayers].sort((a, b) => {
     if (a.injuryStatus === 'Injured' && b.injuryStatus !== 'Injured') return -1;
@@ -108,16 +110,16 @@ export function MyPlayersPage() {
                   {isInjured ? 'Injured' : 'Fit'}
                 </span>
 
-                {/* Injury risk — only shown when not injured */}
-                {player.injuryRisk != null && !isInjured && (
+                {/* Relative risk — only shown when not injured */}
+                {!isInjured && (
                   <span
                     className="flex-shrink-0 px-2 py-1 rounded-xl text-xs font-bold text-white"
                     style={{
                       fontFamily: 'var(--font-mono)',
-                      backgroundColor: getRiskColor(player.injuryRisk),
+                      backgroundColor: getRelativeRiskMeta(player.relativeRisk ?? null).color,
                     }}
                   >
-                    {player.injuryRisk}%
+                    {player.relativeRisk != null ? `${player.relativeRisk.toFixed(1)}×` : '—'}
                   </span>
                 )}
 
@@ -223,20 +225,18 @@ export function MyPlayersPage() {
                     </span>
                   </div>
 
-                  {/* Injury risk */}
+                  {/* Relative risk */}
                   <div className="flex flex-col gap-0.5 p-2.5 bg-[#F5F6FA] rounded-xl">
                     <span className="text-xs text-[#6B7280]">Risk</span>
                     {isInjured ? (
                       <span className="text-sm font-bold text-[#DC2626]" style={{ fontFamily: 'var(--font-mono)' }}>INJURED</span>
-                    ) : player.injuryRisk != null ? (
+                    ) : (
                       <span
                         className="text-lg font-bold"
-                        style={{ fontFamily: 'var(--font-mono)', color: getRiskColor(player.injuryRisk) }}
+                        style={{ fontFamily: 'var(--font-mono)', color: getRelativeRiskMeta(player.relativeRisk ?? null).color }}
                       >
-                        {player.injuryRisk}%
+                        {player.relativeRisk != null ? `${player.relativeRisk.toFixed(1)}×` : '—'}
                       </span>
-                    ) : (
-                      <span className="text-lg font-bold text-[#6B7280]" style={{ fontFamily: 'var(--font-mono)' }}>-</span>
                     )}
                   </div>
 

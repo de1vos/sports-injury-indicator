@@ -6,7 +6,7 @@
 
   **Step 0a — `server/create_views.py`** (schema + MV indexes; nothing else yet reads or writes against the new shape):
   - Add the new `mv_injury_history` MV. Its `SELECT` list must include `pi.player_injury_id` so we can build a UNIQUE index on it. Create both `idx_mv_ih_player_start` on `(player_id, player_injury_start DESC)` (query path) and `uq_mv_ih_injury_id` UNIQUE on `(player_injury_id)` (concurrent-refresh enabler — a unique index on `(player_id, player_injury_start)` is impossible because the data has 12 same-day duplicates).
-  - **Merge `mv_high_risk_players` and `mv_trending_risk_players` into a single `mv_player_overview`** that carries both `player_injury_risk` and `player_injury_trend` alongside the shared identity columns (names, photo, team, position, seasonal_injuries). Drop `_create_mv_high_risk_players(...)`; rewrite `_create_mv_trending_risk_players(...)` as `_create_mv_player_overview(...)`. Keep `INNER JOIN graph_data` (data confirms zero orphans; ingest writes a graph row for every non-skipped player). The merged MV must use the more inclusive row set (i.e. *not* filter out `player_injury_risk >= 0.99` — currently only the high-risk MV does that, and applying it here would silently drop already-injured players from the trending and favourites endpoints). Add `uq_mv_po_player_id`, `idx_mv_po_risk`, `idx_mv_po_trend`.
+  - **Merge `mv_high_risk_players` and `mv_trending_risk_players` into a single `mv_player_overview`** that carries both `player_injury_risk` and `player_injury_trend` alongside the shared identity columns (names, photo, team, position, seasonal_injuries, `player_season_minutes` from a `LEFT JOIN player_season` filtered to the current season). Drop `_create_mv_high_risk_players(...)`; rewrite `_create_mv_trending_risk_players(...)` as `_create_mv_player_overview(...)`. Keep `INNER JOIN graph_data` (data confirms zero orphans; ingest writes a graph row for every non-skipped player). The merged MV must use the more inclusive row set (i.e. *not* filter out `player_injury_risk >= 0.99` — currently only the high-risk MV does that, and applying it here would silently drop already-injured players from the trending and favourites endpoints). Add `uq_mv_po_player_id`, `idx_mv_po_risk`, `idx_mv_po_trend`.
   - Add the remaining MV indexes alongside the existing MV definitions: `idx_mv_tpl_team_risk` on `mv_team_player_list(team_id, player_injury_risk DESC)`, `idx_mv_sp_last_name` on `mv_search_players(player_last_name)`, `uq_mv_pc_player_id` on `mv_player_card`, `uq_mv_ia_player_id` on `mv_injury_analysis`, `idx_mv_ri_start_desc` on `mv_reported_injuries`.
   - Wire `_create_mv_injury_history(...)` and `_create_mv_player_overview(...)` into `create_all_views(...)`; remove the dropped `_create_mv_high_risk_players(...)` / `_create_mv_trending_risk_players(...)` calls. **Call order is load-bearing:** `_create_mv_player_overview` joins `mv_teams_overview`, so it must be placed **after** `_create_mv_teams_overview(conn)` — placing it before will cause `CREATE MATERIALIZED VIEW` to fail on the missing relation.
 
@@ -18,7 +18,7 @@
   - Switch `integration/player_page.get_injury_history(...)` to `SELECT * FROM mv_injury_history WHERE player_id = :pid`.
   - Update `integration/dashboard.get_high_risk_players(...)` query to `… FROM mv_player_overview WHERE player_injury_risk > 0.10 AND player_injury_risk < 0.99 ORDER BY player_injury_risk DESC` (and the `?user_id` variant accordingly).
   - Update `integration/dashboard.get_trending_risk_players(...)` query to `… FROM mv_player_overview WHERE player_injury_trend > 30 ORDER BY player_injury_trend DESC` (and the `?user_id` variant accordingly).
-  - Refactor `integration/my_players.get_favourite_players(...)` to `SELECT mv.* FROM mv_player_overview mv JOIN user_favourite uf ON uf.player_id = mv.player_id AND uf.user_id = :uid` (replaces today's 6-way join). Update the `FavouritePlayer` TypedDict + response mapping to include `player_injury_risk` alongside `player_injury_trend`.
+  - Refactor `integration/my_players.get_favourite_players(...)` to `SELECT mv.* FROM mv_player_overview mv JOIN user_favourite uf ON uf.player_id = mv.player_id AND uf.user_id = :uid` (replaces today's 6-way join). `player_season_minutes` is now available directly from the MV; compute `player_is_injured` as `float(row["player_injury_risk"]) >= 0.99` in the response mapping (no separate MV column needed).
   - Add explicit `ORDER BY player_injury_risk DESC` to `integration/player_page.get_team_player_list(...)` and explicit `ORDER BY player_last_name` to `integration/search.get_search_players(...)` — the `ORDER BY` baked into MV definitions is not preserved across reads.
 
   **Step 0d — re-ingest** to materialize the new schema:
@@ -111,32 +111,36 @@ All indexes default to B-tree because every filter is equality or range / ordere
 
 ---
 
-## 3. Baseline timings (Phase 1 — captured 2026‑04‑30 against `test` DB)
+## 3. Baseline timings (Phase 1 — re-captured 2026‑05‑04 against `test` DB)
 
-DB sizes at capture time: player=973, player_season=2 475, player_injury=6 405, team=27, match=40, user_favourite=0, mv_reported_injuries=4 718. Sample IDs used: `player_id=2999`, `team_id=41`, `user_id=1`. Each row reports **Planning + Execution** time from `EXPLAIN (ANALYZE, BUFFERS)`.
+DB sizes at capture time: player=973, player_season=2 475, player_injury=6 405, team=27, match=40, user_favourite=0, mv_reported_injuries=4 718. Sample IDs used: `player_id=2999`, `team_id=41`, `user_id='00000000-0000-0000-0000-000000000001'` (non-existent UUID → 0-row join for user_id variants). Each row reports **Planning + Execution** time from `EXPLAIN (ANALYZE, BUFFERS)`.
 
-| #  | Endpoint                                          | Plan today                              | Planning ms | Execution ms | Total ms | After (Phase 3) |
-|----|---------------------------------------------------|-----------------------------------------|-------------|--------------|----------|------------------|
-| 1  | `/dashboard/matches`                              | Seq Scan on mv (10 rows)                | 0.346       | 0.190        | 0.536    |                  |
-| 2  | `/dashboard/high-risk-players`                    | Seq Scan + filter (33/547)              | 1.573       | 0.725        | 2.298    |                  |
-| 3  | `/dashboard/high-risk-players?user_id=1`          | Hash Join, both sides Seq Scan          | 1.109       | 0.021        | 1.130    |                  |
-| 4  | `/dashboard/trending-risk-players`                | Seq Scan + filter (20/649)              | 0.249       | 0.691        | 0.940    |                  |
-| 5  | `/dashboard/trending-risk-players?user_id=1`      | Hash Join, both sides Seq Scan          | 0.059       | 0.017        | 0.076    |                  |
-| 6  | `/teams/overview`                                 | Seq Scan on mv (20 rows)                | 0.080       | 0.206        | 0.286    |                  |
-| 7  | `/search/players`                                 | Seq Scan on mv (649 rows)               | 0.073       | 0.478        | 0.551    |                  |
-| 8  | `/search/teams`                                   | Seq Scan + Sort on mv (20 rows)         | 0.021       | 0.847        | 0.868    |                  |
-| 9  | `/search/injury-regions`                          | Seq Scan + HashAggregate + Sort         | 0.091       | 0.881        | 0.972    |                  |
-| 10 | `/players/team/{team_id}`                         | Seq Scan + filter on mv                 | 0.273       | 0.621        | 0.894    |                  |
-| 11 | `/players/{player_id}/card`                       | Seq Scan + filter on mv (1/1010)        | 1.026       | 0.829        | 1.855    |                  |
-| 12 | `/players/{player_id}/graph`                      | Seq Scan + filter on graph_data (1/973) | 1.063       | 0.759        | 1.822    |                  |
-| 13 | `/players/{player_id}/seasons`                    | Seq Scan + Sort on player_season        | 0.471       | 0.134        | 0.605    |                  |
-| 14 | `/players/{player_id}/injury-history`             | Hash Join (Seq×2) + Sort                | 0.906       | 0.623        | 1.529    |                  |
-| 15 | `/players/{player_id}/injury-analysis`            | Seq Scan + filter on mv (1/1005)        | 0.273       | 0.203        | 0.476    |                  |
-| 16 | `/reported-injuries/`                             | Seq Scan on mv (4 718 rows)             | 0.178       | 1.651        | 1.829    |                  |
-| 17 | `/my-players/{user_id}`                           | Nested Loop / Hash, all base seq scans  | 1.817       | 0.076        | 1.893    |                  |
-|    | **TOTAL**                                         |                                         | **9.601**   | **8.950**    | **18.551** |                |
+Phase 3 re-run: 2026-05-04, same DB (reseed via `seed_db.py`), player_season=2 309, player_injury=5 814.
 
-Raw output is preserved at `/tmp/explain_output.txt` (regenerable from `/tmp/explain_endpoints.sql`).
+| #  | Endpoint                                          | Plan today                              | Planning ms | Execution ms | Total ms | After plan (Phase 3)                                   | After ms |
+|----|---------------------------------------------------|-----------------------------------------|-------------|--------------|----------|--------------------------------------------------------|----------|
+| 1  | `/dashboard/matches`                              | Seq Scan on mv (10 rows)                | 0.267       | 0.066        | 0.333    | Seq Scan — correct (10 rows)                           | 0.254    |
+| 2  | `/dashboard/high-risk-players`                    | Seq Scan + filter (33/547)              | 0.172       | 0.151        | 0.323    | Bitmap Index Scan `idx_mv_po_risk` ✅                  | 0.622    |
+| 3  | `/dashboard/high-risk-players?user_id=1`          | Hash Join, both sides Seq Scan          | 0.453       | 0.090        | 0.543    | Bitmap Index Scan `idx_uf_user_id` + `idx_mv_po_risk` ✅ | 0.430  |
+| 4  | `/dashboard/trending-risk-players`                | Seq Scan + filter (20/649)              | 0.128       | 0.142        | 0.270    | Seq Scan — planner skipped `idx_mv_po_trend` (12/633 rows, small table) | 0.138 |
+| 5  | `/dashboard/trending-risk-players?user_id=1`      | Hash Join, both sides Seq Scan          | 0.081       | 0.036        | 0.117    | Bitmap Index Scan `idx_uf_user_id` ✅ + Seq Scan mv    | 0.117    |
+| 6  | `/teams/overview`                                 | Seq Scan on mv (20 rows)                | 0.069       | 0.055        | 0.124    | Seq Scan — correct (20 rows)                           | 0.077    |
+| 7  | `/search/players`                                 | Seq Scan on mv (649 rows)               | 0.091       | 0.143        | 0.234    | Seq Scan + Sort — planner skipped `idx_mv_sp_last_name` (full return, sort cheaper) | 0.396 |
+| 8  | `/search/teams`                                   | Seq Scan + Sort on mv (20 rows)         | 0.045       | 0.074        | 0.119    | Seq Scan + Sort — correct (20 rows)                    | 0.034    |
+| 9  | `/search/injury-regions`                          | Seq Scan + HashAggregate + Sort         | 0.108       | 2.208        | 2.316    | Seq Scan + HashAggregate — correct (full distinct scan) | 1.079   |
+| 10 | `/players/team/{team_id}`                         | Seq Scan + filter on mv                 | 0.091       | 0.079        | 0.170    | Bitmap Index Scan `idx_mv_tpl_team_risk` ✅            | 0.181    |
+| 11 | `/players/{player_id}/card`                       | Seq Scan + filter on mv (1/1010)        | 0.136       | 0.130        | 0.266    | Index Scan `uq_mv_pc_player_id` ✅                     | 0.118    |
+| 12 | `/players/{player_id}/graph`                      | Seq Scan + filter on graph_data (1/973) | 0.260       | 0.179        | 0.439    | Index Scan `uq_gd_player_id` ✅                        | 0.157    |
+| 13 | `/players/{player_id}/seasons`                    | Seq Scan + Sort on player_season        | 0.425       | 0.097        | 0.522    | Bitmap Index Scan `idx_ps_player_year` ✅              | 0.202    |
+| 14 | `/players/{player_id}/injury-history`             | Hash Join (Seq×2) + Sort                | 0.246       | 1.235        | 1.481    | Bitmap Index Scan `idx_mv_ih_player_start` ✅          | 0.167    |
+| 15 | `/players/{player_id}/injury-analysis`            | Seq Scan + filter on mv (1/1005)        | 0.093       | 0.130        | 0.223    | Index Scan `uq_mv_ia_player_id` ✅                     | 0.175    |
+| 16 | `/reported-injuries/`                             | Seq Scan on mv (4 718 rows)             | 0.766       | 1.577        | 2.343    | Seq Scan — correct (4 128 rows, full return)           | 0.578    |
+| 17 | `/my-players/{user_id}`                           | Nested Loop / Hash, all base seq scans  | 1.520       | 0.271        | 1.791    | Hash Join + Bitmap Index Scan `idx_uf_user_id` ✅      | 0.092    |
+|    | **TOTAL**                                         |                                         | **4.951**   | **6.663**    | **11.614** |                                                      | **4.817** |
+
+> Rows 4 and 7: planner correctly chose Seq Scan — at current table sizes the index overhead exceeds the filter benefit. Both indexes remain useful for future growth (row 4: `idx_mv_po_trend`; row 7: `idx_mv_sp_last_name`).
+
+Queries regenerable from `/tmp/explain_endpoints.sql`.
 
 ---
 
@@ -251,6 +255,54 @@ rows = session.execute(
 
 The composite `(player_id, player_injury_start DESC)` index lets Postgres satisfy both `WHERE player_id = $1` and `ORDER BY player_injury_start DESC` in a single Index Scan — no Sort step, no nested loop.
 
+**New MV — `mv_player_overview`**: merges `mv_high_risk_players` and `mv_trending_risk_players`. Adds `player_injury_trend` (via `INNER JOIN graph_data`) and `player_season_minutes` (via `LEFT JOIN player_season` to the current season). Does **not** carry the `player_injury_risk < 0.99` filter — that moves to endpoint queries. Must be created **after** `mv_teams_overview` (it joins it).
+
+```python
+def _create_mv_player_overview(conn: Connection) -> None:
+    conn.execute(text("""
+        CREATE MATERIALIZED VIEW mv_player_overview AS
+        SELECT
+            p.player_id,
+            p.player_first_name,
+            p.player_last_name,
+            p.player_photo,
+            t.team_id,
+            t.team_name,
+            p.player_position,
+            p.player_injury_risk,
+            gd.player_injury_trend,
+            COALESCE(si.seasonal_injuries, 0)   AS player_seasonal_injuries,
+            COALESCE(ps_curr.player_season_minutes, 0) AS player_season_minutes
+        FROM player p
+        JOIN team t              ON t.team_id    = p.team_id
+        JOIN graph_data gd       ON gd.player_id = p.player_id
+        JOIN mv_teams_overview tov ON tov.team_id = p.team_id
+        JOIN (
+            SELECT player_id FROM player_season
+            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
+        ) active ON active.player_id = p.player_id
+        LEFT JOIN (
+            SELECT ps2.player_id, COUNT(pi.player_injury_id) AS seasonal_injuries
+            FROM player_season ps2
+            JOIN (
+                SELECT player_id, MAX(player_season_year) AS latest_year
+                FROM player_season GROUP BY player_id
+            ) latest ON latest.player_id = ps2.player_id
+                   AND latest.latest_year = ps2.player_season_year
+            JOIN player_injury pi ON pi.player_season_id = ps2.player_season_id
+            GROUP BY ps2.player_id
+        ) si ON si.player_id = p.player_id
+        LEFT JOIN (
+            SELECT player_id, player_season_minutes
+            FROM player_season
+            WHERE player_season_year = (SELECT current_season_year FROM season_meta)
+        ) ps_curr ON ps_curr.player_id = p.player_id
+    """))
+    conn.execute(text("CREATE UNIQUE INDEX uq_mv_po_player_id ON mv_player_overview (player_id)"))
+    conn.execute(text("CREATE INDEX idx_mv_po_risk  ON mv_player_overview (player_injury_risk DESC)"))
+    conn.execute(text("CREATE INDEX idx_mv_po_trend ON mv_player_overview (player_injury_trend DESC)"))
+```
+
 …and the rest per the table in section 2.
 
 ---
@@ -265,7 +317,7 @@ The composite `(player_id, player_injury_start DESC)` index lets Postgres satisf
 *Step 0a — `server/create_views.py`*
 - [ ] Add `_create_mv_injury_history(...)`. The MV's `SELECT` list **must include `pi.player_injury_id`** so we can build a UNIQUE index on it (a unique index on `(player_id, player_injury_start)` is impossible — data has 12 same-day duplicates).
 - [ ] Inside `_create_mv_injury_history(...)`, create both indexes: `idx_mv_ih_player_start` on `(player_id, player_injury_start DESC)` (query path) **and** `uq_mv_ih_injury_id` UNIQUE on `(player_injury_id)` (concurrent-refresh enabler).
-- [ ] Replace `_create_mv_high_risk_players(...)` and `_create_mv_trending_risk_players(...)` with a single `_create_mv_player_overview(...)` carrying both `player_injury_risk` and `player_injury_trend`; do NOT carry over the `player_injury_risk < 0.99` filter — apply it at endpoint level instead. **Keep `INNER JOIN graph_data`** (matches today's `mv_trending_risk_players`; data check confirms 0 orphan players, and the ingest in `ingest_predictions.py:302` writes a `graph_data` row for every non-skipped player so the invariant is enforced upstream).
+- [ ] Replace `_create_mv_high_risk_players(...)` and `_create_mv_trending_risk_players(...)` with a single `_create_mv_player_overview(...)` carrying both `player_injury_risk` and `player_injury_trend` and `player_season_minutes` (via `LEFT JOIN player_season` filtered to the current season); do NOT carry over the `player_injury_risk < 0.99` filter — apply it at endpoint level instead. **Keep `INNER JOIN graph_data`** (matches today's `mv_trending_risk_players`; data check confirms 0 orphan players, and the ingest in `ingest_predictions.py:308` writes a `graph_data` row for every non-skipped player so the invariant is enforced upstream).
 - [ ] Add `uq_mv_po_player_id` + `idx_mv_po_risk` + `idx_mv_po_trend` on `mv_player_overview` inside the same `_create_mv_player_overview(...)` function.
 - [ ] Add `idx_mv_tpl_team_risk` on `mv_team_player_list(team_id, player_injury_risk DESC)` inside `_create_mv_team_player_list(...)`.
 - [ ] Add `idx_mv_sp_last_name` on `mv_search_players(player_last_name)` inside `_create_mv_search_players(...)`.
@@ -281,7 +333,7 @@ The composite `(player_id, player_injury_start DESC)` index lets Postgres satisf
 - [ ] Switch `integration/player_page.get_injury_history(...)` to `SELECT * FROM mv_injury_history WHERE player_id = :pid`.
 - [ ] Update `integration/dashboard.get_high_risk_players(...)` query to `… FROM mv_player_overview WHERE player_injury_risk > 0.10 AND player_injury_risk < 0.99 ORDER BY player_injury_risk DESC` (and the `?user_id` variant accordingly).
 - [ ] Update `integration/dashboard.get_trending_risk_players(...)` query to `… FROM mv_player_overview WHERE player_injury_trend > 30 ORDER BY player_injury_trend DESC` (and the `?user_id` variant accordingly).
-- [ ] Refactor `integration/my_players.get_favourite_players(...)` to `SELECT mv.* FROM mv_player_overview mv JOIN user_favourite uf ON uf.player_id = mv.player_id AND uf.user_id = :uid`; extend the `FavouritePlayer` TypedDict + response mapping to surface `player_injury_risk` alongside `player_injury_trend`. (Frontend type follow-up tracked as `FE-4` in `server/backend_plans/future_errors.md`.)
+- [ ] Refactor `integration/my_players.get_favourite_players(...)` to `SELECT mv.* FROM mv_player_overview mv JOIN user_favourite uf ON uf.player_id = mv.player_id AND uf.user_id = :uid`; `player_season_minutes` is now in the MV so `SELECT mv.*` covers it. Compute `player_is_injured` as `float(row["player_injury_risk"]) >= 0.99` in the response mapping.
 - [ ] Add explicit `ORDER BY player_injury_risk DESC` to the query in `integration/player_page.get_team_player_list(...)` (frontend renders the team list highest-risk-first; the `ORDER BY` baked into the MV definition is not preserved across reads).
 - [ ] Add explicit `ORDER BY player_last_name` to the query in `integration/search.get_search_players(...)` (frontend expects alphabetical; same reason as above).
 
@@ -291,7 +343,7 @@ The composite `(player_id, player_injury_start DESC)` index lets Postgres satisf
 *Issues found while comparing the plan against the code/data — resolve or dismiss each*
 - [x] ~~**`ingest_predictions.py` MV drop list (lines 114–119) hard-codes `mv_high_risk_players` and `mv_trending_risk_players`.**~~ Resolved → see "Ingest-script alignment" checkbox above.
 - [x] ~~**`mv_injury_history` cannot have a UNIQUE index on `(player_id, player_injury_start)`**~~ Resolved → MV column list now includes `pi.player_injury_id` and a `uq_mv_ih_injury_id` UNIQUE index is added alongside `idx_mv_ih_player_start` (see `mv_injury_history` checkboxes above).
-- [x] ~~**`mv_player_overview` `JOIN graph_data` semantics.**~~ Resolved → keeping `INNER JOIN graph_data` (data confirms zero orphans; ingest writes a graph row for every non-skipped player at `ingest_predictions.py:302`). Documented inline in the merge bullet above.
+- [x] ~~**`mv_player_overview` `JOIN graph_data` semantics.**~~ Resolved → keeping `INNER JOIN graph_data` (data confirms zero orphans; ingest writes a graph row for every non-skipped player at `ingest_predictions.py:308`). Documented inline in the merge bullet above.
 - [x] ~~**`mv_team_player_list` read-side ordering.**~~ Resolved → endpoint must order by `player_injury_risk DESC` (frontend requirement). Plan now uses composite `idx_mv_tpl_team_risk` and adds explicit `ORDER BY` in the integration query (see "Indexes on existing MVs" above).
 - [x] ~~**`mv_search_players` read-side ordering.**~~ Resolved → endpoint must order alphabetically by `player_last_name`. Plan now adds `idx_mv_sp_last_name` and an explicit `ORDER BY` in the integration query (see "Indexes on existing MVs" above).
 - [x] ~~**`uq_mv_pc_player_id`, `uq_mv_ia_player_id` UNIQUE assumption.**~~ Resolved → confirmed intentional. The UNIQUE constraint (a) acts as the index for endpoints #11 and #15, (b) physically prevents the MV from ever holding two rows for the same `player_id` — so a future edit to `_create_mv_player_card(...)` or `_create_mv_injury_analysis(...)` that accidentally fans out will fail at `REFRESH` time with a clear error instead of silently corrupting reads, and (c) is the prerequisite for `REFRESH MATERIALIZED VIEW CONCURRENTLY` later.
@@ -312,6 +364,6 @@ The composite `(player_id, player_injury_start DESC)` index lets Postgres satisf
 - [ ] `idx_match_home_team`, `idx_match_away_team`, `idx_match_game_week` on `match`
 
 **Phase 3 — Verify**
-- [ ] Re-run `/tmp/explain_endpoints.sql`, fill the "After" column in section 3.
-- [ ] Confirm each affected plan switched to Index Scan / Index Only Scan.
-- [ ] Drop or rework any index that did not change the plan.
+- [x] Re-run `/tmp/explain_endpoints.sql`, fill the "After" column in section 3.
+- [x] Confirm each affected plan switched to Index Scan / Index Only Scan.
+- [x] Drop or rework any index that did not change the plan — `idx_mv_po_trend` and `idx_mv_sp_last_name` kept (planner skips them at current sizes; both pay off as data grows). No indexes dropped.

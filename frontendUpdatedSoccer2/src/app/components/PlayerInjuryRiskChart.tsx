@@ -22,13 +22,21 @@ function gwToDateRange(gw: number): [Date, Date] {
 
 function generateGWData(player: Player): ChartPoint[] {
   const curGW = currentGW();
-  const startGW = Math.max(1, curGW - 19);
-  const endGW = curGW;
   const raw: Omit<ChartPoint, 'injuredLine'>[] = [];
 
-  for (let gw = startGW; gw <= endGW; gw++) {
-    const [gwStart, gwEnd] = gwToDateRange(gw);
+  for (let gw = curGW + 1; gw <= 38; gw++) {
+    const progress = (gw - (curGW + 1)) / Math.max(1, 38 - curGW);
+    const baseRisk = player.injuryRisk - player.riskTrend * 0.5 * (1 - progress);
+    const variation = (Math.random() - 0.5) * 4;
+    raw.push({
+      week: `GW${gw}`,
+      risk: Math.round(Math.max(0, Math.min(100, baseRisk + variation)) * 10) / 10,
+      prevSeason: true,
+    });
+  }
 
+  for (let gw = 1; gw <= curGW; gw++) {
+    const [gwStart, gwEnd] = gwToDateRange(gw);
     const isInjured = player.injuryHistory.some(inj => {
       const from = new Date(inj.from);
       const until = inj.until ? new Date(inj.until) : new Date('9999-12-31');
@@ -38,7 +46,7 @@ function generateGWData(player: Player): ChartPoint[] {
     if (isInjured) {
       raw.push({ week: `GW${gw}`, risk: null, injured: true });
     } else {
-      const progress = (gw - startGW) / (endGW - startGW);
+      const progress = gw / curGW;
       const baseRisk = player.injuryRisk - player.riskTrend * (1 - progress);
       const variation = (Math.random() - 0.5) * 4;
       raw.push({
@@ -64,9 +72,8 @@ function buildTrendData(player: Player, currentGw: number): ChartPoint[] {
   const prevSeason  = all.filter(e => gwNum(e) >  currentGw);   // e.g. GW35–38 from last year
   const currentSzn  = all.filter(e => gwNum(e) <= currentGw);   // GW1–currentGw this year
 
-  // Show up to 4 tail entries from prev season + up to 11 from current season (15 total)
-  const prevSlice = prevSeason.slice(-4);
-  const currSlice = currentSzn.slice(-11);
+  const prevSlice = prevSeason;
+  const currSlice = currentSzn;
 
   const toPoint = (e: typeof all[0], isPrev: boolean): Omit<ChartPoint, 'injuredLine'> => ({
     week: e.gw,
@@ -155,7 +162,7 @@ export function PlayerInjuryRiskChart({ player, currentGw: currentGwProp }: { pl
   // "Now" sits at the current GW — always the rightmost visible point
   const nowLabel = `GW${currentGw}`;
 
-  // Forecast region (GWs after currentGw) — amber shading to the right of "Now"
+  // Previous season weeks — amber shading on the LEFT
   const prevSeasonWeeks = chartData.filter(d => d.prevSeason).map(d => d.week);
   const prevSeasonFirst = prevSeasonWeeks[0];
   const prevSeasonLast = prevSeasonWeeks[prevSeasonWeeks.length - 1];
@@ -292,7 +299,7 @@ export function PlayerInjuryRiskChart({ player, currentGw: currentGwProp }: { pl
                 strokeDasharray="4 2"
               />
             )}
-            {/* Current GW "Now" marker — always shown at the rightmost (current) GW */}
+            {/* Current GW "Now" marker */}
             <ReferenceLine
               x={nowLabel}
               stroke="#1A56DB"
@@ -307,7 +314,7 @@ export function PlayerInjuryRiskChart({ player, currentGw: currentGwProp }: { pl
             <ReferenceLine y={50} stroke="#DC2626" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={35} stroke="#EA580C" strokeDasharray="3 3" strokeOpacity={0.3} />
             <ReferenceLine y={20} stroke="#0D9488" strokeDasharray="3 3" strokeOpacity={0.3} />
-            {/* Grey injured line — renders below the red line */}
+            {/* Grey injured line — renders below the risk line */}
             <Line
               type="monotone"
               dataKey="injuredLine"
@@ -323,7 +330,7 @@ export function PlayerInjuryRiskChart({ player, currentGw: currentGwProp }: { pl
               animationDuration={ANIM_DURATION}
               animationEasing="ease-out"
             />
-            {/* Red risk line — renders on top */}
+            {/* Risk line — renders on top */}
             <Line
               type="monotone"
               dataKey="risk"
@@ -354,9 +361,7 @@ export function PlayerInjuryRiskChart({ player, currentGw: currentGwProp }: { pl
           </div>
         ))}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5">
-            <div className="w-3 h-3 rounded-full bg-[#6B7280]" />
-          </div>
+          <div className="w-3 h-3 rounded-full bg-[#6B7280]" />
           <span className="text-[#6B7280]">Injured</span>
         </div>
         {prevSeasonFirst && (

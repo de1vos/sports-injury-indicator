@@ -38,6 +38,12 @@ Known business-logic gaps that are not blocking current work but should be addre
 
 ---
 
+## ~~FE-5~~ — RESOLVED: `GET /my-players` now uses `mv_player_overview`
+
+**Resolved by index implementation PR (#73).** `get_favourite_players` now queries `mv_player_overview` — the direct column select was removed. New columns added to `mv_player_overview` are automatically available to My Players.
+
+---
+
 ## FE-4 — Frontend `FavouritePlayer` type drift after Phase 0 of the index plan
 
 **File:** frontend `FavouritePlayer` TypeScript type (consumer of `GET /my-players/{user_id}`)

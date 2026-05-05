@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import ClassVar, List, Optional
 from uuid import UUID
 from dotenv import load_dotenv
-from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric, UniqueConstraint
+from sqlalchemy import CheckConstraint, Identity, Column, Time, Numeric, UniqueConstraint, Index, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, Relationship, SQLModel, create_engine
 
@@ -71,6 +71,11 @@ class Team(SQLModel, table=True):
 # 4. Match
 class Match(SQLModel, table=True):
     __tablename__: ClassVar[str] = "match"
+    __table_args__: ClassVar[tuple] = (
+        Index("idx_match_home_team", "home_team_id"),
+        Index("idx_match_away_team", "away_team_id"),
+        Index("idx_match_game_week", "match_game_week"),
+    )
     match_id: Optional[int] = Field(
         default=None,
         primary_key=True,
@@ -103,6 +108,9 @@ class Match(SQLModel, table=True):
 
 # 6. Player
 class Player(SQLModel, table=True):
+    __table_args__: ClassVar[tuple] = (
+        Index("idx_p_team_id", "team_id"),
+    )
     player_id: Optional[int] = Field(
         default=None,
         primary_key=True,
@@ -119,6 +127,7 @@ class Player(SQLModel, table=True):
     player_photo: str = Field(max_length=500)
     player_kit_number: int
     player_injury_risk: Decimal = Field(sa_column=Column(Numeric(4, 3), CheckConstraint('player_injury_risk BETWEEN 0 AND 1'), nullable=False))
+    player_relative_risk: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(6, 3)))
     player_risk_factor_1: str = Field(max_length=100)
     player_risk_factor_2: str = Field(max_length=100)
     player_risk_factor_3: str = Field(max_length=100)
@@ -132,6 +141,9 @@ class Player(SQLModel, table=True):
 # 7. PlayerInjury
 class PlayerInjury(SQLModel, table=True):
     __tablename__: ClassVar[str] = "player_injury"
+    __table_args__: ClassVar[tuple] = (
+        Index("idx_pi_season_id", "player_season_id"),
+    )
     player_injury_id: Optional[int] = Field(
         default=None,
         primary_key=True,
@@ -152,6 +164,7 @@ class PlayerSeason(SQLModel, table=True):
     __tablename__: ClassVar[str] = "player_season"
     __table_args__: ClassVar[tuple] = (
         UniqueConstraint("player_id", "player_season_year", name="uq_player_season_year"),
+        Index("idx_ps_player_year", "player_id", text("player_season_year DESC")),
     )
     player_season_id: Optional[int] = Field(
         default=None,
@@ -180,6 +193,10 @@ class PlayerSeason(SQLModel, table=True):
 # 9. UserFavourite
 class UserFavourite(SQLModel, table=True):
     __tablename__: ClassVar[str] = "user_favourite"
+    __table_args__: ClassVar[tuple] = (
+        Index("idx_uf_user_id",   "user_id"),
+        Index("idx_uf_player_id", "player_id"),
+    )
     user_id: UUID = Field(
         sa_column=Column(PG_UUID(as_uuid=True), primary_key=True, nullable=False)
     )
@@ -203,6 +220,7 @@ class GraphData(SQLModel, table=True):
             ' AND '.join(f'gw_{i} BETWEEN 0 AND 1' for i in range(1, 39)),
             name='chk_gw_risk_range'
         ),
+        Index("uq_gd_player_id", "player_id", unique=True),
     )
 
     # Mapping all 38 weeks

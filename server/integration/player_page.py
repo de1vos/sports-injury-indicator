@@ -10,6 +10,7 @@ class TeamPlayerList(TypedDict):
     player_first_name: str
     player_last_name: str
     player_injury_risk: int | str
+    player_relative_risk: float | None
 
 
 class PlayerCard(TypedDict):
@@ -23,6 +24,7 @@ class PlayerCard(TypedDict):
     player_kit_number: int
     nation_name: str
     player_injury_risk: int
+    player_relative_risk: float | None
     player_injury_status: str
     player_injury_trend: int
     player_season_injuries: int
@@ -107,7 +109,7 @@ class InjuryAnalysis(TypedDict):
 
 def get_team_player_list(team_id: int, session: Session) -> List[TeamPlayerList]:
     rows = session.execute(
-        text("SELECT * FROM mv_team_player_list WHERE team_id = :tid"),
+        text("SELECT * FROM mv_team_player_list WHERE team_id = :tid ORDER BY player_injury_risk DESC"),
         {"tid": team_id}
     ).mappings().all()
     return [
@@ -116,6 +118,7 @@ def get_team_player_list(team_id: int, session: Session) -> List[TeamPlayerList]
             "player_first_name": row["player_first_name"],
             "player_last_name": row["player_last_name"],
             "player_injury_risk": "injured" if float(row["player_injury_risk"]) >= 0.99 else round(float(row["player_injury_risk"]) * 100),
+            "player_relative_risk": float(row["player_relative_risk"]) if row["player_relative_risk"] is not None else None,
         }
         for row in rows
     ]
@@ -140,6 +143,7 @@ def get_player_card(player_id: int, session: Session) -> PlayerCard | None:
         "player_kit_number": row["player_kit_number"],
         "nation_name": row["nation_name"],
         "player_injury_risk": round(injury_risk * 100),
+        "player_relative_risk": float(row["player_relative_risk"]) if row["player_relative_risk"] is not None else None,
         "player_injury_status": "injured" if injury_risk >= 0.99 else "available",
         "player_injury_trend": round(float(row["player_injury_trend"])) if row["player_injury_trend"] else 0,
         "player_season_injuries": row["player_season_injuries"],
@@ -208,27 +212,18 @@ def get_season_statistics(player_id: int, session: Session) -> List[SeasonStatis
 
 def get_injury_history(player_id: int, session: Session) -> List[InjuryHistory]:
     rows = session.execute(
-        sa_select(  # type: ignore[call-overload, arg-type]
-            PlayerInjury.player_injury_type,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_region,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_start,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_end,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_severity,  # type: ignore[arg-type]
-            PlayerInjury.player_injury_days_out,  # type: ignore[arg-type]
-        )
-        .join(PlayerSeason, PlayerInjury.player_season_id == PlayerSeason.player_season_id)  # type: ignore[arg-type]
-        .where(PlayerSeason.player_id == player_id)  # type: ignore[arg-type]
-        .order_by(PlayerInjury.player_injury_start.desc())  # type: ignore[attr-defined]
-    ).all()
+        text("SELECT * FROM mv_injury_history WHERE player_id = :pid"),
+        {"pid": player_id}
+    ).mappings().all()
 
     return [
         {
-            "player_injury_type": row.player_injury_type,
-            "player_injury_region": row.player_injury_region,
-            "player_injury_start": str(row.player_injury_start),
-            "player_injury_end": str(row.player_injury_end) if row.player_injury_end else None,
-            "player_injury_severity": row.player_injury_severity,
-            "player_injury_days_out": row.player_injury_days_out,
+            "player_injury_type": row["player_injury_type"],
+            "player_injury_region": row["player_injury_region"],
+            "player_injury_start": str(row["player_injury_start"]),
+            "player_injury_end": str(row["player_injury_end"]) if row["player_injury_end"] else None,
+            "player_injury_severity": row["player_injury_severity"],
+            "player_injury_days_out": row["player_injury_days_out"],
         }
         for row in rows
     ]

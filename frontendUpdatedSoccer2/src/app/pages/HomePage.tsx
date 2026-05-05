@@ -10,6 +10,7 @@ import {
   useTeamsOverview,
 } from '../hooks/useApi';
 import type { DashboardHighRiskPlayer, DashboardTrendingPlayer, DashboardMatch } from '../api/dashboard';
+import { getRelativeRiskMeta } from '../utils/risk';
 
 const PAGE_SIZE = 10;
 
@@ -363,14 +364,14 @@ export function HomePage() {
       {/* Hero + Match Cards */}
       <div className="hero-net bg-gradient-to-b from-[#1A56DB] via-[#2563EB] to-[#F5F6FA] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-6">
-          <h1 className="text-4xl font-bold mb-2 tracking-tight">Injury risk & match monitoring</h1>
+          <h1 className="text-4xl font-bold mb-2 tracking-tight">Stay ahead of the injury room</h1>
           <p className="text-white/70 text-lg font-medium">
-            Monitor predicted injury risk and view player availability & return-to-play data
+            AI-driven predictive injury risk, squad availability and return timelines all in one place.
           </p>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin">
             {matchLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex-shrink-0 w-[240px] h-[148px] bg-white rounded-2xl border border-[rgba(0,0,0,0.06)] animate-pulse" />
@@ -455,9 +456,9 @@ export function HomePage() {
                           <div>
                             <span
                               className="inline-block px-2.5 py-1 rounded-lg font-bold text-white text-xs"
-                              style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(player.injuryRisk) }}
+                              style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRelativeRiskMeta(player.relativeRisk).color }}
                             >
-                              {player.injuryRisk}%
+                              {player.relativeRisk != null ? `${player.relativeRisk.toFixed(1)}×` : '—'}
                             </span>
                             <div className="text-[11px] text-[#9CA3AF] mt-1 text-right">
                               {player.seasonalInjuries} inj.

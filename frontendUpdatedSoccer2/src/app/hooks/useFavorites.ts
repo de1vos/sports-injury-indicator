@@ -14,6 +14,7 @@ export interface CachedPlayer {
   injuryTrend: number;
   seasonalInjuries: number;
   injuryRisk?: number;
+  relativeRisk?: number | null;
   injuryStatus?: string;
   minutesPlayed?: number;
 }
@@ -27,6 +28,7 @@ interface BackendFavourite {
   team_name: string;
   player_position: string;
   player_injury_risk: number;
+  player_relative_risk?: number | null;
   player_is_injured: boolean;
   player_injury_trend: number;
   player_seasonal_injuries: number;
@@ -43,6 +45,7 @@ function mapPlayer(b: BackendFavourite): CachedPlayer {
     teamName: b.team_name,
     position: b.player_position,
     injuryRisk: b.player_injury_risk,
+    relativeRisk: b.player_relative_risk ?? null,
     injuryStatus: b.player_is_injured ? 'Injured' : 'Fit',
     injuryTrend: b.player_injury_trend,
     seasonalInjuries: b.player_seasonal_injuries,
@@ -56,6 +59,7 @@ export interface FavoritesContextValue {
   isFavorite: (playerId: string) => boolean;
   favoriteCount: number;
   favoritePlayers: CachedPlayer[];
+  refresh: () => void;
 }
 
 export const FavoritesContext = createContext<FavoritesContextValue | null>(null);
@@ -70,14 +74,19 @@ export function useFavoritesState(): FavoritesContextValue {
     [favoritePlayers],
   );
 
+  const fetchFavourites = () => {
+    if (!session) return;
+    authFetch<BackendFavourite[]>('/favourites')
+      .then(data => setFavoritePlayers(data.map(mapPlayer)))
+      .catch(console.error);
+  };
+
   useEffect(() => {
     if (!session) {
       setFavoritePlayers([]);
       return;
     }
-    authFetch<BackendFavourite[]>('/favourites')
-      .then(data => setFavoritePlayers(data.map(mapPlayer)))
-      .catch(console.error);
+    fetchFavourites();
   }, [session]);
 
   const toggleFavorite = (playerId: string, data?: CachedPlayer) => {
@@ -112,6 +121,7 @@ export function useFavoritesState(): FavoritesContextValue {
     isFavorite: (playerId: string) => favorites.has(playerId),
     favoriteCount: favoritePlayers.length,
     favoritePlayers,
+    refresh: fetchFavourites,
   };
 }
 
