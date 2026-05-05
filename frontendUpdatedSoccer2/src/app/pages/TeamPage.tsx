@@ -241,7 +241,14 @@ export function TeamPage() {
     [playerList, sortBy, targetedPlayerId]
   );
 
-  const currentPlayerId = currentPlayerIndex !== null ? sortedPlayers[currentPlayerIndex]?.id : undefined;
+  // Resolve the player ID to fetch. Prefer the index in sortedPlayers (so chip
+  // clicks work), but fall back to the URL-targeted ID — that way a deep link
+  // from the reported-injuries page still loads the player even if the team's
+  // player roster fails to load or doesn't contain that player.
+  const currentPlayerId =
+    (currentPlayerIndex !== null ? sortedPlayers[currentPlayerIndex]?.id : undefined) ??
+    targetedPlayerId ??
+    undefined;
 
   const { data: playerCard, loading: cardLoading } = usePlayerCard(currentPlayerId);
   const { data: graphData } = usePlayerGraph(currentPlayerId);

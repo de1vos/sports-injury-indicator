@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useReportedInjuries } from '../hooks/useApi';
+import { getTeamAccentColor } from '../api/mappers';
+import type { TeamOverviewItem } from '../api/mappers';
 
 type SortField = 'endDate' | 'startDate' | 'lastName' | 'team' | 'severity';
 type SortDirection = 'asc' | 'desc';
@@ -285,10 +287,28 @@ export function ReportedInjuriesPage() {
               const isOngoing = injury.endDate === null;
               const href = `/team/${injury.teamId}?player=${injury.playerId}`;
 
+              // Pass a minimal team object via router state so TeamPage can
+              // render even if /teams/overview hasn't loaded (or fails) by the
+              // time the user lands. This guarantees the click reaches the
+              // player view rather than a "Team not found" state.
+              const teamState: TeamOverviewItem = {
+                id: injury.teamId,
+                name: injury.teamName,
+                abbreviation: injury.teamName.slice(0, 3).toUpperCase(),
+                accentColor: getTeamAccentColor(injury.teamId),
+                logo: `https://media.api-sports.io/football/teams/${injury.teamId}.png`,
+                squadSize: 0,
+                avgRisk: 0,
+                totalInjuries: 0,
+                percentInjured: 0,
+                totalMinutesLost: 0,
+              };
+
               return (
                 <Link
                   key={`${injury.playerId}-${injury.startDate}-${idx}`}
                   to={href}
+                  state={{ team: teamState }}
                   className="flex items-center gap-4 bg-white rounded-2xl border border-[rgba(0,0,0,0.06)] px-5 py-4 hover:shadow-md hover:shadow-black/[0.04] hover:border-[rgba(26,86,219,0.2)] transition-all duration-200"
                 >
                   {/* Avatar */}

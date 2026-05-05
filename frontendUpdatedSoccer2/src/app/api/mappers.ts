@@ -11,6 +11,11 @@ import type {
 
 // ── Teams ────────────────────────────────────────────────────────────────────
 
+export const getTeamAccentColor = (teamId: string | number): string => {
+  const numericId = typeof teamId === 'number' ? teamId : Number(teamId);
+  return TEAM_COLORS[numericId] ?? '#1A56DB';
+};
+
 const TEAM_COLORS: Record<number, string> = {
   42:   '#EF0107', // Arsenal
   66:   '#670E36', // Aston Villa
