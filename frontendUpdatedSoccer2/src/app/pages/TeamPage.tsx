@@ -248,7 +248,15 @@ export function TeamPage() {
     injurySummaryData: injuryAnalysisData?.summary    ?? playerCard.injurySummaryData,
   } : null;
 
+  // Reset player selection when navigating to a different team
+  useEffect(() => {
+    setCurrentPlayerIndex(null);
+    setDirectPlayerId(null);
+  }, [teamId]);
+
   // Handles explicit navigation via ?player= param (search, reported injuries links, etc.)
+  // Only acts when the player is found — if not found, the playerList may still be stale
+  // data from the previous team. The effect will re-run when playerList updates.
   useEffect(() => {
     if (!playerList || sortedPlayers.length === 0) return;
     const playerParam = searchParams.get('player');
@@ -257,15 +265,16 @@ export function TeamPage() {
     if (index !== -1) {
       setDirectPlayerId(null);
       setCurrentPlayerIndex(index);
+      setSearchParams({}, { replace: true });
     } else if (playerList.some(p => p.id === playerParam)) {
       // Player exists on the team but is not in the filtered sidebar list
       // (e.g. fully recovered with 0 risk) — load them directly by ID
       setDirectPlayerId(playerParam);
       setCurrentPlayerIndex(0);
-    } else {
-      setCurrentPlayerIndex(0);
+      setSearchParams({}, { replace: true });
     }
-    setSearchParams({}, { replace: true });
+    // If player not found: leave params intact so the effect retries when
+    // playerList refreshes for the correct team.
   }, [playerList, sortedPlayers, searchParams]);
 
   // Default selection on initial load when no ?player= param is present
