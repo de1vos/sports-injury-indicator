@@ -261,14 +261,18 @@ export function TeamPage() {
   // the reported-injuries page (or anywhere else that deep-links a player)
   // always lands on the targeted player — even on repeat visits to the same
   // team page where the component stays mounted.
+  //
+  // We deliberately keep the URL param in place: clearing it via
+  // setSearchParams would cause `sortedPlayers` (which includes the targeted
+  // player) to recompute without that player, leaving `currentPlayerIndex`
+  // pointing at a stale slot.
   useEffect(() => {
     if (!playerList || sortedPlayers.length === 0) return;
 
     if (targetedPlayerId) {
       const index = sortedPlayers.findIndex(p => p.id === targetedPlayerId);
-      setCurrentPlayerIndex(index !== -1 ? index : 0);
-      // Clear the param so it doesn't stick across subsequent in-page interactions.
-      setSearchParams({}, { replace: true });
+      if (index !== -1) setCurrentPlayerIndex(index);
+      else if (currentPlayerIndex === null) setCurrentPlayerIndex(0);
     } else if (currentPlayerIndex === null) {
       setCurrentPlayerIndex(0);
     }
