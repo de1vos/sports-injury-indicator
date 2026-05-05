@@ -29,6 +29,7 @@ export interface DashboardHighRiskPlayer {
   teamName: string;
   position: string;
   injuryRisk: number; // 0–100
+  relativeRisk?: number | null;
   seasonalInjuries: number;
 }
 
@@ -72,6 +73,7 @@ const mapHighRisk = (p: ApiHighRiskPlayer): DashboardHighRiskPlayer => ({
   teamName: p.team_name,
   position: p.player_position,
   injuryRisk: Math.round(p.player_injury_risk),
+  relativeRisk: p.player_relative_risk ?? null,
   seasonalInjuries: p.player_seasonal_injuries,
 });
 
