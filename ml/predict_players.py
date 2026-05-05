@@ -581,13 +581,15 @@ def main():
 
             trend.append({"gw": gw_key, "season": fx_season, "risk": risk_val})
 
-        # Override injury_risk only if the player is injured at the current GW.
-        # "Injured" in future slots means they'll be out next week, not now.
+        # Sync injury_risk to the current GW trend entry so card and graph always match.
         current_gw_entry = next(
             (e for e in trend if e["gw"] == f"GW{current_gameweek}"), None
         )
-        if current_gw_entry and current_gw_entry["risk"] == "Injured":
-            injury_risk = 0.99
+        if current_gw_entry:
+            if current_gw_entry["risk"] == "Injured":
+                injury_risk = 0.99
+            elif isinstance(current_gw_entry["risk"], (int, float)):
+                injury_risk = float(current_gw_entry["risk"])
 
         # Injury trend — week-over-week relative %
         injury_trend = compute_injury_trend(trend)
