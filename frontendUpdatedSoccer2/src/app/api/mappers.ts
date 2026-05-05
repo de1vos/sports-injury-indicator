@@ -61,7 +61,7 @@ export const mapTeamOverview = (t: ApiTeamOverview): TeamOverviewItem => ({
 export type TeamPlayerListItem = Pick<
   Player,
   'id' | 'firstName' | 'lastName' | 'position' | 'kitNumber' | 'age' |
-  'nationality' | 'injuryRisk' | 'riskLevel' | 'photo'
+  'nationality' | 'injuryRisk' | 'riskLevel' | 'relativeRisk' | 'photo'
 >;
 
 export const mapTeamPlayer = (p: ApiTeamPlayer): TeamPlayerListItem => ({
@@ -70,6 +70,7 @@ export const mapTeamPlayer = (p: ApiTeamPlayer): TeamPlayerListItem => ({
   lastName: p.player_last_name,
   injuryRisk: typeof p.player_injury_risk === 'number' ? p.player_injury_risk : 0,
   riskLevel: p.player_injury_risk === 'injured' ? 'Injured' : undefined,
+  relativeRisk: p.player_relative_risk ?? null,
   position: '',
   kitNumber: 0,
   age: 0,
@@ -92,6 +93,7 @@ export const mapPlayerCard = (p: ApiPlayerCard, playerId?: string): Player => ({
   kitNumber: p.player_kit_number,
   nationality: p.nation_name,
   injuryRisk: p.player_injury_risk,
+  relativeRisk: p.player_relative_risk ?? null,
   riskLevel: p.player_injury_status === 'available' ? 'Fit' : 'Injured',
   riskTrend: p.player_injury_trend ?? 0,
   injuries: p.player_season_injuries,

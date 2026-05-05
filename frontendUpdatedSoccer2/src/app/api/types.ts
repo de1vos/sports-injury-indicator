@@ -18,6 +18,7 @@ export interface ApiTeamPlayer {
   player_first_name: string;
   player_last_name: string;
   player_injury_risk: number | 'injured'; // integer 0–100, or "injured" string
+  player_relative_risk?: number | null;
 }
 
 export interface ApiPlayerCard {
@@ -32,6 +33,7 @@ export interface ApiPlayerCard {
   player_kit_number: number;
   nation_name: string;
   player_injury_risk: number;       // 0–100 integer
+  player_relative_risk?: number | null;
   player_injury_status: string;     // 'available' | 'injured' | etc.
   player_injury_trend: number;
   player_season_injuries: number;
@@ -99,6 +101,7 @@ export interface ApiHighRiskPlayer {
   team_name: string;
   player_position: string;
   player_injury_risk: number; // 0–100 integer
+  player_relative_risk?: number | null;
   player_seasonal_injuries: number;
 }
 

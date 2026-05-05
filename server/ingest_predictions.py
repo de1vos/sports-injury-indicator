@@ -22,7 +22,7 @@ import json
 import re
 import sys
 from datetime import date, time as dtime, datetime, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
 from sqlalchemy import text, insert
@@ -54,6 +54,10 @@ def clamp_risk(val) -> Decimal:
     except (InvalidOperation, TypeError):
         v = Decimal("0")
     return min(max(v, Decimal("0")), Decimal("0.999"))
+
+
+def round_gw(v: Decimal) -> Decimal:
+    return v.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def safe_str(val, max_len: int | None = None, fallback: str = "") -> str:
@@ -297,7 +301,7 @@ def main():
                 if not 1 <= n <= 38:
                     continue
                 risk = entry.get("risk")
-                gw_map[f"gw_{n}"] = INJURED_SENTINEL if risk == "Injured" else clamp_risk(risk)
+                gw_map[f"gw_{n}"] = INJURED_SENTINEL if risk == "Injured" else round_gw(clamp_risk(risk))
 
             row: dict = {
                 "player_id":           p["player_id"],
