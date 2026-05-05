@@ -31,7 +31,7 @@ from config import (
     MODEL_FILE, OUTPUT_DIR, RISK_THRESHOLDS, CURRENT_SEASON,
     INJURY_REGIONS_FOR_MODEL, BODY_REGION_MAP, MIN_MINUTES_LAST_30,
 )
-from model_utils import SigmoidCalibrator  # required for pickle deserialization
+from model_utils import IsotonicCalibratedModel  # required for pickle deserialization
 from nation_flags import write_nations_json
 from team_colors import team_color
 
