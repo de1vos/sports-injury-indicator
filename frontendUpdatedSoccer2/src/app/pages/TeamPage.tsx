@@ -248,27 +248,32 @@ export function TeamPage() {
     injurySummaryData: injuryAnalysisData?.summary    ?? playerCard.injurySummaryData,
   } : null;
 
+  // Handles explicit navigation via ?player= param (search, reported injuries links, etc.)
   useEffect(() => {
     if (!playerList || sortedPlayers.length === 0) return;
-    if (currentPlayerIndex !== null) return;
     const playerParam = searchParams.get('player');
-    if (playerParam) {
-      const index = sortedPlayers.findIndex(p => p.id === playerParam);
-      if (index !== -1) {
-        setDirectPlayerId(null);
-        setCurrentPlayerIndex(index);
-      } else if (playerList.some(p => p.id === playerParam)) {
-        // Player exists on the team but is not in the filtered sidebar list
-        // (e.g. fully recovered with 0 risk) — load them directly by ID
-        setDirectPlayerId(playerParam);
-        setCurrentPlayerIndex(0);
-      } else {
-        setCurrentPlayerIndex(0);
-      }
+    if (!playerParam) return;
+    const index = sortedPlayers.findIndex(p => p.id === playerParam);
+    if (index !== -1) {
+      setDirectPlayerId(null);
+      setCurrentPlayerIndex(index);
+    } else if (playerList.some(p => p.id === playerParam)) {
+      // Player exists on the team but is not in the filtered sidebar list
+      // (e.g. fully recovered with 0 risk) — load them directly by ID
+      setDirectPlayerId(playerParam);
+      setCurrentPlayerIndex(0);
     } else {
       setCurrentPlayerIndex(0);
     }
     setSearchParams({}, { replace: true });
+  }, [playerList, sortedPlayers, searchParams]);
+
+  // Default selection on initial load when no ?player= param is present
+  useEffect(() => {
+    if (!playerList || sortedPlayers.length === 0) return;
+    if (currentPlayerIndex !== null) return;
+    if (searchParams.get('player')) return;
+    setCurrentPlayerIndex(0);
   }, [playerList, sortedPlayers]);
 
   // Loading gate
