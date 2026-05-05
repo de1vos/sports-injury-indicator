@@ -16,18 +16,28 @@
 
 ## Phase 0 — Blockers
 
-`mv_search_players` joins `team t` to get `team_name` but does not SELECT `t.team_id`. The frontend needs `team_id` to route to `/team/{team_id}?player={player_id}` when a player result is clicked. The view must be dropped and recreated (not idempotent), and the backend mapper updated.
+Three backend fixes are required before Phase 1 can proceed.
+
+**Blocker A — `mv_search_players` missing `team_id`**
+The view joins `team t` to get `team_name` but never SELECTs `t.team_id`. The frontend needs it to navigate to `/team/{team_id}?player={player_id}` on player click. Since `CREATE MATERIALIZED VIEW` is not idempotent, the view must be dropped and recreated after changing the definition.
+
+**Blocker B — `get_search_teams()` not returning `avg_risk` or `squad_size`**
+The endpoint only selects `team_id, team_name, team_logo` from `mv_teams_overview`, but Navigation needs `average_risk_of_injury` to sort the default suggestions by risk and `amount_of_players` for the subtitle ("X players · Avg risk Y%"). Both columns already exist in the view — they just aren't selected or returned by the endpoint.
+
+**Blocker C — `mv_search_players` / `/search/players` has no `is_injured` flag**
+Navigation shows an "INJ" badge instead of a risk score for injured players (derived from `p.isInjured`). The search endpoint returns a numeric `player_injury_risk` only — it loses the distinction because `player_injury_risk` is stored as a decimal in the DB and scaled to 0–100 in the mapper. Need to add a boolean `player_is_injured` column to `mv_search_players` by joining against active injuries (same subquery pattern used by `mv_teams_overview`).
 
 **Files affected**
 
 | File | Change | Done |
 |---|---|---|
-| `server/create_views.py` | Add `t.team_id` to SELECT in `_create_mv_search_players()` | ❌ |
-| `server/integration/search.py` | Add `team_id` to `SearchPlayer` TypedDict and to the mapper dict in `get_search_players()` | ❌ |
+| `server/create_views.py` | Add `t.team_id` and `is_injured` flag to `_create_mv_search_players()` SELECT | ❌ |
+| `server/integration/search.py` | Add `team_id`, `is_injured` to `SearchPlayer` TypedDict + mapper; add `avg_risk`, `squad_size` to `SearchTeam` TypedDict + `get_search_teams()` query | ❌ |
 
-- [ ] 0.1 In `create_views.py`, add `t.team_id,` to the SELECT list in `_create_mv_search_players()`
-- [ ] 0.2 In `integration/search.py`, add `team_id: int` to the `SearchPlayer` TypedDict and `"team_id": row["team_id"]` to the mapper
-- [ ] 0.3 Run migration on the database: `DROP MATERIALIZED VIEW IF EXISTS mv_search_players CASCADE;` then re-run view creation
+- [ ] 0.1 In `create_views.py` `_create_mv_search_players()`: add `t.team_id,` and a `CASE WHEN active_inj.player_id IS NOT NULL THEN TRUE ELSE FALSE END AS player_is_injured` via a LEFT JOIN against active injuries (same pattern as the `inj` subquery in `mv_teams_overview`)
+- [ ] 0.2 In `integration/search.py` `SearchPlayer` TypedDict: add `team_id: int` and `player_is_injured: bool`; add both to the mapper dict
+- [ ] 0.3 In `integration/search.py` `get_search_teams()`: extend the SELECT to include `average_risk_of_injury, amount_of_players`; add `avg_risk: float` and `squad_size: int` to `SearchTeam` TypedDict and mapper
+- [ ] 0.4 Run migration: `DROP MATERIALIZED VIEW IF EXISTS mv_search_players CASCADE;` then re-run view creation
 
 ---
 
@@ -41,7 +51,7 @@
 | `frontendUpdatedSoccer2/src/app/hooks/useSearchData.ts` | Replace N+2 fetch logic with 3 parallel search endpoint calls; update `SearchPlayer`/`SearchTeam` types to match backend response | ❌ |
 
 - [ ] 1.1 Create `api/search.ts` with `searchApi.getPlayers()`, `searchApi.getTeams()`, `searchApi.getInjuryRegions()` — typed to match backend `SearchPlayer` / `SearchTeam` shapes
-- [ ] 1.2 Update `SearchPlayer` interface in `useSearchData.ts` to include `team_id` and `player_photo`; remove dependency on `teamsApi`, `playersApi`, `reportedInjuriesApi`
+- [ ] 1.2 Update `SearchPlayer` interface in `useSearchData.ts` to match backend: `team_id`, `player_photo`, `player_is_injured`; map int IDs to strings (`.toString()`) for compatibility with existing routing; remove dependency on `teamsApi`, `playersApi`, `reportedInjuriesApi`
 - [ ] 1.3 Replace the `load()` callback body with `Promise.all([searchApi.getPlayers(), searchApi.getTeams(), searchApi.getInjuryRegions()])` — 3 calls instead of N+2
 - [ ] 1.4 Verify module-level cache still works correctly after refactor (loaded flag, setData on re-mount)
 
@@ -84,9 +94,10 @@
 ## TL;DR checklist
 
 **Phase 0**
-- [ ] 0.1 Add `t.team_id` to SELECT in `_create_mv_search_players()`
-- [ ] 0.2 Add `team_id` to `SearchPlayer` TypedDict and mapper
-- [ ] 0.3 Drop and recreate `mv_search_players` in the database
+- [ ] 0.1 Add `team_id` + `player_is_injured` to `mv_search_players` view definition
+- [ ] 0.2 Add `team_id`, `player_is_injured` to `SearchPlayer` TypedDict + mapper
+- [ ] 0.3 Add `avg_risk`, `squad_size` to `SearchTeam` TypedDict + `get_search_teams()` query
+- [ ] 0.4 Drop and recreate `mv_search_players` in the database
 
 **Phase 1**
 - [ ] 1.1 Create `api/search.ts` with typed calls to all three endpoints
