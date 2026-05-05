@@ -324,6 +324,8 @@ def _create_mv_reported_injuries(conn: Connection) -> None:
     conn.execute(text("""
         CREATE MATERIALIZED VIEW mv_reported_injuries AS
         SELECT
+            p.player_id,
+            p.team_id,
             pi.player_injury_start,
             pi.player_injury_end,
             p.player_first_name,
