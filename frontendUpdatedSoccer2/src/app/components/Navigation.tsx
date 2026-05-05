@@ -152,7 +152,7 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="hover:opacity-80 transition-opacity -ml-6">
+          <Link to="/" className="hover:opacity-80 transition-opacity -ml-12">
             <img src={logo} alt="2to3Weeks" className="h-8 w-auto" />
           </Link>
 
