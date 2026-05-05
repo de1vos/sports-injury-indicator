@@ -381,7 +381,7 @@ export function TeamPage() {
                     : `linear-gradient(145deg, ${team.accentColor}, ${team.accentColor}BB)`,
                 }}
               >
-                <div className="h-full flex flex-col items-center px-2 pt-3 pb-2.5 text-white">
+                <div className="h-full flex flex-col items-center px-2 pt-1.5 pb-2.5 text-white">
                   {/* Name — fixed-height flex area, clamps at 3 lines */}
                   <div className="flex-1 min-h-0 flex items-start justify-center w-full overflow-hidden">
                     <span className="text-[9px] font-bold text-center leading-[1.25] w-full line-clamp-4">
