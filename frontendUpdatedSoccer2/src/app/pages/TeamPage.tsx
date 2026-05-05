@@ -201,6 +201,7 @@ export function TeamPage() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('risk');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number | null>(null);
+  const [directPlayerId, setDirectPlayerId] = useState<string | null>(null);
   const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
   const { toggleFavorite, isFavorite } = useFavorites();
 
@@ -231,7 +232,7 @@ export function TeamPage() {
     [playerList, sortBy]
   );
 
-  const currentPlayerId = currentPlayerIndex !== null ? sortedPlayers[currentPlayerIndex]?.id : undefined;
+  const currentPlayerId = directPlayerId ?? (currentPlayerIndex !== null ? sortedPlayers[currentPlayerIndex]?.id : undefined);
 
   const { data: playerCard, loading: cardLoading } = usePlayerCard(currentPlayerId);
   const { data: graphData } = usePlayerGraph(currentPlayerId);
@@ -253,7 +254,17 @@ export function TeamPage() {
     const playerParam = searchParams.get('player');
     if (playerParam) {
       const index = sortedPlayers.findIndex(p => p.id === playerParam);
-      setCurrentPlayerIndex(index !== -1 ? index : 0);
+      if (index !== -1) {
+        setDirectPlayerId(null);
+        setCurrentPlayerIndex(index);
+      } else if (playerList.some(p => p.id === playerParam)) {
+        // Player exists on the team but is not in the filtered sidebar list
+        // (e.g. fully recovered with 0 risk) — load them directly by ID
+        setDirectPlayerId(playerParam);
+        setCurrentPlayerIndex(0);
+      } else {
+        setCurrentPlayerIndex(0);
+      }
     } else {
       setCurrentPlayerIndex(0);
     }
@@ -283,10 +294,14 @@ export function TeamPage() {
     );
   }
 
-  const handlePrevious = () =>
+  const handlePrevious = () => {
+    setDirectPlayerId(null);
     setCurrentPlayerIndex(prev => { const i = prev ?? 0; return i > 0 ? i - 1 : sortedPlayers.length - 1; });
-  const handleNext = () =>
+  };
+  const handleNext = () => {
+    setDirectPlayerId(null);
     setCurrentPlayerIndex(prev => { const i = prev ?? 0; return i < sortedPlayers.length - 1 ? i + 1 : 0; });
+  };
 
   const s = currentPlayer?.seasonStats?.[0];
 
@@ -334,7 +349,7 @@ export function TeamPage() {
       {/* Navigation ABOVE mini cards */}
       <div className="flex justify-center">
         <PlayerNavigation
-          current={currentPlayerIndex + 1}
+          current={(currentPlayerIndex ?? 0) + 1}
           total={sortedPlayers.length}
           onPrev={handlePrevious}
           onNext={handleNext}
@@ -349,7 +364,7 @@ export function TeamPage() {
             return (
               <button
                 key={player.id}
-                onClick={() => setCurrentPlayerIndex(index)}
+                onClick={() => { setDirectPlayerId(null); setCurrentPlayerIndex(index); }}
                 className={`w-[95px] h-[120px] rounded-2xl overflow-hidden transition-all flex-shrink-0 ${
                   index === currentPlayerIndex
                     ? 'ring-2 ring-[#1A56DB] ring-offset-2 scale-105 opacity-100'
