@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router';
 import { Navigation } from './components/Navigation';
 import { FavoritesContext, useFavoritesState } from './hooks/useFavorites';
@@ -33,6 +33,19 @@ function ProtectedMyPlayers() {
 }
 
 function RootLayout() {
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem('disclaimerAcknowledged')) {
+      setShowDisclaimer(true);
+    }
+  }, []);
+
+  function handleAccept() {
+    localStorage.setItem('disclaimerAcknowledged', 'true');
+    setShowDisclaimer(false);
+  }
+
   return (
     <FavoritesProvider>
       <div className="min-h-screen bg-[#F5F6FA] flex flex-col">
@@ -43,6 +56,23 @@ function RootLayout() {
         <footer className="bg-yellow-50 border-t-2 border-yellow-400 px-6 py-4 text-center text-sm text-gray-700">
           <strong>Disclaimer:</strong> Predictive data is for decision-support only. Use of this tool constitutes an acknowledgement that predictive data does not constitute medical advice or a substitute for clinical judgment and that final judgment rests with the user.
         </footer>
+
+        {showDisclaimer && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Disclaimer</h2>
+              <p className="text-gray-700 text-sm leading-relaxed mb-6">
+                Predictive data is for decision-support only. Use of this tool constitutes an acknowledgement that predictive data does not constitute medical advice or a substitute for clinical judgment and that final judgment rests with the user.
+              </p>
+              <button
+                onClick={handleAccept}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors"
+              >
+                I Acknowledge
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </FavoritesProvider>
   );
