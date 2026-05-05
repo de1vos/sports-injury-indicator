@@ -40,3 +40,11 @@ def injury_history(player_id: int, session: Session = Depends(get_session)):
 @router.get("/{player_id}/injury-analysis")
 def injury_analysis(player_id: int, session: Session = Depends(get_session)):
     return player_page.get_injury_analysis(player_id, session)
+
+
+@router.get("/{player_id}/risk-factors")
+def player_risk_factors(player_id: int, session: Session = Depends(get_session)):
+    result = player_page.get_player_risk_factors(player_id, session)
+    if not result:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return result

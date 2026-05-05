@@ -1,6 +1,6 @@
 import { apiFetch } from './client';
-import type { ApiTeamPlayer, ApiPlayerCard, ApiPlayerGraph, ApiPlayerSeason, ApiInjuryRecord, ApiInjuryAnalysis } from './types';
-import { mapTeamPlayer, mapPlayerCard, mapGraph, mapSeasons, mapInjuryHistory, mapInjuryAnalysis } from './mappers';
+import type { ApiTeamPlayer, ApiPlayerCard, ApiPlayerGraph, ApiPlayerSeason, ApiInjuryRecord, ApiInjuryAnalysis, ApiPlayerRiskFactors } from './types';
+import { mapTeamPlayer, mapPlayerCard, mapGraph, mapSeasons, mapInjuryHistory, mapInjuryAnalysis, mapPlayerRiskFactors } from './mappers';
 import type { Player, SeasonStat, InjuryRecord, InjurySummaryData } from '../data/mockData';
 
 // Re-export shared types used by hooks / pages
@@ -45,5 +45,11 @@ export const playersApi = {
   getInjuryAnalysis: async (playerId: string) => {
     const data = await apiFetch<ApiInjuryAnalysis>(`/players/${playerId}/injury-analysis`);
     return { summary: mapInjuryAnalysis(data) };
+  },
+
+  /** ML risk factors → { factors: string[] } */
+  getRiskFactors: async (playerId: string) => {
+    const data = await apiFetch<ApiPlayerRiskFactors>(`/players/${playerId}/risk-factors`);
+    return { factors: mapPlayerRiskFactors(data) };
   },
 };

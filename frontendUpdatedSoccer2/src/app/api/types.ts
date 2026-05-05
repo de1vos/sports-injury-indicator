@@ -129,6 +129,12 @@ export interface ApiMyPlayer {
   player_seasonal_injuries: number;
 }
 
+export interface ApiPlayerRiskFactors {
+  player_risk_factor_1: string | null;
+  player_risk_factor_2: string | null;
+  player_risk_factor_3: string | null;
+}
+
 export interface ApiReportedInjury {
   player_id: number;
   team_id: number;
