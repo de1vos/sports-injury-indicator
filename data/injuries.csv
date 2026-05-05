@@ -3121,6 +3121,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 1864,Knee Injury,2024-03-10,2024-05-17,68.0,Severe,Knee
 1864,Knock,2024-11-16,2024-11-30,14.0,Moderate,Unknown/Minor
 1864,Yellow Cards,2024-12-15,2024-12-21,6.0,Minor,Disciplinary
+1864,Inactive,2026-05-04,,,Long-term,Other
 1902,Thigh Injury,2021-02-10,2021-02-16,6.0,Minor,Thigh
 1902,Virus,2021-07-28,2021-08-14,17.0,Moderate,Illness
 1902,Lacking Match Fitness,2022-09-03,2022-09-30,27.0,Moderate,Other
@@ -3893,6 +3894,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 2771,Knock,2024-11-15,2024-11-21,6.0,Minor,Unknown/Minor
 2771,Calf Injury,2025-04-02,2025-04-30,28.0,Moderate,Calf
 2771,Hamstring,2025-09-10,,,Long-term,Thigh
+2771,Injury,2026-05-04,,,Long-term,Unknown/Minor
 2778,Groin Injury,2015-09-20,2015-09-30,10.0,Moderate,Groin
 2778,Toe Injury,2017-07-22,2017-08-10,19.0,Moderate,Unknown/Minor
 2778,Toe Injury,2017-08-12,2017-08-25,13.0,Moderate,Unknown/Minor
@@ -4389,6 +4391,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 2990,Calf Injury,2024-04-16,2024-04-20,4.0,Minor,Calf
 2990,Injury,2024-09-21,2024-09-27,6.0,Minor,Unknown/Minor
 2990,International duty,2025-12-20,2026-01-25,36.0,Severe,Administrative
+2990,Injury,2026-05-04,,,Long-term,Unknown/Minor
 2991,Suspended,2013-07-28,2013-08-02,5.0,Minor,Disciplinary
 2991,Groin Injury,2014-09-21,2014-10-25,34.0,Severe,Groin
 2991,Knock,2014-11-15,2014-11-27,12.0,Moderate,Unknown/Minor
@@ -7160,6 +7163,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 19191,Hamstring,2024-09-22,2024-10-18,26.0,Moderate,Thigh
 19191,Hamstring,2025-01-05,2025-01-25,20.0,Moderate,Thigh
 19191,Knee Injury,2026-01-25,2026-03-11,45.0,Severe,Knee
+19191,Hamstring Injury,2026-05-03,2026-05-07,4.0,Minor,Thigh
 19192,Knock,2022-05-01,2022-05-14,13.0,Moderate,Unknown/Minor
 19192,Hamstring,2022-11-14,2023-01-07,54.0,Severe,Thigh
 19192,Foot Injury,2023-07-03,2023-09-20,79.0,Severe,Foot
@@ -7610,7 +7614,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 19545,Hamstring,2024-08-10,2024-10-14,65.0,Severe,Thigh
 19545,Hamstring,2024-11-21,2024-12-29,38.0,Severe,Thigh
 19545,Illness,2025-03-09,2025-03-12,3.0,Minor,Illness
-19545,Hamstring Injury,2026-03-21,,,Long-term,Thigh
+19545,Hamstring Injury,2026-03-21,2026-04-25,35.0,Severe,Thigh
 19549,Ankle/Foot Injury,2021-05-11,2021-05-31,20.0,Moderate,Ankle
 19549,Ankle/Foot Injury,2022-09-14,2022-10-08,24.0,Moderate,Ankle
 19549,Ankle/Foot Injury,2022-12-04,2022-12-25,21.0,Moderate,Ankle
@@ -10420,6 +10424,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 284324,Knee Injury,2024-10-07,2024-10-18,11.0,Moderate,Knee
 284324,Coach's decision,2024-12-15,2024-12-18,3.0,Minor,Other
 284324,Knock,2025-02-27,2025-03-01,2.0,Minor,Unknown/Minor
+284324,Inactive,2026-05-04,,,Long-term,Other
 284356,Red Card,2023-12-24,2023-12-26,2.0,Minor,Disciplinary
 284359,Illness,2025-09-07,2025-09-16,9.0,Moderate,Illness
 284361,Knee Injury,2024-09-17,2024-10-17,30.0,Severe,Knee
@@ -10495,7 +10500,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 286616,Shoulder Injury,2023-02-09,2023-03-03,22.0,Moderate,Shoulder
 286616,Unknown,2024-09-11,2024-09-13,2.0,Minor,Unknown/Minor
 286616,Injury,2026-01-25,2026-03-03,37.0,Severe,Unknown/Minor
-286616,Groin Injury,2026-03-21,,,Long-term,Groin
+286616,Groin Injury,2026-03-21,2026-04-25,35.0,Severe,Groin
 286894,Shoulder Injury,2022-09-04,2023-01-21,139.0,Long-term,Shoulder
 286894,Shoulder Injury,2023-03-16,2023-03-31,15.0,Moderate,Shoulder
 286894,Shoulder Injury,2023-04-29,2023-08-16,109.0,Long-term,Shoulder
@@ -10846,7 +10851,6 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 362711,Hip Injury,2024-10-24,2025-01-24,92.0,Long-term,Hip
 362711,Ankle Injury,2025-04-25,2025-04-26,1.0,Minor,Ankle
 362711,Foot Injury,2026-03-15,2026-04-15,31.0,Severe,Foot
-362711,Shoulder Injury,2026-05-04,,,Long-term,Shoulder
 363333,Injury,2024-05-16,2024-05-31,15.0,Moderate,Unknown/Minor
 363333,International duty,2024-08-07,2024-08-09,2.0,Minor,Administrative
 363333,International duty,2025-01-13,2025-02-21,39.0,Severe,Administrative
