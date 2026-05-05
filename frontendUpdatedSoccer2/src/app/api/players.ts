@@ -1,7 +1,6 @@
 import { apiFetch } from './client';
 import type { ApiTeamPlayer, ApiPlayerCard, ApiPlayerGraph, ApiPlayerSeason, ApiInjuryRecord, ApiInjuryAnalysis } from './types';
 import { mapTeamPlayer, mapPlayerCard, mapGraph, mapSeasons, mapInjuryHistory, mapInjuryAnalysis } from './mappers';
-import type { Player, SeasonStat, InjuryRecord, InjurySummaryData } from '../data/mockData';
 
 // Re-export shared types used by hooks / pages
 export type { TeamPlayerListItem, TeamOverviewItem } from './mappers';
@@ -14,19 +13,16 @@ export const playersApi = {
   },
 
   /** Full player profile */
-  getCard: async (playerId: string): Promise<Player> => {
+  getCard: async (playerId: string) => {
     const data = await apiFetch<ApiPlayerCard>(`/players/${playerId}/card`);
     return mapPlayerCard(data, playerId);
   },
 
-  /** Gameweek risk graph → { trend: RiskTrendEntry[], currentGw?: number } */
+  /** Gameweek risk graph → { trend: RiskTrendEntry[], currentGw: string | null } */
   getGraph: async (playerId: string) => {
     const data = await apiFetch<ApiPlayerGraph>(`/players/${playerId}/graph`);
-    const gwStr = data['graph_data_current_gw'];
-    const currentGw = typeof gwStr === 'string'
-      ? (parseInt(gwStr.replace('gw', ''), 10) || undefined)
-      : undefined;
-    return { trend: mapGraph(data), currentGw };
+    const { entries, currentGw } = mapGraph(data);
+    return { trend: entries, currentGw };
   },
 
   /** Season stats → { seasons: SeasonStat[] } */
