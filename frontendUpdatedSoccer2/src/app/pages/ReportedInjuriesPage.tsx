@@ -292,7 +292,8 @@ export function ReportedInjuriesPage() {
           <div className="space-y-2">
             {pageData.map((injury, idx) => {
               const sty = severityStyle(injury.severity);
-              const isOngoing = injury.endDate === null;
+              const today = new Date().toISOString().split('T')[0];
+              const isOngoing = injury.endDate === null || injury.endDate >= today;
               const href = `/team/${injury.teamId}?player=${injury.playerId}`;
 
               return (
@@ -334,8 +335,8 @@ export function ReportedInjuriesPage() {
                     <div className="text-xs text-[#9CA3AF]" style={{ fontFamily: 'var(--font-mono)' }}>
                       {injury.startDate}
                     </div>
-                    <div className="text-xs mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: isOngoing ? '#0D9488' : '#6B7280' }}>
-                      {isOngoing ? 'Ongoing' : injury.endDate}
+                    <div className="text-xs mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: (isOngoing || (injury.endDate && injury.endDate >= new Date().toISOString().split('T')[0])) ? '#0D9488' : '#6B7280' }}>
+                      {(isOngoing || (injury.endDate && injury.endDate >= new Date().toISOString().split('T')[0])) ? 'Ongoing' : injury.endDate}
                     </div>
                   </div>
 
