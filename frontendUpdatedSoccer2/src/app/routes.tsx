@@ -36,13 +36,13 @@ function RootLayout() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem('disclaimerAcknowledged')) {
+    if (!sessionStorage.getItem('disclaimerAcknowledged')) {
       setShowDisclaimer(true);
     }
   }, []);
 
   function handleAccept() {
-    localStorage.setItem('disclaimerAcknowledged', 'true');
+    sessionStorage.setItem('disclaimerAcknowledged', 'true');
     setShowDisclaimer(false);
   }
 
