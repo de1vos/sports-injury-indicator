@@ -593,23 +593,25 @@ export function TeamPage() {
                               }))
                             : [{ season: '2025/26', value: fallback, color: SEASON_COLORS[0] }];
 
-                        // Sort largest → smallest so longest bar renders first (behind)
-                        const sorted = [...bars].sort((a, b) => b.value - a.value);
 
                         return (
                           <div key={label}>
                             <p className="text-sm font-semibold text-[#1A1A2E] mb-2">{label}</p>
 
                             {/* Single overlapping bar track */}
-                            <div className="relative w-full h-3 bg-[#F5F6FA] rounded-full overflow-hidden mb-2">
-                              {sorted.map(({ season, value, color }) => (
-                                <div
-                                  key={season}
-                                  className="absolute top-0 left-0 h-full rounded-full transition-all duration-500"
-                                  style={{ width: `${Math.min((value / max) * 100, 100)}%`, backgroundColor: color }}
-                                />
-                              ))}
-                            </div>
+                            <div className="w-full h-3 bg-[#F5F6FA] rounded-full overflow-hidden mb-2 flex gap-0.5">
+                            {bars.map(({ season, value, color }) => (
+                              <div
+                                key={season}
+                                className="h-full flex-1 bg-[#E5E7EB] rounded-full overflow-hidden"
+                              >
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min((value / max) * 100, 100)}%`, backgroundColor: color }}
+                                      />
+                                  </div>
+                                ))}
+                              </div>
 
                             {/* Season legend with values */}
                             <div className="flex flex-wrap gap-x-4 gap-y-0.5">
