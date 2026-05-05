@@ -200,6 +200,7 @@ export function TeamPage() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('risk');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [directPlayerId, setDirectPlayerId] = useState<string | null>(null);
   const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
   const { toggleFavorite, isFavorite } = useFavorites();
 
@@ -230,7 +231,7 @@ export function TeamPage() {
     [playerList, sortBy]
   );
 
-  const currentPlayerId = sortedPlayers[currentPlayerIndex]?.id;
+  const currentPlayerId = directPlayerId ?? sortedPlayers[currentPlayerIndex]?.id;
 
   const { data: playerCard, loading: cardLoading } = usePlayerCard(currentPlayerId);
   const { data: graphData } = usePlayerGraph(currentPlayerId);
@@ -252,9 +253,14 @@ export function TeamPage() {
     if (playerParam) {
       const index = sortedPlayers.findIndex(p => p.id === playerParam);
       if (index !== -1) {
+        setDirectPlayerId(null);
         setCurrentPlayerIndex(index);
-        setSearchParams({}, { replace: true });
+      } else if (playerList.some(p => p.id === playerParam)) {
+        // Player exists on the team but is not in the filtered sidebar list
+        // (e.g. fully recovered with 0 risk) — load them directly by ID
+        setDirectPlayerId(playerParam);
       }
+      setSearchParams({}, { replace: true });
     }
   }, [searchParams, playerList, sortedPlayers, setSearchParams]);
 
@@ -281,10 +287,14 @@ export function TeamPage() {
     );
   }
 
-  const handlePrevious = () =>
+  const handlePrevious = () => {
+    setDirectPlayerId(null);
     setCurrentPlayerIndex(prev => (prev > 0 ? prev - 1 : sortedPlayers.length - 1));
-  const handleNext = () =>
+  };
+  const handleNext = () => {
+    setDirectPlayerId(null);
     setCurrentPlayerIndex(prev => (prev < sortedPlayers.length - 1 ? prev + 1 : 0));
+  };
 
   const s = currentPlayer?.seasonStats?.[0];
 
@@ -347,7 +357,7 @@ export function TeamPage() {
             return (
               <button
                 key={player.id}
-                onClick={() => setCurrentPlayerIndex(index)}
+                onClick={() => { setDirectPlayerId(null); setCurrentPlayerIndex(index); }}
                 className={`w-[95px] h-[120px] rounded-2xl overflow-hidden transition-all flex-shrink-0 ${
                   index === currentPlayerIndex
                     ? 'ring-2 ring-[#1A56DB] ring-offset-2 scale-105 opacity-100'
