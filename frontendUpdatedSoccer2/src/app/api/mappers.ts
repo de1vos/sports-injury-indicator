@@ -6,7 +6,7 @@
 import type { Player, InjuryRecord, RiskTrendEntry, SeasonStat, InjurySummaryData, Team } from '../data/mockData';
 import type {
   ApiTeamOverview, ApiTeamPlayer, ApiPlayerCard, ApiPlayerGraph,
-  ApiPlayerSeason, ApiInjuryRecord, ApiInjuryAnalysis,
+  ApiPlayerSeason, ApiInjuryRecord, ApiInjuryAnalysis, ApiPlayerRiskFactors,
 } from './types';
 
 // ── Teams ────────────────────────────────────────────────────────────────────
@@ -179,3 +179,9 @@ export const mapInjuryAnalysis = (data: ApiInjuryAnalysis): InjurySummaryData =>
   minutes_missed_this_season: 0,
   matches_missed_career: 0,
 });
+
+// ── Risk factors ─────────────────────────────────────────────────────────────
+
+export const mapPlayerRiskFactors = (data: ApiPlayerRiskFactors): string[] =>
+  [data.player_risk_factor_1, data.player_risk_factor_2, data.player_risk_factor_3]
+    .filter((f): f is string => !!f);

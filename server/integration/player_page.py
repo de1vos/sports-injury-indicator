@@ -1,7 +1,7 @@
 from typing import List, TypedDict
 from sqlalchemy import func, select as sa_select, text
 from sqlmodel import Session, select
-from database_init import PlayerSeason, GraphData, PlayerInjury
+from database_init import Player, PlayerSeason, GraphData, PlayerInjury
 from integration.common import get_season_meta
 
 
@@ -247,4 +247,23 @@ def get_injury_analysis(player_id: int, session: Session) -> InjuryAnalysis:
         "player_total_games_missed": row["total_games_missed"] if row else 0,
         "player_days_since_injury": row["days_since_injury"] if row else None,
         "player_average_games_played": avg_games_played,
+    }
+
+
+class PlayerRiskFactors(TypedDict):
+    player_risk_factor_1: str | None
+    player_risk_factor_2: str | None
+    player_risk_factor_3: str | None
+
+
+def get_player_risk_factors(player_id: int, session: Session) -> PlayerRiskFactors | None:
+    player = session.exec(
+        select(Player).where(Player.player_id == player_id)  # type: ignore[arg-type]
+    ).first()
+    if not player:
+        return None
+    return {
+        "player_risk_factor_1": player.player_risk_factor_1 or None,
+        "player_risk_factor_2": player.player_risk_factor_2 or None,
+        "player_risk_factor_3": player.player_risk_factor_3 or None,
     }

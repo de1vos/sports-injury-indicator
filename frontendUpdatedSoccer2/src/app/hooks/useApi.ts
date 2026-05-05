@@ -80,6 +80,9 @@ export const usePlayerInjuryHistory = (playerId: string | undefined) =>
 export const usePlayerInjuryAnalysis = (playerId: string | undefined) =>
   useApi(() => playersApi.getInjuryAnalysis(playerId!), playerId ? `inj-analysis-${playerId}` : undefined);
 
+export const usePlayerRiskFactors = (playerId: string | undefined) =>
+  useApi(() => playersApi.getRiskFactors(playerId!), playerId ? `risk-factors-${playerId}` : undefined);
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
 export const useDashboardMatches = () =>

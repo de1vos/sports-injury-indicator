@@ -11,6 +11,7 @@ import {
   usePlayerSeasons,
   usePlayerInjuryHistory,
   usePlayerInjuryAnalysis,
+  usePlayerRiskFactors,
 } from '../hooks/useApi';
 import { PlayerCard } from '../components/PlayerCard';
 import { PlayerInjuryRiskChart } from '../components/PlayerInjuryRiskChart';
@@ -239,6 +240,7 @@ export function TeamPage() {
   const { data: seasonsData } = usePlayerSeasons(currentPlayerId);
   const { data: injuryHistoryData } = usePlayerInjuryHistory(currentPlayerId);
   const { data: injuryAnalysisData } = usePlayerInjuryAnalysis(currentPlayerId);
+  const { data: riskFactorsData } = usePlayerRiskFactors(currentPlayerId);
 
   const currentPlayer: Player | null = playerCard ? {
     ...playerCard,
@@ -246,6 +248,7 @@ export function TeamPage() {
     seasonStats:       seasonsData?.seasons           ?? playerCard.seasonStats,
     injuryHistory:     injuryHistoryData?.injuries    ?? playerCard.injuryHistory ?? [],
     injurySummaryData: injuryAnalysisData?.summary    ?? playerCard.injurySummaryData,
+    riskFactors:       riskFactorsData?.factors       ?? playerCard.riskFactors,
   } : null;
 
   // Reset player selection when navigating to a different team
