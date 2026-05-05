@@ -212,9 +212,19 @@ export function TeamPage() {
 
   const team = teamFromState ?? teamsOverview?.find(t => t.id === teamId) ?? null;
 
+  // Track the player ID that the URL is targeting (e.g. from /team/X?player=Y).
+  // Captured here so the sortedPlayers filter can guarantee the target is
+  // included even if they wouldn't otherwise pass the risk filter (e.g. a
+  // recovered player linked from the reported-injuries page).
+  const targetedPlayerId = searchParams.get('player');
+
   const sortedPlayers = useMemo(() =>
     (playerList ?? [])
-      .filter(p => p.riskLevel === 'Injured' || (p.injuryRisk ?? 0) > 0)
+      .filter(p =>
+        p.riskLevel === 'Injured' ||
+        (p.injuryRisk ?? 0) > 0 ||
+        p.id === targetedPlayerId
+      )
       .sort((a, b) => {
       switch (sortBy) {
         case 'risk':      return b.injuryRisk - a.injuryRisk;
@@ -228,7 +238,7 @@ export function TeamPage() {
         default: return 0;
       }
     }),
-    [playerList, sortBy]
+    [playerList, sortBy, targetedPlayerId]
   );
 
   const currentPlayerId = currentPlayerIndex !== null ? sortedPlayers[currentPlayerIndex]?.id : undefined;
@@ -247,18 +257,23 @@ export function TeamPage() {
     injurySummaryData: injuryAnalysisData?.summary    ?? playerCard.injurySummaryData,
   } : null;
 
+  // Apply ?player=<id> from the URL whenever it changes, so navigating from
+  // the reported-injuries page (or anywhere else that deep-links a player)
+  // always lands on the targeted player — even on repeat visits to the same
+  // team page where the component stays mounted.
   useEffect(() => {
     if (!playerList || sortedPlayers.length === 0) return;
-    if (currentPlayerIndex !== null) return;
-    const playerParam = searchParams.get('player');
-    if (playerParam) {
-      const index = sortedPlayers.findIndex(p => p.id === playerParam);
+
+    if (targetedPlayerId) {
+      const index = sortedPlayers.findIndex(p => p.id === targetedPlayerId);
       setCurrentPlayerIndex(index !== -1 ? index : 0);
-    } else {
+      // Clear the param so it doesn't stick across subsequent in-page interactions.
+      setSearchParams({}, { replace: true });
+    } else if (currentPlayerIndex === null) {
       setCurrentPlayerIndex(0);
     }
-    setSearchParams({}, { replace: true });
-  }, [playerList, sortedPlayers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerList, sortedPlayers, targetedPlayerId]);
 
   // Loading gate
   if (teamsLoading || playersLoading) {
