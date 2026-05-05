@@ -45,9 +45,10 @@ def _create_mv_teams_overview(conn: Connection) -> None:
             t.team_id,
             t.team_name,
             t.team_logo,
-            COALESCE(ps.amount_of_players, 0)  AS amount_of_players,
+            COALESCE(ps.amount_of_players, 0)       AS amount_of_players,
             ps.average_risk_of_injury,
-            COALESCE(inj.active_injuries, 0)   AS active_injuries
+            ROUND(ps.average_risk_of_injury * 100)::int AS avg_risk_pct,
+            COALESCE(inj.active_injuries, 0)       AS active_injuries
         FROM team t
         JOIN (
             SELECT home_team_id AS team_id FROM match
@@ -159,11 +160,13 @@ def _create_mv_search_players(conn: Connection) -> None:
         CREATE MATERIALIZED VIEW mv_search_players AS
         SELECT
             p.player_id,
+            t.team_id,
             p.player_first_name,
             p.player_last_name,
             p.player_photo,
             t.team_name,
-            p.player_injury_risk
+            p.player_relative_risk,
+            CASE WHEN inj.player_id IS NOT NULL THEN TRUE ELSE FALSE END AS player_is_injured
         FROM player p
         JOIN team t ON t.team_id = p.team_id
         JOIN mv_teams_overview tov ON tov.team_id = p.team_id
@@ -171,6 +174,14 @@ def _create_mv_search_players(conn: Connection) -> None:
             SELECT player_id FROM player_season
             WHERE player_season_year = (SELECT current_season_year FROM season_meta)
         ) active ON active.player_id = p.player_id
+        LEFT JOIN (
+            SELECT p2.player_id
+            FROM player p2
+            JOIN player_season ps ON ps.player_id = p2.player_id
+            JOIN player_injury pi ON pi.player_season_id = ps.player_season_id
+            WHERE ps.player_season_year = (SELECT current_season_year FROM season_meta)
+              AND pi.player_injury_end IS NULL
+        ) inj ON inj.player_id = p.player_id
         ORDER BY p.player_last_name
     """))
     conn.execute(text("CREATE INDEX idx_mv_sp_last_name ON mv_search_players (player_last_name)"))

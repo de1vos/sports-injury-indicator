@@ -1,65 +1,80 @@
 import { useState, useCallback } from 'react';
-import { teamsApi } from '../api/teams';
-import { playersApi } from '../api/players';
-import { reportedInjuriesApi } from '../api/reportedInjuries';
+import { searchApi } from '../api/search';
 
 export interface SearchPlayer {
   id: string;
   teamId: string;
   firstName: string;
   lastName: string;
-  injuryRisk: number;
-  isInjured: boolean;
+  photo: string;
   teamName: string;
+  relativeRisk: number | null;
+  isInjured: boolean;
 }
 
 export interface SearchTeam {
   id: string;
   name: string;
-  avgRisk: number;
+  avgRisk: number | null;
   squadSize: number;
 }
 
-// ── Binary Search Tree index ──────────────────────────────────────────────────
-// Entries are sorted by key. Binary search finds prefix matches in O(log n)
-// instead of O(n) linear scan, which is significant for 500+ player datasets.
+// ── Trie index ────────────────────────────────────────────────────────────────
 
-interface IndexEntry<T> { key: string; item: T }
+interface TrieNode<T> {
+  children: Map<string, TrieNode<T>>;
+  items: T[];
+}
 
-class SortedIndex<T> {
-  private entries: IndexEntry<T>[] = [];
+class Trie<T> {
+  private root: TrieNode<T> = { children: new Map(), items: [] };
+  private allItems: Array<{ key: string; item: T }> = [];
 
-  build(items: T[], keyFn: (item: T) => string): void {
-    this.entries = items
-      .map(item => ({ key: keyFn(item).toLowerCase(), item }))
-      .sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+  insert(key: string, item: T): void {
+    const k = key.toLowerCase();
+    this.allItems.push({ key: k, item });
+    let node = this.root;
+    for (const char of k) {
+      if (!node.children.has(char)) {
+        node.children.set(char, { children: new Map(), items: [] });
+      }
+      node = node.children.get(char)!;
+    }
+    node.items.push(item);
   }
 
-  /** Binary search: O(log n) to find start, then O(k) to collect k results. */
   searchPrefix(prefix: string, limit = 20): T[] {
-    if (!prefix) return this.entries.slice(0, limit).map(e => e.item);
-    const p = prefix.toLowerCase();
-    let lo = 0, hi = this.entries.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >>> 1;
-      if (this.entries[mid].key < p) lo = mid + 1;
-      else hi = mid;
+    if (!prefix) return this._collect(this.root, limit);
+    let node = this.root;
+    for (const char of prefix.toLowerCase()) {
+      if (!node.children.has(char)) return [];
+      node = node.children.get(char)!;
     }
+    return this._collect(node, limit);
+  }
+
+  private _collect(node: TrieNode<T>, limit: number): T[] {
     const results: T[] = [];
-    while (lo < this.entries.length && this.entries[lo].key.startsWith(p) && results.length < limit) {
-      results.push(this.entries[lo].item);
-      lo++;
+    const queue: TrieNode<T>[] = [node];
+    while (queue.length > 0 && results.length < limit) {
+      const curr = queue.shift()!;
+      for (const item of curr.items) {
+        results.push(item);
+        if (results.length >= limit) return results;
+      }
+      for (const child of curr.children.values()) {
+        queue.push(child);
+      }
     }
     return results;
   }
 
-  /** O(n) contains search — used as fallback for non-prefix queries. */
   searchContains(query: string, limit = 20): T[] {
     const q = query.toLowerCase();
     const results: T[] = [];
-    for (const e of this.entries) {
-      if (e.key.includes(q)) {
-        results.push(e.item);
+    for (const { key, item } of this.allItems) {
+      if (key.includes(q)) {
+        results.push(item);
         if (results.length >= limit) break;
       }
     }
@@ -68,10 +83,9 @@ class SortedIndex<T> {
 }
 
 interface SearchIndex {
-  // Two player indices: "firstName lastName" and "lastName firstName"
-  playersByFullName: SortedIndex<SearchPlayer>;
-  playersByLastFirst: SortedIndex<SearchPlayer>;
-  teamsByName: SortedIndex<SearchTeam>;
+  playersByFullName: Trie<SearchPlayer>;
+  playersByLastFirst: Trie<SearchPlayer>;
+  teamsByName: Trie<SearchTeam>;
   regionList: string[];
 }
 
@@ -84,28 +98,25 @@ interface SearchData {
 }
 
 function buildIndex(teams: SearchTeam[], players: SearchPlayer[], regions: string[]): SearchIndex {
-  const playersByFullName = new SortedIndex<SearchPlayer>();
-  playersByFullName.build(players, p => `${p.firstName} ${p.lastName}`);
+  const playersByFullName = new Trie<SearchPlayer>();
+  players.forEach(p => playersByFullName.insert(`${p.firstName} ${p.lastName}`, p));
 
-  const playersByLastFirst = new SortedIndex<SearchPlayer>();
-  playersByLastFirst.build(players, p => `${p.lastName} ${p.firstName}`);
+  const playersByLastFirst = new Trie<SearchPlayer>();
+  players.forEach(p => playersByLastFirst.insert(`${p.lastName} ${p.firstName}`, p));
 
-  const teamsByName = new SortedIndex<SearchTeam>();
-  teamsByName.build(teams, t => t.name);
+  const teamsByName = new Trie<SearchTeam>();
+  teams.forEach(t => teamsByName.insert(t.name, t));
 
   return { playersByFullName, playersByLastFirst, teamsByName, regionList: regions };
 }
 
-/** Fast player search using the BST index: checks both name orderings. */
 export function searchPlayers(index: SearchIndex, query: string, limit = 15): SearchPlayer[] {
   const q = query.trim();
   if (!q) return index.playersByFullName.searchPrefix('', limit);
 
-  // Try prefix search first (fast O(log n))
   const byFirst = index.playersByFullName.searchPrefix(q, limit);
   const byLast  = index.playersByLastFirst.searchPrefix(q, limit);
 
-  // Merge, deduplicate by id
   const seen = new Set<string>();
   const results: SearchPlayer[] = [];
   for (const p of [...byFirst, ...byLast]) {
@@ -115,7 +126,6 @@ export function searchPlayers(index: SearchIndex, query: string, limit = 15): Se
     }
   }
 
-  // If prefix search found nothing, fall back to contains search
   if (results.length === 0) {
     return index.playersByFullName.searchContains(q, limit);
   }
@@ -131,7 +141,6 @@ export function searchTeams(index: SearchIndex, query: string, limit = 5): Searc
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
-// Module-level cache so data and index survive hook re-mounts
 let _cache: SearchData | null = null;
 
 export function useSearchData() {
@@ -146,49 +155,35 @@ export function useSearchData() {
     }
 
     try {
-      const [teams, injuries] = await Promise.all([
-        teamsApi.getOverview(),
-        reportedInjuriesApi.getAll(),
+      const [rawPlayers, rawTeams, regions] = await Promise.all([
+        searchApi.getPlayers(),
+        searchApi.getTeams(),
+        searchApi.getInjuryRegions(),
       ]);
 
-      // Fetch players for all teams in parallel — skip teams with no squad data
-      const activeTeams = teams.filter(t => t.squadSize > 0);
-      const playersByTeam = await Promise.all(
-        activeTeams.map(async (team) => {
-          try {
-            const players = await playersApi.getByTeam(team.id);
-            return players.map(p => ({
-              id: p.id,
-              teamId: team.id,
-              firstName: p.firstName,
-              lastName: p.lastName,
-              injuryRisk: p.injuryRisk,
-              isInjured: p.riskLevel === 'Injured',
-              teamName: team.name,
-            }));
-          } catch {
-            return [] as SearchPlayer[];
-          }
-        }),
-      );
-
-      const regions = [
-        ...new Set(injuries.map(i => i.region).filter((r): r is string => Boolean(r))),
-      ].sort();
-
-      const teamItems: SearchTeam[] = teams.map(t => ({
-        id: t.id,
-        name: t.name,
-        avgRisk: t.avgRisk ?? 0,
-        squadSize: t.squadSize,
+      const players: SearchPlayer[] = rawPlayers.map(p => ({
+        id: p.player_id.toString(),
+        teamId: p.team_id.toString(),
+        firstName: p.player_first_name,
+        lastName: p.player_last_name,
+        photo: p.player_photo,
+        teamName: p.team_name,
+        relativeRisk: p.player_relative_risk,
+        isInjured: p.player_is_injured,
       }));
-      const playerItems = playersByTeam.flat();
+
+      const teams: SearchTeam[] = rawTeams.map(t => ({
+        id: t.team_id.toString(),
+        name: t.team_name,
+        avgRisk: t.avg_risk_pct,
+        squadSize: t.squad_size,
+      }));
 
       _cache = {
-        teams: teamItems,
-        players: playerItems,
+        teams,
+        players,
         regions,
-        index: buildIndex(teamItems, playerItems, regions),
+        index: buildIndex(teams, players, regions),
         loaded: true,
       };
 
