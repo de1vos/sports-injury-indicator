@@ -19,7 +19,6 @@ import pandas as pd
 from sklearn.metrics import average_precision_score, brier_score_loss
 from xgboost import XGBClassifier
 from config import ML_FEATURES_CSV, MODEL_FILE, MODELS_DIR, INJURIES_CSV, PLAYERS_CSV
-from model_utils import SigmoidCalibrator
 
 LOOKAHEAD_DAYS = 28
 TARGET_COL = f"injured_next_{LOOKAHEAD_DAYS}d"
@@ -125,9 +124,15 @@ def train(X_train, y_train, X_val, y_val, scale_pos_weight):
 
 
 def calibrate(model, X_val, y_val):
-    print("\nCalibrating probabilities on validation set (sigmoid)...")
-    cal = SigmoidCalibrator(model)
-    cal.fit(X_val, y_val)
+    print("\nCalibrating probabilities on validation set (isotonic)...")
+    from sklearn.isotonic import IsotonicRegression
+    from model_utils import IsotonicCalibratedModel
+    
+    raw_val_probs = model.predict_proba(X_val)[:, 1]
+    iso = IsotonicRegression(out_of_bounds="clip")
+    iso.fit(raw_val_probs, y_val)
+    
+    cal = IsotonicCalibratedModel(model, iso)
     return cal
 
 

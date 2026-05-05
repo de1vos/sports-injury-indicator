@@ -20,12 +20,13 @@ export async function apiFetch<T>(path: string): Promise<T> {
 export async function authFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new ApiError(401, 'Not authenticated')
+  const token = session.access_token
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
       ...init.headers,
-      Authorization: `Bearer ${session.access_token}`,
+      Authorization: `Bearer ${token}`,
     },
   })
   if (!res.ok) throw new ApiError(res.status, `API error ${res.status}: ${path}`)

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Player } from '../data/mockData';
 import { StarIcon } from './StarIcon';
+import { getRelativeRiskMeta } from '../utils/risk';
 
 interface PlayerCardProps {
   player: Player;
@@ -131,23 +132,38 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           </div>
 
           {/* Injury Risk */}
-          <div className="text-center mb-4">
-            <div className="text-6xl font-bold font-mono leading-none mb-1">
-              {isInjured ? 'INJ' : `${player.injuryRisk}%`}
+          {isInjured ? (
+            <div className="rounded-2xl px-4 py-3 mb-4 flex flex-col items-center justify-center" style={{ backgroundColor: 'rgba(220,38,38,0.25)' }}>
+              <div className="text-4xl font-bold font-mono leading-none mb-1">INJURED</div>
+              <div className="text-[10px] uppercase tracking-widest opacity-75">CURRENTLY INJURED</div>
             </div>
-            <div className="text-[10px] uppercase tracking-widest opacity-75 mb-2">
-              INJURY RISK
-            </div>
-            <span
-              className="px-3 py-1 rounded-full text-xs font-bold"
-              style={{
-                backgroundColor: isInjured ? 'rgba(220,38,38,0.85)' : 'rgba(255,255,255,0.9)',
-                color: isInjured ? 'white' : '#0D9488',
-              }}
-            >
-              {isInjured ? 'Injured' : 'Fit'}
-            </span>
-          </div>
+          ) : (() => {
+            const meta = getRelativeRiskMeta(player.relativeRisk);
+            const relBg = player.relativeRisk == null
+              ? 'rgba(255,255,255,0.15)'
+              : meta.color === '#0D9488'
+                ? 'rgba(13,148,136,0.35)'
+                : meta.color === '#EA580C'
+                  ? 'rgba(234,88,12,0.35)'
+                  : 'rgba(220,38,38,0.35)';
+            return (
+              <div className="rounded-2xl px-4 py-3 mb-4 flex items-center justify-around" style={{ backgroundColor: relBg }}>
+                <div className="text-center">
+                  <div className="text-4xl font-bold font-mono leading-none mb-1">{player.injuryRisk}%</div>
+                  <div className="text-[10px] uppercase tracking-widest opacity-75">INJURY RISK</div>
+                </div>
+                <div className="w-px self-stretch opacity-30" style={{ backgroundColor: 'white' }} />
+                <div className="text-center">
+                  <div className="text-4xl font-bold font-mono leading-none mb-1">
+                    {player.relativeRisk != null ? `${player.relativeRisk.toFixed(1)}×` : '—'}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest opacity-75">
+                    {meta.label === '—' ? 'REL. RISK' : meta.label.toUpperCase()}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Stats Grid — 2×2 */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">

@@ -27,6 +27,7 @@ export interface Player {
   preferredFoot?: string;
   photo?: string;
   riskLevel?: string;
+  relativeRisk?: number | null;
   riskFactors?: string[];
   injuryRiskTrend?: RiskTrendEntry[];
   seasonStats?: SeasonStat[];
