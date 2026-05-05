@@ -2,7 +2,7 @@
 Phase 4 — Model Training
 
 Trains an XGBoost classifier on ml_features.csv to predict
-whether a player gets injured in the next 90 days.
+whether a player gets injured in the next 28 days.
 
 Split:
   Training:   seasons 2022/23, 2023/24, 2024/25 (season-level features)
@@ -151,7 +151,7 @@ def top_k_precision(probs, y, k):
     return precision_k, lift
 
 
-def evaluate(model, X, y, label):
+def evaluate(model, X, y, label, thresholds=None):
     probs  = model.predict_proba(X)[:, 1]
     pr_auc = average_precision_score(y, probs)
 
@@ -169,12 +169,15 @@ def evaluate(model, X, y, label):
     print(f"  Brier Skill:  {brier_skill:+.3f}  (0 = no better than random, 1 = perfect)")
 
     # Calibration: does a higher score actually mean a higher injury rate?
-    # Use percentile-based boundaries so buckets always populate regardless of
-    # how compressed the score distribution is (calibrated scores range ~1%–16%).
+    # For calibrated sets, fixed probability thresholds anchored to multiples of the
+    # base rate give semantically stable buckets. For uncalibrated training scores,
+    # even quintiles ensure every bucket is populated.
     print(f"\n  Calibration (base rate = {base_rate:.1%}):")
     print(f"    {'Risk bucket':>14}  {'N':>6}  {'Actual rate':>12}  {'Lift':>6}")
-    percentile_cuts = [0, 25, 50, 75, 90, 100]
-    boundaries = [np.percentile(probs, p) for p in percentile_cuts]
+    if thresholds is not None:
+        boundaries = [0.0] + list(thresholds) + [1.0]
+    else:
+        boundaries = [np.percentile(probs, p) for p in [0, 20, 40, 60, 80, 100]]
     for lo, hi in zip(boundaries[:-1], boundaries[1:]):
         mask = (probs >= lo) & (probs < hi) if hi < boundaries[-1] else (probs >= lo) & (probs <= hi)
         if mask.sum() > 0:
@@ -231,11 +234,15 @@ def main():
     # Calibrate on val set — corrects the train/live positive-rate distribution shift
     calibrated_model = calibrate(model, X_val, y_val)
 
+    # Calibrated thresholds: <3% / 3–6% / 6–9% / 9–15% / >15%
+    # anchored to ~0.5×, 1×, 1.75×, 3× of the typical ~5–6% base rate.
+    _cal_thresholds = [0.03, 0.06, 0.09, 0.15]
+
     # Evaluate on all three splits
     # Training: raw model (calibration was fit on val, so don't apply it here)
     evaluate(model,            X_train, y_train, "Training set (raw — overfitting check)")
-    evaluate(calibrated_model, X_val,   y_val,   "Validation set (calibrated)")
-    pr_auc = evaluate(calibrated_model, X_test,  y_test,  "Test set (calibrated)")
+    evaluate(calibrated_model, X_val,   y_val,   "Validation set (calibrated)",   thresholds=_cal_thresholds)
+    pr_auc = evaluate(calibrated_model, X_test,  y_test,  "Test set (calibrated)", thresholds=_cal_thresholds)
 
     # Feature importance (from uncalibrated model — calibrator doesn't change importances)
     save_feature_importance(model, feature_cols)
