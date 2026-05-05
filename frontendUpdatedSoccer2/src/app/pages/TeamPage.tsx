@@ -365,7 +365,7 @@ export function TeamPage() {
               <button
                 key={player.id}
                 onClick={() => { setDirectPlayerId(null); setCurrentPlayerIndex(index); }}
-                className={`w-[95px] h-[120px] rounded-2xl overflow-hidden transition-all flex-shrink-0 ${
+                className={`w-[95px] h-[140px] rounded-2xl overflow-hidden transition-all flex-shrink-0 ${
                   index === currentPlayerIndex
                     ? 'ring-2 ring-[#1A56DB] ring-offset-2 scale-105 opacity-100'
                     : 'opacity-60 hover:opacity-90 hover:scale-[1.03]'
@@ -379,7 +379,7 @@ export function TeamPage() {
                 <div className="h-full flex flex-col items-center px-2 pt-3 pb-2.5 text-white">
                   {/* Name — fixed-height flex area, clamps at 3 lines */}
                   <div className="flex-1 min-h-0 flex items-start justify-center w-full overflow-hidden">
-                    <span className="text-[9px] font-bold text-center leading-[1.25] w-full line-clamp-3">
+                    <span className="text-[9px] font-bold text-center leading-[1.25] w-full line-clamp-4">
                       {player.firstName} {player.lastName}
                     </span>
                   </div>
