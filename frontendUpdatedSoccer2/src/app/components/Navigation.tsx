@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router';
-import { getRiskColor } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSearchData, searchPlayers, searchTeams } from '../hooks/useSearchData';
 import { useAuth } from '../context/AuthContext';
@@ -12,9 +11,15 @@ type SearchResult = {
   name: string;
   path: string;
   subtitle?: string;
-  risk?: number;
+  risk?: number | null;
   isInjured?: boolean;
 };
+
+function getMultiplierColor(risk: number): string {
+  if (risk < 1.5) return '#059669';
+  if (risk <= 2.0) return '#D97706';
+  return '#DC2626';
+}
 
 const NAV_LINKS = [
   { to: '/', label: 'Dashboard', match: (p: string) => p === '/' },
@@ -52,20 +57,20 @@ export function Navigation() {
     if (!query) {
       // Default suggestions: top teams + top players by risk
       [...searchData.teams]
-        .sort((a, b) => b.avgRisk - a.avgRisk)
+        .sort((a, b) => (b.avgRisk ?? 0) - (a.avgRisk ?? 0))
         .slice(0, 2)
         .forEach(team => {
           results.push({
             type: 'Team',
             name: team.name,
             path: `/team/${team.id}`,
-            subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk}%`,
+            subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk ?? '—'}%`,
             risk: team.avgRisk,
           });
         });
 
       [...searchData.players]
-        .sort((a, b) => b.injuryRisk - a.injuryRisk)
+        .sort((a, b) => (b.relativeRisk ?? 0) - (a.relativeRisk ?? 0))
         .slice(0, 3)
         .forEach(p => {
           results.push({
@@ -73,7 +78,7 @@ export function Navigation() {
             name: `${p.firstName} ${p.lastName}`,
             path: `/team/${p.teamId}?player=${p.id}`,
             subtitle: p.teamName,
-            risk: p.injuryRisk,
+            risk: p.relativeRisk ?? undefined,
             isInjured: p.isInjured,
           });
         });
@@ -103,14 +108,14 @@ export function Navigation() {
           p.lastName.toLowerCase().includes(query),
         );
     [...playerMatches]
-      .sort((a, b) => b.injuryRisk - a.injuryRisk)
+      .sort((a, b) => (b.relativeRisk ?? 0) - (a.relativeRisk ?? 0))
       .forEach(p => {
         results.push({
           type: 'Player',
           name: `${p.firstName} ${p.lastName}`,
           path: `/team/${p.teamId}?player=${p.id}`,
           subtitle: p.teamName,
-          risk: p.injuryRisk,
+          risk: p.relativeRisk ?? undefined,
           isInjured: p.isInjured,
         });
       });
@@ -218,12 +223,12 @@ export function Navigation() {
                           <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
                             INJ
                           </span>
-                        ) : result.risk !== undefined ? (
+                        ) : result.risk != null ? (
                           <span
                             className="text-xs font-bold px-2 py-1 rounded-full text-white"
-                            style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}
+                            style={{ fontFamily: 'var(--font-mono)', backgroundColor: getMultiplierColor(result.risk) }}
                           >
-                            {result.risk}%
+                            {result.risk.toFixed(1)}×
                           </span>
                         ) : null
                       )}

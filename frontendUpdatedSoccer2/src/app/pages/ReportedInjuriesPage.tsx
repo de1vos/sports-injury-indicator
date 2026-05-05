@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useReportedInjuries } from '../hooks/useApi';
+import { searchApi } from '../api/search';
 
 type SortField = 'endDate' | 'startDate' | 'lastName' | 'team' | 'severity';
 type SortDirection = 'asc' | 'desc';
@@ -52,6 +53,7 @@ export function ReportedInjuriesPage() {
   const { data: injuriesData, loading, error } = useReportedInjuries();
 
   const [searchParams] = useSearchParams();
+  const [injuryRegions, setInjuryRegions] = useState<string[]>([]);
   const [sortField, setSortField]         = useState<SortField>('endDate');
   const [sortDir, setSortDir]             = useState<SortDirection>('desc');
   const [filterTeam, setFilterTeam]       = useState('all');
@@ -62,6 +64,17 @@ export function ReportedInjuriesPage() {
   const [filterOngoing, setFilterOngoing] = useState(() => searchParams.get('ongoing') === 'true');
   const [page, setPage]                   = useState(1);
 
+  useEffect(() => {
+    searchApi.getInjuryRegions().then(setInjuryRegions).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const region = searchParams.get('region');
+    const ongoing = searchParams.get('ongoing');
+    if (region) setFilterRegion(region);
+    if (ongoing !== null) setFilterOngoing(ongoing === 'true');
+  }, [searchParams]);
+
   const allRaw = injuriesData ?? [];
 
   // Build unique option lists — memoised so they only recompute when data changes
@@ -69,10 +82,7 @@ export function ReportedInjuriesPage() {
     () => [...new Set(allRaw.map(i => i.teamName))].sort(),
     [allRaw],
   );
-  const uniqueRegions = useMemo(
-    () => [...new Set(allRaw.map(i => i.region).filter(Boolean))].sort(),
-    [allRaw],
-  );
+  const uniqueRegions = injuryRegions;
   const uniqueSeverities = useMemo(
     () => [...new Set(allRaw.map(i => i.severity))].sort(
       (a, b) => (SEVERITY_ORDER[b] ?? 0) - (SEVERITY_ORDER[a] ?? 0),
