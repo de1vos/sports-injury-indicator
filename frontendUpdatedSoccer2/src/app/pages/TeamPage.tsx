@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, useLocation, useNavigate, Link } from 'react-router';
 import type { TeamOverviewItem } from '../api/mappers';
 import { getRiskColor, MATCH_DURATION, type Player, type SeasonStat } from '../data/mockData';
+import { getRelativeRiskMeta } from '../utils/risk';
 import {
   useTeamsOverview,
   useTeamPlayers,
@@ -199,7 +200,7 @@ export function TeamPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('risk');
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number | null>(null);
   const [directPlayerId, setDirectPlayerId] = useState<string | null>(null);
   const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -231,7 +232,7 @@ export function TeamPage() {
     [playerList, sortBy]
   );
 
-  const currentPlayerId = directPlayerId ?? sortedPlayers[currentPlayerIndex]?.id;
+  const currentPlayerId = directPlayerId ?? (currentPlayerIndex !== null ? sortedPlayers[currentPlayerIndex]?.id : undefined);
 
   const { data: playerCard, loading: cardLoading } = usePlayerCard(currentPlayerId);
   const { data: graphData } = usePlayerGraph(currentPlayerId);
@@ -248,7 +249,8 @@ export function TeamPage() {
   } : null;
 
   useEffect(() => {
-    if (!playerList) return;
+    if (!playerList || sortedPlayers.length === 0) return;
+    if (currentPlayerIndex !== null) return;
     const playerParam = searchParams.get('player');
     if (playerParam) {
       const index = sortedPlayers.findIndex(p => p.id === playerParam);
@@ -259,10 +261,15 @@ export function TeamPage() {
         // Player exists on the team but is not in the filtered sidebar list
         // (e.g. fully recovered with 0 risk) — load them directly by ID
         setDirectPlayerId(playerParam);
+        setCurrentPlayerIndex(0);
+      } else {
+        setCurrentPlayerIndex(0);
       }
-      setSearchParams({}, { replace: true });
+    } else {
+      setCurrentPlayerIndex(0);
     }
-  }, [searchParams, playerList, sortedPlayers, setSearchParams]);
+    setSearchParams({}, { replace: true });
+  }, [playerList, sortedPlayers]);
 
   // Loading gate
   if (teamsLoading || playersLoading) {
@@ -289,11 +296,11 @@ export function TeamPage() {
 
   const handlePrevious = () => {
     setDirectPlayerId(null);
-    setCurrentPlayerIndex(prev => (prev > 0 ? prev - 1 : sortedPlayers.length - 1));
+    setCurrentPlayerIndex(prev => { const i = prev ?? 0; return i > 0 ? i - 1 : sortedPlayers.length - 1; });
   };
   const handleNext = () => {
     setDirectPlayerId(null);
-    setCurrentPlayerIndex(prev => (prev < sortedPlayers.length - 1 ? prev + 1 : 0));
+    setCurrentPlayerIndex(prev => { const i = prev ?? 0; return i < sortedPlayers.length - 1 ? i + 1 : 0; });
   };
 
   const s = currentPlayer?.seasonStats?.[0];
@@ -342,7 +349,7 @@ export function TeamPage() {
       {/* Navigation ABOVE mini cards */}
       <div className="flex justify-center">
         <PlayerNavigation
-          current={currentPlayerIndex + 1}
+          current={(currentPlayerIndex ?? 0) + 1}
           total={sortedPlayers.length}
           onPrev={handlePrevious}
           onNext={handleNext}
@@ -379,9 +386,9 @@ export function TeamPage() {
                   {/* Risk badge — fixed, never shrinks */}
                   <div
                     className="flex-shrink-0 px-3 py-1 rounded-full text-[11px] font-bold mt-1.5"
-                    style={{ backgroundColor: isInjured ? 'rgba(0,0,0,0.25)' : getRiskColor(player.injuryRisk) }}
+                    style={{ backgroundColor: isInjured ? 'rgba(0,0,0,0.25)' : getRelativeRiskMeta(player.relativeRisk).color }}
                   >
-                    {isInjured ? 'INJ' : `${player.injuryRisk}%`}
+                    {isInjured ? 'INJ' : player.relativeRisk != null ? `${player.relativeRisk.toFixed(1)}×` : '—'}
                   </div>
                   {/* Status pill — fixed, never shrinks */}
                   <div className="flex-shrink-0 w-full rounded-xl py-1 text-center mt-1.5" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
