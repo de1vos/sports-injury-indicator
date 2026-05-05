@@ -10,6 +10,7 @@ import {
   useTeamsOverview,
 } from '../hooks/useApi';
 import type { DashboardHighRiskPlayer, DashboardTrendingPlayer, DashboardMatch } from '../api/dashboard';
+import { getRelativeRiskMeta } from '../utils/risk';
 
 const PAGE_SIZE = 10;
 
@@ -455,9 +456,9 @@ export function HomePage() {
                           <div>
                             <span
                               className="inline-block px-2.5 py-1 rounded-lg font-bold text-white text-xs"
-                              style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(player.injuryRisk) }}
+                              style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRelativeRiskMeta(player.relativeRisk).color }}
                             >
-                              {player.injuryRisk}%
+                              {player.relativeRisk != null ? `${player.relativeRisk.toFixed(1)}×` : '—'}
                             </span>
                             <div className="text-[11px] text-[#9CA3AF] mt-1 text-right">
                               {player.seasonalInjuries} inj.
