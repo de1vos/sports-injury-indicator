@@ -4,6 +4,8 @@ from sqlmodel import Session
 
 
 class InjuryList(TypedDict):
+    player_id: int
+    team_id: int
     injury_date_start: str
     injury_date_end: str | None
     player_first_name: str
@@ -22,6 +24,8 @@ def get_reported_injuries(session: Session) -> List[InjuryList]:
     rows = session.execute(text("SELECT * FROM mv_reported_injuries")).mappings().all()
     return [
         {
+            "player_id": row["player_id"],
+            "team_id": row["team_id"],
             "injury_date_start": str(row["player_injury_start"]),
             "injury_date_end": str(row["player_injury_end"]) if row["player_injury_end"] else None,
             "player_first_name": row["player_first_name"],
