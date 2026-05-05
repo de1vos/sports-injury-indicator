@@ -599,7 +599,7 @@ export function TeamPage() {
                             <p className="text-sm font-semibold text-[#1A1A2E] mb-2">{label}</p>
 
                             {/* Single overlapping bar track */}
-                            <div className="w-full h-3 bg-[#F5F6FA] rounded-full overflow-hidden mb-2 flex gap-0.5">
+                            <div className="w-full h-3 bg-[#F5F6FA] rounded-full overflow-hidden mb-2 flex gap-2">
                             {bars.map(({ season, value, color }) => (
                               <div
                                 key={season}
