@@ -132,34 +132,33 @@ export function PlayerCard({ player, teamName, teamColor, isFavorite, onToggleFa
           </div>
 
           {/* Injury Risk */}
-          {(() => {
+          {isInjured ? (
+            <div className="rounded-2xl px-4 py-3 mb-4 flex flex-col items-center justify-center" style={{ backgroundColor: 'rgba(220,38,38,0.25)' }}>
+              <div className="text-4xl font-bold font-mono leading-none mb-1">INJURED</div>
+              <div className="text-[10px] uppercase tracking-widest opacity-75">CURRENTLY INJURED</div>
+            </div>
+          ) : (() => {
             const meta = getRelativeRiskMeta(player.relativeRisk);
-            const relBg = isInjured
-              ? 'rgba(220,38,38,0.25)'
-              : player.relativeRisk == null
-                ? 'rgba(255,255,255,0.15)'
-                : meta.color === '#0D9488'
-                  ? 'rgba(13,148,136,0.35)'
-                  : meta.color === '#EA580C'
-                    ? 'rgba(234,88,12,0.35)'
-                    : 'rgba(220,38,38,0.35)';
+            const relBg = player.relativeRisk == null
+              ? 'rgba(255,255,255,0.15)'
+              : meta.color === '#0D9488'
+                ? 'rgba(13,148,136,0.35)'
+                : meta.color === '#EA580C'
+                  ? 'rgba(234,88,12,0.35)'
+                  : 'rgba(220,38,38,0.35)';
             return (
               <div className="rounded-2xl px-4 py-3 mb-4 flex items-center justify-around" style={{ backgroundColor: relBg }}>
-                {/* Injury risk */}
                 <div className="text-center">
-                  <div className="text-4xl font-bold font-mono leading-none mb-1">
-                    {isInjured ? 'INJ' : `${player.injuryRisk}%`}
-                  </div>
+                  <div className="text-4xl font-bold font-mono leading-none mb-1">{player.injuryRisk}%</div>
                   <div className="text-[10px] uppercase tracking-widest opacity-75">INJURY RISK</div>
                 </div>
                 <div className="w-px self-stretch opacity-30" style={{ backgroundColor: 'white' }} />
-                {/* Relative risk */}
                 <div className="text-center">
                   <div className="text-4xl font-bold font-mono leading-none mb-1">
-                    {isInjured ? '—' : player.relativeRisk != null ? `${player.relativeRisk.toFixed(1)}×` : '—'}
+                    {player.relativeRisk != null ? `${player.relativeRisk.toFixed(1)}×` : '—'}
                   </div>
                   <div className="text-[10px] uppercase tracking-widest opacity-75">
-                    {isInjured ? 'INJURED' : meta.label === '—' ? 'REL. RISK' : meta.label.toUpperCase()}
+                    {meta.label === '—' ? 'REL. RISK' : meta.label.toUpperCase()}
                   </div>
                 </div>
               </div>
