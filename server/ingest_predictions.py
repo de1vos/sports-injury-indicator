@@ -11,8 +11,8 @@ Writes (idempotent — safe to re-run):
 
 Preserves:
   user_favourite
-  (player_id / team_id are stable API-Football IDs, so FKs remain valid
-   across re-ingestions as long as IDs don't change in the source data)
+  (player_id / team_id / match_fixture_id are stable API-Football IDs;
+   rows are upserted so FKs in user_favourite remain valid across re-ingestions)
 
 Run:
   cd server && python ingest_predictions.py
@@ -26,6 +26,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
 from sqlalchemy import text, insert
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from create_views import create_all_views
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -108,12 +109,65 @@ def main():
     print(f"  {len(nations_raw)} nations")
     print(f"  {len(matches_raw['completed'])} completed + {len(matches_raw['upcoming'])} upcoming matches")
 
+    # ── Build rows from source data ───────────────────────────────────────────
+    nation_rows = [
+        {
+            "nation_name":       n["nation_name"],
+            "nation_flag_image": n.get("nation_flag_image") or "",
+        }
+        for n in nations_raw
+    ]
+
+    seen_teams: set[int] = set()
+    team_rows = []
+    for p in players:
+        tid = p.get("team_id")
+        if tid is None or tid in seen_teams:
+            continue
+        seen_teams.add(tid)
+        team_rows.append({
+            "team_id":    tid,
+            "team_name":  safe_str(p.get("team"), max_len=200),
+            "team_logo":  safe_str(p.get("team_logo"), max_len=500),
+            "team_color": safe_str(p.get("team_color") or "#888888", max_len=10),
+        })
+
+    match_rows = []
+    all_fixtures = (
+        [(fx, True)  for fx in matches_raw.get("completed", [])] +
+        [(fx, False) for fx in matches_raw.get("upcoming",  [])]
+    )
+    for fx, is_played in all_fixtures:
+        m = GW_ROUND_RE.match(fx.get("round", ""))
+        if not m:
+            continue
+        match_date = parse_date(fx.get("date"))
+        if match_date is None:
+            continue
+        score = fx.get("score", {}) or {}
+        match_rows.append({
+            "home_team_id":         fx["home_team_id"],
+            "away_team_id":         fx["away_team_id"],
+            "match_date":           match_date,
+            "match_time":           parse_time(fx.get("date")),
+            "match_fixture_id":     fx["fixture_id"],
+            "match_game_week":      f"gw{int(m.group(1))}",
+            "match_venue":          safe_str(fx.get("venue"), max_len=200),
+            "match_goals_home":     score.get("home") or 0,
+            "match_goals_away":     score.get("away") or 0,
+            "home_avg_injury_risk": Decimal("0"),
+            "away_avg_injury_risk": Decimal("0"),
+            "match_is_played":      is_played,
+        })
+
+    # ID sets used for stale cleanup
+    new_player_ids  = [p["player_id"] for p in players if p.get("player_id") is not None]
+    new_team_ids    = [row["team_id"] for row in team_rows]
+    new_fixture_ids = [row["match_fixture_id"] for row in match_rows]
+
     with engine.connect() as conn:
 
-        # Defer FK checks so we can delete + re-insert in bulk without ordering issues
-        conn.execute(text("SET CONSTRAINTS ALL DEFERRED"))
-
-        # ── 1. Drop materialized views (must happen before table wipe) ────────
+        # ── 1. Drop materialized views ────────────────────────────────────────
         print("\nDropping materialized views...")
         for view in (
             "mv_high_risk_players", "mv_trending_risk_players",
@@ -125,49 +179,56 @@ def main():
             conn.execute(text(f"DROP MATERIALIZED VIEW IF EXISTS {view}"))
         print("  views dropped")
 
-        # ── 2. Wipe ML-derived tables ─────────────────────────────────────────
-        print("\nClearing ML-derived tables...")
-        for tbl in ("graph_data", "player_injury", "player_season", "match",
-                    "player", "team", "nation", "season_meta"):
+        # ── 2. Clear fully-replaced tables (DB-generated IDs, re-inserted fresh)
+        print("\nClearing replaced tables...")
+        for tbl in ("graph_data", "player_injury", "player_season", "season_meta"):
             conn.execute(text(f"DELETE FROM {tbl}"))
             print(f"  cleared {tbl}")
 
-        # ── 2. Nations ────────────────────────────────────────────────────────
+        # ── 3. Stale cleanup for upserted tables ──────────────────────────────
+        # Must run after clearing child tables so FK constraints aren't violated.
+        print("\nRemoving stale rows...")
+        if new_player_ids:
+            player_id_csv = ", ".join(str(i) for i in new_player_ids)
+            conn.execute(text(f"DELETE FROM user_favourite WHERE player_id NOT IN ({player_id_csv})"))
+            conn.execute(text(f"DELETE FROM player WHERE player_id NOT IN ({player_id_csv})"))
+        if new_team_ids:
+            team_id_csv = ", ".join(str(i) for i in new_team_ids)
+            conn.execute(text(f"DELETE FROM team WHERE team_id NOT IN ({team_id_csv})"))
+        if new_fixture_ids:
+            fixture_id_csv = ", ".join(str(i) for i in new_fixture_ids)
+            conn.execute(text(f"DELETE FROM match WHERE match_fixture_id NOT IN ({fixture_id_csv})"))
+        print("  stale rows removed")
+
+        # ── 4. Nations (insert new only, never overwrite existing) ────────────
         print("\nInserting nations...")
-        nation_rows = [
-            {
-                "nation_name":       n["nation_name"],
-                "nation_flag_image": n.get("nation_flag_image") or "",
-            }
-            for n in nations_raw
-        ]
-        result = conn.execute(
-            insert(Nation).returning(Nation.nation_id, Nation.nation_name),
+        conn.execute(
+            pg_insert(Nation).on_conflict_do_nothing(index_elements=["nation_name"]),
             nation_rows,
         )
+        # ON CONFLICT DO NOTHING returns nothing for existing rows — select all
+        result = conn.execute(text("SELECT nation_id, nation_name FROM nation"))
         nation_name_to_id: dict[str, int] = {row.nation_name: row.nation_id for row in result}
-        print(f"  {len(nation_name_to_id)} nations inserted")
+        print(f"  {len(nation_name_to_id)} nations total")
 
-        # ── 3. Teams ──────────────────────────────────────────────────────────
-        print("\nInserting teams...")
-        seen_teams: set[int] = set()
-        team_rows = []
-        for p in players:
-            tid = p.get("team_id")
-            if tid is None or tid in seen_teams:
-                continue
-            seen_teams.add(tid)
-            team_rows.append({
-                "team_id":    tid,
-                "team_name":  safe_str(p.get("team"), max_len=200),
-                "team_logo":  safe_str(p.get("team_logo"), max_len=500),
-                "team_color": safe_str(p.get("team_color") or "#888888", max_len=10),
-            })
-        conn.execute(insert(Team), team_rows)
-        print(f"  {len(team_rows)} teams inserted")
+        # ── 5. Teams ──────────────────────────────────────────────────────────
+        print("\nUpserting teams...")
+        team_stmt = pg_insert(Team)
+        conn.execute(
+            team_stmt.on_conflict_do_update(
+                index_elements=["team_id"],
+                set_={
+                    "team_name":  team_stmt.excluded.team_name,
+                    "team_logo":  team_stmt.excluded.team_logo,
+                    "team_color": team_stmt.excluded.team_color,
+                },
+            ),
+            team_rows,
+        )
+        print(f"  {len(team_rows)} teams upserted")
 
-        # ── 4. Players ────────────────────────────────────────────────────────
-        print("\nInserting players...")
+        # ── 6. Players ────────────────────────────────────────────────────────
+        print("\nUpserting players...")
         player_rows = []
         skipped_players: list[int] = []
         for p in players:
@@ -179,27 +240,100 @@ def main():
             height = p.get("height")
             weight = p.get("weight")
             player_rows.append({
-                "player_id":          p["player_id"],
-                "team_id":            p["team_id"],
-                "nation_id":          nation_id,
-                "player_first_name":  safe_str(p.get("firstname"), max_len=100),
-                "player_last_name":   safe_str(p.get("lastname"),  max_len=100),
-                "player_position":    safe_str(p.get("position"),  max_len=50),
-                "player_age":         p.get("age") or 0,
-                "player_height":      f"{height} cm" if height else "",
-                "player_weight":      f"{weight} kg" if weight else "",
-                "player_photo":       safe_str(p.get("photo"), max_len=500),
-                "player_kit_number":  p.get("kit_number") or 0,
-                "player_injury_risk": clamp_risk(p.get("injury_risk", 0)),
+                "player_id":            p["player_id"],
+                "team_id":              p["team_id"],
+                "nation_id":            nation_id,
+                "player_first_name":    safe_str(p.get("firstname"), max_len=100),
+                "player_last_name":     safe_str(p.get("lastname"),  max_len=100),
+                "player_position":      safe_str(p.get("position"),  max_len=50),
+                "player_age":           p.get("age") or 0,
+                "player_height":        f"{height} cm" if height else "",
+                "player_weight":        f"{weight} kg" if weight else "",
+                "player_photo":         safe_str(p.get("photo"), max_len=500),
+                "player_kit_number":    p.get("kit_number") or 0,
+                "player_injury_risk":   clamp_risk(p.get("injury_risk", 0)),
                 "player_relative_risk": Decimal(str(p["relative_risk"])) if p.get("relative_risk") is not None else None,
                 "player_risk_factor_1": safe_str(p.get("risk_factor_1"), max_len=100),
                 "player_risk_factor_2": safe_str(p.get("risk_factor_2"), max_len=100),
                 "player_risk_factor_3": safe_str(p.get("risk_factor_3"), max_len=100),
             })
-        conn.execute(insert(Player), player_rows)
-        print(f"  {len(player_rows)} players inserted ({len(skipped_players)} skipped)")
+        player_stmt = pg_insert(Player)
+        conn.execute(
+            player_stmt.on_conflict_do_update(
+                index_elements=["player_id"],
+                set_={
+                    "team_id":              player_stmt.excluded.team_id,
+                    "nation_id":            player_stmt.excluded.nation_id,
+                    "player_first_name":    player_stmt.excluded.player_first_name,
+                    "player_last_name":     player_stmt.excluded.player_last_name,
+                    "player_position":      player_stmt.excluded.player_position,
+                    "player_age":           player_stmt.excluded.player_age,
+                    "player_height":        player_stmt.excluded.player_height,
+                    "player_weight":        player_stmt.excluded.player_weight,
+                    "player_photo":         player_stmt.excluded.player_photo,
+                    "player_kit_number":    player_stmt.excluded.player_kit_number,
+                    "player_injury_risk":   player_stmt.excluded.player_injury_risk,
+                    "player_relative_risk": player_stmt.excluded.player_relative_risk,
+                    "player_risk_factor_1": player_stmt.excluded.player_risk_factor_1,
+                    "player_risk_factor_2": player_stmt.excluded.player_risk_factor_2,
+                    "player_risk_factor_3": player_stmt.excluded.player_risk_factor_3,
+                },
+            ),
+            player_rows,
+        )
+        print(f"  {len(player_rows)} players upserted ({len(skipped_players)} skipped)")
 
-        # ── 5. Player seasons ─────────────────────────────────────────────────
+        # ── 7. Matches ────────────────────────────────────────────────────────
+        print("\nUpserting matches...")
+        if match_rows:
+            match_stmt = pg_insert(Match)
+            conn.execute(
+                match_stmt.on_conflict_do_update(
+                    index_elements=["match_fixture_id"],
+                    set_={
+                        "home_team_id":         match_stmt.excluded.home_team_id,
+                        "away_team_id":         match_stmt.excluded.away_team_id,
+                        "match_date":           match_stmt.excluded.match_date,
+                        "match_time":           match_stmt.excluded.match_time,
+                        "match_game_week":      match_stmt.excluded.match_game_week,
+                        "match_venue":          match_stmt.excluded.match_venue,
+                        "match_goals_home":     match_stmt.excluded.match_goals_home,
+                        "match_goals_away":     match_stmt.excluded.match_goals_away,
+                        "home_avg_injury_risk": match_stmt.excluded.home_avg_injury_risk,
+                        "away_avg_injury_risk": match_stmt.excluded.away_avg_injury_risk,
+                        "match_is_played":      match_stmt.excluded.match_is_played,
+                    },
+                ),
+                match_rows,
+            )
+        print(f"  {len(match_rows)} matches upserted")
+
+        # ── 8. Compute avg injury risk per match ──────────────────────────────
+        print("\nComputing per-match average injury risks...")
+        conn.execute(text("""
+            UPDATE match SET
+                home_avg_injury_risk = COALESCE((
+                    SELECT AVG(player_injury_risk)
+                    FROM player
+                    WHERE team_id = match.home_team_id
+                      AND player_injury_risk < 0.99
+                ), 0),
+                away_avg_injury_risk = COALESCE((
+                    SELECT AVG(player_injury_risk)
+                    FROM player
+                    WHERE team_id = match.away_team_id
+                      AND player_injury_risk < 0.99
+                ), 0)
+        """))
+
+        # ── 9. Season meta ────────────────────────────────────────────────────
+        season_yr  = predictions_raw["current_season"]
+        gw_int     = predictions_raw["current_gameweek"]
+        current_gw = f"gw{gw_int}"
+        conn.execute(insert(SeasonMeta), [{"current_season_year": season_yr, "current_game_week": current_gw}])
+        print(f"  season_meta: year={season_yr}, gw={current_gw}")
+
+        # ── 10. Player seasons ────────────────────────────────────────────────
         print("\nInserting player seasons...")
         season_rows = []
         seen_season_keys: set[tuple[int, int]] = set()
@@ -243,7 +377,7 @@ def main():
         }
         print(f"  {len(season_rows)} player seasons inserted")
 
-        # ── 6. Player injuries ────────────────────────────────────────────────
+        # ── 11. Player injuries ───────────────────────────────────────────────
         print("\nInserting player injuries...")
         injury_rows = []
         for p in players:
@@ -284,14 +418,13 @@ def main():
             conn.execute(insert(PlayerInjury), injury_rows)
         print(f"  {len(injury_rows)} injury records inserted")
 
-        # ── 7. Graph data ─────────────────────────────────────────────────────
+        # ── 12. Graph data ────────────────────────────────────────────────────
         print("\nInserting graph data...")
         graph_rows = []
         for p in players:
             if p["player_id"] in skipped_players:
                 continue
 
-            # Map "GW1"…"GW38" labels → gw_1…gw_38 columns
             gw_map: dict[str, Decimal] = {}
             for entry in p.get("injury_risk_trend", []):
                 m = GW_LABEL_RE.match(str(entry.get("gw", "")))
@@ -313,68 +446,6 @@ def main():
 
         conn.execute(insert(GraphData), graph_rows)
         print(f"  {len(graph_rows)} graph data rows inserted")
-
-        # ── 8. Matches ────────────────────────────────────────────────────────
-        print("\nInserting matches...")
-        match_rows = []
-        all_fixtures = (
-            [(fx, True)  for fx in matches_raw.get("completed", [])] +
-            [(fx, False) for fx in matches_raw.get("upcoming",  [])]
-        )
-
-        for fx, is_played in all_fixtures:
-            m = GW_ROUND_RE.match(fx.get("round", ""))
-            if not m:
-                continue  # non-PL fixture — skip
-
-            match_date = parse_date(fx.get("date"))
-            if match_date is None:
-                continue
-
-            score = fx.get("score", {}) or {}
-            match_rows.append({
-                "home_team_id":         fx["home_team_id"],
-                "away_team_id":         fx["away_team_id"],
-                "match_date":           match_date,
-                "match_time":           parse_time(fx.get("date")),
-                "match_fixture_id":     fx["fixture_id"],
-                "match_game_week":      f"gw{int(m.group(1))}",
-                "match_venue":          safe_str(fx.get("venue"), max_len=200),
-                "match_goals_home":     score.get("home") or 0,
-                "match_goals_away":     score.get("away") or 0,
-                "home_avg_injury_risk": Decimal("0"),
-                "away_avg_injury_risk": Decimal("0"),
-                "match_is_played":      is_played,
-            })
-
-        if match_rows:
-            conn.execute(insert(Match), match_rows)
-        print(f"  {len(match_rows)} matches inserted")
-
-        # ── 9. Compute avg injury risk per match ──────────────────────────────
-        print("\nComputing per-match average injury risks...")
-        conn.execute(text("""
-            UPDATE match SET
-                home_avg_injury_risk = COALESCE((
-                    SELECT AVG(player_injury_risk)
-                    FROM player
-                    WHERE team_id = match.home_team_id
-                      AND player_injury_risk < 0.99
-                ), 0),
-                away_avg_injury_risk = COALESCE((
-                    SELECT AVG(player_injury_risk)
-                    FROM player
-                    WHERE team_id = match.away_team_id
-                      AND player_injury_risk < 0.99
-                ), 0)
-        """))
-
-        # ── 10. Season meta ───────────────────────────────────────────────────
-        season_yr  = predictions_raw["current_season"]
-        gw_int     = predictions_raw["current_gameweek"]
-        current_gw = f"gw{gw_int}"
-        conn.execute(insert(SeasonMeta), [{"current_season_year": season_yr, "current_game_week": current_gw}])
-        print(f"  season_meta: year={season_yr}, gw={current_gw}")
 
         conn.commit()
 

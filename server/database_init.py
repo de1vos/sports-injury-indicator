@@ -19,6 +19,9 @@ engine = create_engine(_db_url, echo=False)
 
 # 1. Nation
 class Nation(SQLModel, table=True):
+    __table_args__: ClassVar[tuple] = (
+        UniqueConstraint("nation_name", name="uq_nation_name"),
+    )
     nation_id: Optional[int] = Field(
         default=None,
         primary_key=True,
@@ -72,6 +75,7 @@ class Team(SQLModel, table=True):
 class Match(SQLModel, table=True):
     __tablename__: ClassVar[str] = "match"
     __table_args__: ClassVar[tuple] = (
+        UniqueConstraint("match_fixture_id", name="uq_match_fixture_id"),
         Index("idx_match_home_team", "home_team_id"),
         Index("idx_match_away_team", "away_team_id"),
         Index("idx_match_game_week", "match_game_week"),
