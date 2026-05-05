@@ -370,7 +370,7 @@ export function HomePage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin">
             {matchLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex-shrink-0 w-[240px] h-[148px] bg-white rounded-2xl border border-[rgba(0,0,0,0.06)] animate-pulse" />
