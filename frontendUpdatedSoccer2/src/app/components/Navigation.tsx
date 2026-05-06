@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router';
+import { getRiskColor } from '../data/mockData';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSearchData, searchPlayers, searchTeams } from '../hooks/useSearchData';
 import { useAuth } from '../context/AuthContext';
@@ -10,16 +11,11 @@ type SearchResult = {
   type: 'Team' | 'Player' | 'Region';
   name: string;
   path: string;
+  image?: string;
   subtitle?: string;
-  risk?: number | null;
+  risk?: number;
   isInjured?: boolean;
 };
-
-function getMultiplierColor(risk: number): string {
-  if (risk < 1.5) return '#059669';
-  if (risk <= 2.0) return '#D97706';
-  return '#DC2626';
-}
 
 const NAV_LINKS = [
   { to: '/', label: 'Dashboard', match: (p: string) => p === '/' },
@@ -33,6 +29,7 @@ export function Navigation() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -50,35 +47,40 @@ export function Navigation() {
     }
   }, [searchParams, setSearchParams]);
 
+  useEffect(() => {
+    if (mobileSearchOpen) searchInputRef.current?.focus();
+  }, [mobileSearchOpen]);
+
   const searchResults = useMemo<SearchResult[]>(() => {
     const query = searchQuery.toLowerCase().trim();
     const results: SearchResult[] = [];
 
     if (!query) {
-      // Default suggestions: top teams + top players by risk
       [...searchData.teams]
-        .sort((a, b) => (b.avgRisk ?? 0) - (a.avgRisk ?? 0))
+        .sort((a, b) => b.avgRisk - a.avgRisk)
         .slice(0, 2)
         .forEach(team => {
           results.push({
             type: 'Team',
             name: team.name,
+            image: team.logo,
             path: `/team/${team.id}`,
-            subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk ?? '—'}%`,
+            subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk}%`,
             risk: team.avgRisk,
           });
         });
 
       [...searchData.players]
-        .sort((a, b) => (b.relativeRisk ?? 0) - (a.relativeRisk ?? 0))
+        .sort((a, b) => b.injuryRisk - a.injuryRisk)
         .slice(0, 3)
         .forEach(p => {
           results.push({
             type: 'Player',
             name: `${p.firstName} ${p.lastName}`,
+            image: p.photo,
             path: `/team/${p.teamId}?player=${p.id}`,
             subtitle: p.teamName,
-            risk: p.relativeRisk ?? undefined,
+            risk: p.injuryRisk,
             isInjured: p.isInjured,
           });
         });
@@ -86,7 +88,6 @@ export function Navigation() {
       return results.slice(0, 5);
     }
 
-    // Teams — O(log n) BST prefix search with contains fallback
     const teamMatches = searchData.index
       ? searchTeams(searchData.index, query, 3)
       : searchData.teams.filter(t => t.name.toLowerCase().includes(query));
@@ -94,13 +95,13 @@ export function Navigation() {
       results.push({
         type: 'Team',
         name: team.name,
+        image: team.logo,
         path: `/team/${team.id}`,
         subtitle: `${team.squadSize} players · Avg risk ${team.avgRisk}%`,
         risk: team.avgRisk,
       });
     });
 
-    // Players — O(log n) BST prefix search with contains fallback
     const playerMatches = searchData.index
       ? searchPlayers(searchData.index, query, 8)
       : searchData.players.filter(p =>
@@ -108,19 +109,19 @@ export function Navigation() {
           p.lastName.toLowerCase().includes(query),
         );
     [...playerMatches]
-      .sort((a, b) => (b.relativeRisk ?? 0) - (a.relativeRisk ?? 0))
+      .sort((a, b) => b.injuryRisk - a.injuryRisk)
       .forEach(p => {
         results.push({
           type: 'Player',
           name: `${p.firstName} ${p.lastName}`,
+          image: p.photo,
           path: `/team/${p.teamId}?player=${p.id}`,
           subtitle: p.teamName,
-          risk: p.relativeRisk ?? undefined,
+          risk: p.injuryRisk,
           isInjured: p.isInjured,
         });
       });
 
-    // Injury regions matching query
     searchData.regions
       .filter(r => r.toLowerCase().includes(query))
       .forEach(region => {
@@ -139,6 +140,7 @@ export function Navigation() {
     navigate(path);
     setSearchQuery('');
     setShowDropdown(false);
+    setMobileSearchOpen(false);
   };
 
   const BADGE_COLORS: Record<SearchResult['type'], string> = {
@@ -151,8 +153,9 @@ export function Navigation() {
     <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-b border-[rgba(0,0,0,0.08)] z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
-          <Link to="/" className="hover:opacity-80 transition-opacity -ml-12">
+          <Link to="/" className="hover:opacity-80 transition-opacity -ml-2">
             <img src={logo} alt="2to3Weeks" className="h-8 w-auto" />
           </Link>
 
@@ -176,8 +179,8 @@ export function Navigation() {
             ))}
           </div>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md relative mx-4">
+          {/* Search Bar — full bar on desktop, hidden on mobile until icon tapped */}
+          <div className={`${mobileSearchOpen ? 'absolute top-16 left-0 right-0 px-4 py-2 bg-white/95 backdrop-blur-xl border-b border-[rgba(0,0,0,0.08)] z-40' : 'hidden'} lg:static lg:block lg:flex-1 lg:max-w-md lg:relative lg:mx-4 lg:bg-transparent lg:border-0 lg:py-0 lg:px-0`}>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,7 +202,7 @@ export function Navigation() {
 
             {/* Search Dropdown */}
             {showDropdown && searchResults.length > 0 && (
-              <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden">
+              <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden z-50">
                 {!searchQuery.trim() && (
                   <div className="px-4 py-2 bg-[#F5F6FA] border-b border-[rgba(0,0,0,0.06)]">
                     <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Recommended</span>
@@ -211,29 +214,45 @@ export function Navigation() {
                     onClick={() => handleResultClick(result.path)}
                     className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#F5F6FA] transition-colors text-left border-b border-[rgba(0,0,0,0.04)] last:border-b-0"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[#1A1A2E] font-medium truncate">{result.name}</div>
-                      {result.subtitle && <div className="text-sm text-[#6B7280] truncate">{result.subtitle}</div>}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {result.image ? (
+                        <img
+                          src={result.image}
+                          alt=""
+                          className={`flex-shrink-0 object-contain ${
+                            result.type === 'Player'
+                              ? 'w-8 h-8 rounded-full bg-[#F5F6FA]'
+                              : 'w-6 h-6 rounded'
+                          }`}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : result.type === 'Player' ? (
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-bold text-[#6B7280]">
+                          {result.name[0]}
+                        </div>
+                      ) : null}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[#1A1A2E] font-medium truncate">{result.name}</div>
+                        {result.subtitle && <div className="text-sm text-[#6B7280] truncate">{result.subtitle}</div>}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-                      {/* Risk / injured badge for players and teams */}
                       {result.type === 'Player' && (
                         result.isInjured ? (
                           <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
                             INJ
                           </span>
-                        ) : result.risk != null ? (
+                        ) : result.risk !== undefined ? (
                           <span
                             className="text-xs font-bold px-2 py-1 rounded-full text-white"
-                            style={{ fontFamily: 'var(--font-mono)', backgroundColor: getMultiplierColor(result.risk) }}
+                            style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}
                           >
-                            {result.risk.toFixed(1)}×
+                            {result.risk}%
                           </span>
                         ) : null
                       )}
 
-                      {/* Type badge */}
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${BADGE_COLORS[result.type]}`}>
                         {result.type}
                       </span>
@@ -272,6 +291,22 @@ export function Navigation() {
               </Link>
             )}
           </div>
+
+          {/* Search Icon - Mobile only */}
+          <button
+            onClick={() => { setMobileSearchOpen(prev => !prev); setMenuOpen(false); }}
+            className="lg:hidden flex items-center justify-center w-10 h-10 text-[#1A1A2E] hover:text-[#1A56DB] transition-colors"
+          >
+            {mobileSearchOpen ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            )}
+          </button>
 
           {/* Hamburger - Mobile */}
           <button

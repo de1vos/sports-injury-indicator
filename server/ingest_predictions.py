@@ -77,6 +77,11 @@ def parse_date(s) -> date | None:
         return None
 
 
+def parse_end_date(s) -> date | None:
+    d = parse_date(s)
+    return d if d and d < date.today() else None
+
+
 def parse_time(s) -> dtime | None:
     if not s:
         return None
@@ -409,7 +414,7 @@ def main():
                     "player_injury_type":     safe_str(inj.get("type"),        max_len=200, fallback="Unknown"),
                     "player_injury_days_out": inj.get("days_out") or 0,
                     "player_injury_start":    start,
-                    "player_injury_end":      parse_date(inj.get("end")),
+                    "player_injury_end":      parse_end_date(inj.get("end")),
                     "player_injury_severity": safe_str(inj.get("severity"),    max_len=50, fallback="Unknown"),
                     "player_injury_region":   safe_str(inj.get("body_region"), max_len=50, fallback="Unknown"),
                 })

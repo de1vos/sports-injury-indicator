@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, useLocation, useNavigate, Link } from 'react-router';
 import type { TeamOverviewItem } from '../api/mappers';
 import { getRiskColor, MATCH_DURATION, type Player, type SeasonStat } from '../data/mockData';
@@ -145,7 +145,7 @@ function InjuryHistoryTable({ player }: { player: Player }) {
                     <td className="py-3 px-2 text-[#6B7280]">{injury.region}</td>
                     <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.from}</td>
                     <td className="py-3 px-2 whitespace-nowrap font-mono text-xs">
-                      {injury.until && injury.until < new Date().toISOString().split('T')[0] ? (
+                      {injury.until ? (
                         <span className="text-[#1A1A2E]">{injury.until}</span>
                       ) : (
                         <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Ongoing</span>
@@ -205,6 +205,18 @@ export function TeamPage() {
   const [directPlayerId, setDirectPlayerId] = useState<string | null>(null);
   const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
   const { toggleFavorite, isFavorite } = useFavorites();
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    if (currentPlayerIndex === null) return;
+    const card = cardRefs.current[currentPlayerIndex];
+    const container = scrollContainerRef.current;
+    if (!card || !container) return;
+    const scrollTarget = card.offsetLeft - container.offsetWidth / 2 + card.offsetWidth / 2;
+    container.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+  }, [currentPlayerIndex]);
 
   // Use team passed via router state (from TeamsPage / HomePage) to avoid
   // a redundant GET /teams/overview call. Fall back to fetching if navigating directly.
@@ -374,13 +386,14 @@ export function TeamPage() {
       </div>
 
       {/* Mini Cards */}
-      <div className="overflow-x-auto touch-pan-x overscroll-x-contain py-5 mb-10">
+      <div ref={scrollContainerRef} className="overflow-x-auto touch-pan-x overscroll-x-contain py-5 mb-10">
         <div className="flex gap-2 justify-center min-w-max px-4">
           {sortedPlayers.map((player, index) => {
             const isInjured = player.riskLevel === 'Injured';
             return (
               <button
                 key={player.id}
+                ref={el => { cardRefs.current[index] = el; }}
                 onClick={() => { setDirectPlayerId(null); setCurrentPlayerIndex(index); }}
                 className={`w-[95px] h-[140px] rounded-2xl overflow-hidden transition-all flex-shrink-0 ${
                   index === currentPlayerIndex
@@ -486,7 +499,21 @@ export function TeamPage() {
                     onToggleFavorite={() => toggleFavorite(currentPlayer.id, { id: currentPlayer.id, teamId: teamId ?? '', firstName: currentPlayer.firstName, lastName: currentPlayer.lastName, photo: currentPlayer.photo, teamName: team?.name ?? '', position: currentPlayer.position, injuryTrend: currentPlayer.riskTrend, seasonalInjuries: currentPlayer.injuries, injuryRisk: currentPlayer.injuryRisk, injuryStatus: currentPlayer.riskLevel, minutesPlayed: currentPlayer.minutesPlayed })}
                   />
                 </div>
-              </div>
+                           </div>
+
+              {currentPlayer.riskFactors && currentPlayer.riskFactors.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
+                  <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Key Risk Drivers</h3>
+                  <ul className="space-y-2">
+                    {currentPlayer.riskFactors.map((factor, i) => (
+                      <li key={i} className="flex items-start gap-3 py-3 px-4 bg-[#FEF2F2] rounded-xl">
+                        <span className="text-[#DC2626] mt-0.5">⚠</span>
+                        <span className="text-sm text-[#1A1A2E] font-medium">{factor}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Injury Analysis */}
               <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
@@ -556,7 +583,6 @@ export function TeamPage() {
                 </div>
               </div>
 
-              <InjuryHistoryTable player={currentPlayer} />
             </div>
 
             {/* ── Right column: Chart · Performance/Stats toggle · Risk factors ── */}
@@ -687,19 +713,7 @@ export function TeamPage() {
                 )}
               </div>
 
-              {currentPlayer.riskFactors && currentPlayer.riskFactors.length > 0 && (
-                <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
-                  <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Risk Factors</h3>
-                  <ul className="space-y-2">
-                    {currentPlayer.riskFactors.map((factor, i) => (
-                      <li key={i} className="flex items-start gap-3 py-3 px-4 bg-[#FEF2F2] rounded-xl">
-                        <span className="text-[#DC2626] mt-0.5">⚠</span>
-                        <span className="text-sm text-[#1A1A2E] font-medium">{factor}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                      <InjuryHistoryTable player={currentPlayer} />
             </div>
           </>
         )}
