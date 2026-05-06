@@ -364,6 +364,9 @@ export function TeamPage() {
           >
             Avg Injury Risk: {team.avgRisk}%
           </span>
+          <span className="px-4 py-2 bg-white rounded-full text-sm font-medium text-[#1A1A2E] border border-[rgba(0,0,0,0.06)]">
+            Total injuries: {team.totalInjuries}
+          </span>
         </div>
       </div>
 
@@ -467,8 +470,216 @@ export function TeamPage() {
                 </button>
               </div>
             </div>
-            <SeasonStatisticsTable player={currentPlayer} />
-            <InjuryHistoryTable player={currentPlayer} />
+
+            {/* Graph */}
+            <div className="mt-6 w-full">
+              <PlayerInjuryRiskChart player={currentPlayer} currentGw={graphData?.currentGw} />
+            </div>
+
+            {/* Season Performance / Statistics toggle */}
+            <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6 mt-6 w-full">
+              <div className="flex gap-2 mb-5">
+                {(['performance', 'statistics'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setStatsTab(tab)}
+                    className={`flex-1 py-2 px-4 rounded-xl text-sm font-semibold transition-all ${
+                      statsTab === tab
+                        ? 'bg-[#1A56DB] text-white shadow-md'
+                        : 'bg-[#F5F6FA] text-[#6B7280] hover:bg-[#E5E7EB]'
+                    }`}
+                  >
+                    {tab === 'performance' ? 'Season Performance' : 'Statistics'}
+                  </button>
+                ))}
+              </div>
+
+              {statsTab === 'performance' && (() => {
+                const allSeasons = currentPlayer.seasonStats ?? [];
+                const SEASON_COLORS = ['#1A56DB', '#DC2626', '#0D9488', '#F59E0B', '#EA580C'];
+                const metrics: Array<{
+                  label: string;
+                  get: (r: SeasonStat) => number;
+                  fallback: number;
+                  max: number;
+                  fmt: (v: number) => string;
+                }> = [
+                  { label: 'Games Played',   get: r => r.appearances, fallback: currentPlayer.gamesPlayed,   max: 38,   fmt: v => String(v) },
+                  { label: 'Minutes Played', get: r => r.minutes,     fallback: currentPlayer.minutesPlayed, max: 3000, fmt: v => v.toLocaleString() },
+                  { label: 'Goals',          get: r => r.goals,       fallback: 0,                           max: 30,   fmt: v => String(v) },
+                  { label: 'Assists',        get: r => r.assists,     fallback: 0,                           max: 20,   fmt: v => String(v) },
+                  { label: 'Tackles',        get: r => r.tackles,     fallback: 0,                           max: 100,  fmt: v => String(v) },
+                ];
+                return (
+                  <div className="space-y-5">
+                    {metrics.map(({ label, get, fallback, max, fmt }) => {
+                      const bars: Array<{ season: string; value: number; color: string }> =
+                        allSeasons.length > 0
+                          ? allSeasons.map((r, i) => ({
+                              season: `${r.season}/${String(r.season + 1).slice(2)}`,
+                              value: get(r),
+                              color: SEASON_COLORS[i % SEASON_COLORS.length],
+                            }))
+                          : [{ season: '2025/26', value: fallback, color: SEASON_COLORS[0] }];
+                      const dynamicMax = bars.length > 0 ? Math.max(...bars.map(b => b.value), 1) : max;
+                      return (
+                        <div key={label}>
+                          <p className="text-sm font-semibold text-[#1A1A2E] mb-2">{label}</p>
+                          <div className="flex gap-2">
+                            {bars.map(({ season, value, color }) => (
+                              <div key={season} className="flex-1 flex flex-col items-center gap-1">
+                                <div className="w-full h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min((value / dynamicMax) * 100, 100)}%`, backgroundColor: color }}
+                                  />
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                                  <span className="text-[10px] font-medium" style={{ color }}>{season}</span>
+                                  <span className="text-[10px] font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                                    {fmt(value)}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              {statsTab === 'statistics' && (
+                <div className="overflow-x-auto -mx-1">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[rgba(0,0,0,0.06)]">
+                        {['Season', 'Apps', 'Mins', 'Goals', 'Ast', 'Rating', 'Tkl'].map((h, i) => (
+                          <th key={h} className={`py-2 px-2 text-xs text-[#6B7280] font-semibold ${i === 0 ? 'text-left' : 'text-center'}`}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentPlayer.seasonStats ? (
+                        currentPlayer.seasonStats.map(row => (
+                          <tr key={row.season} className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
+                            <td className="py-2.5 px-2 font-semibold text-[#1A1A2E]">{row.season}/{String(row.season + 1).slice(2)}</td>
+                            <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{row.appearances}</td>
+                            <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{row.minutes}</td>
+                            <td className="py-2.5 px-2 text-center font-mono font-bold text-[#1A1A2E]">{row.goals}</td>
+                            <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{row.assists}</td>
+                            <td className={`py-2.5 px-2 text-center font-mono font-bold ${row.rating >= 7 ? 'text-[#0D9488]' : row.rating >= 6.5 ? 'text-[#EA580C]' : 'text-[#DC2626]'}`}>{row.rating.toFixed(2)}</td>
+                            <td className="py-2.5 px-2 text-center font-mono text-[#6B7280]">{row.tackles}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <>
+                          <tr className="border-b border-[rgba(0,0,0,0.06)]">
+                            <td className="py-2.5 px-2 font-semibold text-[#1A1A2E]">2025/26</td>
+                            <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{currentPlayer.gamesPlayed}</td>
+                            <td className="py-2.5 px-2 text-center font-mono text-[#1A1A2E]">{currentPlayer.minutesPlayed}</td>
+                            {Array(4).fill(null).map((_, i) => <td key={i} className="py-2.5 px-2 text-center font-mono text-[#6B7280]">-</td>)}
+                          </tr>
+                          {['2024/25', '2023/24'].map(season => (
+                            <tr key={season} className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
+                              <td className="py-2.5 px-2 font-semibold text-[#1A1A2E]">{season}</td>
+                              {Array(6).fill(null).map((_, i) => <td key={i} className="py-2.5 px-2 text-center font-mono text-[#6B7280]">-</td>)}
+                            </tr>
+                          ))}
+                        </>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Key Risk Drivers */}
+            {currentPlayer.riskFactors && currentPlayer.riskFactors.length > 0 && (
+              <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6 mt-6 w-full">
+                <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Key Risk Drivers</h3>
+                <ul className="space-y-2">
+                  {currentPlayer.riskFactors.map((factor, i) => (
+                    <li key={i} className="flex items-start gap-3 py-3 px-4 bg-[#FEF2F2] rounded-xl">
+                      <span className="text-[#DC2626] mt-0.5">⚠</span>
+                      <span className="text-sm text-[#1A1A2E] font-medium">{factor}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Injury Analysis */}
+            <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6 mt-6 w-full">
+              <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Injury Analysis</h3>
+
+              {(() => {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const isInjured = currentPlayer.injuryRisk >= 99 || (currentPlayer.injuryHistory ?? []).some(entry => !entry.until || entry.until >= todayStr);
+                return (
+                  <div className="flex items-start justify-between p-4 bg-[#F5F6FA] rounded-2xl mb-5">
+                    <div>
+                      <div className="text-xs text-[#6B7280] mb-1">Injury Risk</div>
+                      <div className="text-3xl font-bold" style={{ fontFamily: 'var(--font-mono)', color: isInjured ? '#DC2626' : getRiskColor(currentPlayer.injuryRisk) }}>
+                        {isInjured ? 'INJURED' : `${currentPlayer.injuryRisk}%`}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-[#6B7280] mb-1">Injury Status</div>
+                      <span
+                        className="px-3 py-1 rounded-full text-sm font-bold"
+                        style={{ backgroundColor: isInjured ? '#DC2626' : '#0D9488', color: 'white' }}
+                      >
+                        {isInjured ? 'Injured' : 'Fit'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">Load Metrics</p>
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                {[
+                  { label: 'Season Injuries',  value: currentPlayer.injurySummaryData?.injuries_this_season  ?? currentPlayer.injuries,                                                                         red: (currentPlayer.injurySummaryData?.injuries_this_season ?? currentPlayer.injuries) >= 2 },
+                  { label: 'Matches Missed',   value: currentPlayer.injurySummaryData?.matches_missed_this_season ?? Math.round(currentPlayer.minutesMissed / MATCH_DURATION),                                 red: (currentPlayer.injurySummaryData?.matches_missed_this_season ?? Math.round(currentPlayer.minutesMissed / MATCH_DURATION)) >= 5 },
+                  { label: 'Days Since Inj.',  value: currentPlayer.injurySummaryData?.days_since_last_injury ?? currentPlayer.daysSinceLastInjury,                                                             red: (currentPlayer.injurySummaryData?.days_since_last_injury ?? currentPlayer.daysSinceLastInjury) < 14 },
+                  { label: 'Mins per Month',   value: Math.round(currentPlayer.minutesPlayed / 9.5),                                                                                                             red: false },
+                ].map(({ label, value, red }) => (
+                  <div key={label} className="flex flex-col gap-0.5 p-3 bg-[#F5F6FA] rounded-2xl">
+                    <span className="text-xs text-[#6B7280]">{label}</span>
+                    <span className="text-2xl font-bold" style={{ fontFamily: 'var(--font-mono)', color: red ? '#DC2626' : '#1A1A2E' }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 border-t border-[rgba(0,0,0,0.06)]">
+                <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">Match Stats</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: 'Goals',           value: s?.goals             ?? '-' },
+                    { label: 'Assists',         value: s?.assists           ?? '-' },
+                    { label: 'Duels',           value: s?.duels_total       ?? '-' },
+                    { label: 'Dribbles',        value: s?.dribbles_attempts ?? '-' },
+                    { label: 'Fouls Committed', value: s?.fouls_committed   ?? '-' },
+                    { label: 'Fouls Against',   value: s?.fouls_drawn       ?? currentPlayer.foulsAgainst ?? '-' },
+                    { label: 'Yellow Cards',    value: s?.yellow_cards      ?? '-' },
+                    { label: 'Red Cards',       value: s?.red_cards         ?? '-' },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex flex-col items-center p-3 bg-[#F5F6FA] rounded-xl">
+                      <span className="text-xs text-[#6B7280] mb-1 text-center leading-tight">{label}</span>
+                      <span className="text-lg font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Injury History */}
+            <div className="mt-6 w-full">
+              <InjuryHistoryTable player={currentPlayer} />
+            </div>
           </>
         )}
       </div>
