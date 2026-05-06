@@ -15,6 +15,7 @@ export interface SearchPlayer {
 export interface SearchTeam {
   id: string;
   name: string;
+  logo: string;
   avgRisk: number | null;
   squadSize: number;
 }
@@ -175,6 +176,7 @@ export function useSearchData() {
       const teams: SearchTeam[] = rawTeams.map(t => ({
         id: t.team_id.toString(),
         name: t.team_name,
+        logo: t.team_logo,
         avgRisk: t.avg_risk_pct,
         squadSize: t.squad_size,
       }));
