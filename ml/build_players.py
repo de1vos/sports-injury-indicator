@@ -72,11 +72,15 @@ def main():
         if not pl_stats:
             continue
 
-        # Pick the most recent PL stat block
+        # Pick the most recent PL stat block; use list position as tiebreaker so
+        # mid-season transfers resolve to the destination club (API returns chronologically).
         stat = max(
-            pl_stats,
-            key=lambda s: season_order.get(s.get("league", {}).get("season", 0), 0)
-        )
+            enumerate(pl_stats),
+            key=lambda x: (
+                season_order.get(x[1].get("league", {}).get("season", 0), 0),
+                x[0],
+            ),
+        )[1]
 
         season = stat.get("league", {}).get("season")
 
