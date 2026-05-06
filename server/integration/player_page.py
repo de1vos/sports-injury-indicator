@@ -117,7 +117,7 @@ def get_team_player_list(team_id: int, session: Session) -> List[TeamPlayerList]
             "player_id": row["player_id"],
             "player_first_name": row["player_first_name"],
             "player_last_name": row["player_last_name"],
-            "player_injury_risk": "injured" if float(row["player_injury_risk"]) >= 0.99 else round(float(row["player_injury_risk"]) * 100),
+            "player_injury_risk": "injured" if row["has_active_injury"] else round(float(row["player_injury_risk"]) * 100),
             "player_relative_risk": float(row["player_relative_risk"]) if row["player_relative_risk"] is not None else None,
         }
         for row in rows
@@ -144,7 +144,7 @@ def get_player_card(player_id: int, session: Session) -> PlayerCard | None:
         "nation_name": row["nation_name"],
         "player_injury_risk": round(injury_risk * 100),
         "player_relative_risk": float(row["player_relative_risk"]) if row["player_relative_risk"] is not None else None,
-        "player_injury_status": "injured" if injury_risk >= 0.99 else "available",
+        "player_injury_status": "injured" if row["has_active_injury"] else "available",
         "player_injury_trend": round(float(row["player_injury_trend"])) if row["player_injury_trend"] else 0,
         "player_season_injuries": row["player_season_injuries"],
         "player_season_minutes": row["player_season_minutes"],
