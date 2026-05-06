@@ -486,7 +486,21 @@ export function TeamPage() {
                     onToggleFavorite={() => toggleFavorite(currentPlayer.id, { id: currentPlayer.id, teamId: teamId ?? '', firstName: currentPlayer.firstName, lastName: currentPlayer.lastName, photo: currentPlayer.photo, teamName: team?.name ?? '', position: currentPlayer.position, injuryTrend: currentPlayer.riskTrend, seasonalInjuries: currentPlayer.injuries, injuryRisk: currentPlayer.injuryRisk, injuryStatus: currentPlayer.riskLevel, minutesPlayed: currentPlayer.minutesPlayed })}
                   />
                 </div>
-              </div>
+                           </div>
+
+              {currentPlayer.riskFactors && currentPlayer.riskFactors.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
+                  <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Risk Factors</h3>
+                  <ul className="space-y-2">
+                    {currentPlayer.riskFactors.map((factor, i) => (
+                      <li key={i} className="flex items-start gap-3 py-3 px-4 bg-[#FEF2F2] rounded-xl">
+                        <span className="text-[#DC2626] mt-0.5">⚠</span>
+                        <span className="text-sm text-[#1A1A2E] font-medium">{factor}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Injury Analysis */}
               <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
@@ -556,7 +570,6 @@ export function TeamPage() {
                 </div>
               </div>
 
-              <InjuryHistoryTable player={currentPlayer} />
             </div>
 
             {/* ── Right column: Chart · Performance/Stats toggle · Risk factors ── */}
@@ -687,19 +700,7 @@ export function TeamPage() {
                 )}
               </div>
 
-              {currentPlayer.riskFactors && currentPlayer.riskFactors.length > 0 && (
-                <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
-                  <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Key Risk Drivers</h3>
-                  <ul className="space-y-2">
-                    {currentPlayer.riskFactors.map((factor, i) => (
-                      <li key={i} className="flex items-start gap-3 py-3 px-4 bg-[#FEF2F2] rounded-xl">
-                        <span className="text-[#DC2626] mt-0.5">⚠</span>
-                        <span className="text-sm text-[#1A1A2E] font-medium">{factor}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                      <InjuryHistoryTable player={currentPlayer} />
             </div>
           </>
         )}
