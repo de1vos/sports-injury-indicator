@@ -79,7 +79,7 @@ def parse_date(s) -> date | None:
 
 def parse_end_date(s) -> date | None:
     d = parse_date(s)
-    return d if d and d <= date.today() else None
+    return d if d and d < date.today() else None
 
 
 def parse_time(s) -> dtime | None:
