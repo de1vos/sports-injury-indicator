@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router';
 import { getRiskColor } from '../data/mockData';
+import { getRelativeRiskMeta } from '../utils/risk';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSearchData, searchPlayers, searchTeams } from '../hooks/useSearchData';
 import { useAuth } from '../context/AuthContext';
@@ -236,21 +237,21 @@ export function Navigation() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-                        {result.type === 'Player' && (
-                          result.isInjured ? (
-                            <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
-                              INJ
-                            </span>
-                          ) : result.risk != null ? (
-                            <span
-                              className="text-xs font-bold px-2 py-1 rounded-full text-white"
-                              style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}
-                            >
-                              {result.risk}×
-                            </span>
-                          ) : null
-                        )}
+                    <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                      {result.type === 'Player' && (
+                        result.isInjured ? (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                            INJ
+                          </span>
+                        ) : result.risk != null ? (
+                          <span
+                            className="text-xs font-bold px-2 py-1 rounded-full text-white"
+                            style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRelativeRiskMeta(result.risk).color }}
+                          >
+                            {result.risk.toFixed(1)}×
+                          </span>
+                        ) : null
+                      )}
 
                         <span className={`text-xs font-medium px-2 py-1 rounded-full ${BADGE_COLORS[result.type]}`}>
                           {result.type}
