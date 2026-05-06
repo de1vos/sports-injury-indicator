@@ -2,7 +2,7 @@ name: Daily ML Refresh
 
 on:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '43 1 * * *'
   workflow_dispatch:
 
 permissions:
