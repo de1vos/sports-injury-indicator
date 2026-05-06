@@ -546,7 +546,8 @@ def main():
         else:
             fid_to_score = {}
 
-        trend     = []
+        trend        = []
+        scored_trend = []   # only entries with real model scores or "Injured" (no carry-forwards)
         last_risk = None
 
         for slot, fx in enumerate(ordered_fixtures, start=1):
@@ -573,9 +574,11 @@ def main():
 
             if injured:
                 risk_val = "Injured"
+                scored_trend.append({"gw": gw_key, "season": fx_season, "risk": "Injured"})
             elif fid in fid_to_score:
                 last_risk = fid_to_score[fid]
                 risk_val  = last_risk
+                scored_trend.append({"gw": gw_key, "season": fx_season, "risk": risk_val})
             else:
                 risk_val = last_risk if last_risk is not None else round(injury_risk, 4)
 
@@ -591,8 +594,11 @@ def main():
             elif isinstance(current_gw_entry["risk"], (int, float)):
                 injury_risk = float(current_gw_entry["risk"])
 
-        # Injury trend — week-over-week relative %
-        injury_trend = compute_injury_trend(trend)
+        # Injury trend — week-over-week relative % (scored fixtures only; 0 when injured)
+        if injury_risk >= 0.99:
+            injury_trend = 0.0
+        else:
+            injury_trend = compute_injury_trend(scored_trend)
 
         # Season stats — all available seasons, newest first
         all_season_stats = get_all_season_stats(
