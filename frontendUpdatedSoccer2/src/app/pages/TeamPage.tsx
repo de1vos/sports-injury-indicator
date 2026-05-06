@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, useLocation, useNavigate, Link } from 'react-router';
 import type { TeamOverviewItem } from '../api/mappers';
 import { getRiskColor, MATCH_DURATION, type Player, type SeasonStat } from '../data/mockData';
@@ -206,6 +206,18 @@ export function TeamPage() {
   const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
   const { toggleFavorite, isFavorite } = useFavorites();
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    if (currentPlayerIndex === null) return;
+    const card = cardRefs.current[currentPlayerIndex];
+    const container = scrollContainerRef.current;
+    if (!card || !container) return;
+    const scrollTarget = card.offsetLeft - container.offsetWidth / 2 + card.offsetWidth / 2;
+    container.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+  }, [currentPlayerIndex]);
+
   // Use team passed via router state (from TeamsPage / HomePage) to avoid
   // a redundant GET /teams/overview call. Fall back to fetching if navigating directly.
   const teamFromState = (location.state as { team?: TeamOverviewItem } | null)?.team;
@@ -374,13 +386,14 @@ export function TeamPage() {
       </div>
 
       {/* Mini Cards */}
-      <div className="overflow-x-auto touch-pan-x overscroll-x-contain py-5 mb-10">
+      <div ref={scrollContainerRef} className="overflow-x-auto touch-pan-x overscroll-x-contain py-5 mb-10">
         <div className="flex gap-2 justify-center min-w-max px-4">
           {sortedPlayers.map((player, index) => {
             const isInjured = player.riskLevel === 'Injured';
             return (
               <button
                 key={player.id}
+                ref={el => { cardRefs.current[index] = el; }}
                 onClick={() => { setDirectPlayerId(null); setCurrentPlayerIndex(index); }}
                 className={`w-[95px] h-[140px] rounded-2xl overflow-hidden transition-all flex-shrink-0 ${
                   index === currentPlayerIndex
