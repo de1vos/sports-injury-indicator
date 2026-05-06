@@ -364,9 +364,6 @@ export function TeamPage() {
           >
             Avg Injury Risk: {team.avgRisk}%
           </span>
-          <span className="px-4 py-2 bg-white rounded-full text-sm font-medium text-[#1A1A2E] border border-[rgba(0,0,0,0.06)]">
-            Total injuries: {team.totalInjuries}
-          </span>
         </div>
       </div>
 
