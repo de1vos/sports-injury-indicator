@@ -71,7 +71,7 @@ export function Navigation() {
         });
 
       [...searchData.players]
-        .sort((a, b) => b.injuryRisk - a.injuryRisk)
+        .sort((a, b) => (b.relativeRisk ?? 0) - (a.relativeRisk ?? 0))
         .slice(0, 3)
         .forEach(p => {
           results.push({
@@ -80,7 +80,7 @@ export function Navigation() {
             image: p.photo,
             path: `/team/${p.teamId}?player=${p.id}`,
             subtitle: p.teamName,
-            risk: p.injuryRisk,
+            risk: p.relativeRisk ?? undefined,
             isInjured: p.isInjured,
           });
         });
@@ -109,7 +109,7 @@ export function Navigation() {
           p.lastName.toLowerCase().includes(query),
         );
     [...playerMatches]
-      .sort((a, b) => b.injuryRisk - a.injuryRisk)
+      .sort((a, b) => (b.relativeRisk ?? 0) - (a.relativeRisk ?? 0))
       .forEach(p => {
         results.push({
           type: 'Player',
@@ -117,7 +117,7 @@ export function Navigation() {
           image: p.photo,
           path: `/team/${p.teamId}?player=${p.id}`,
           subtitle: p.teamName,
-          risk: p.injuryRisk,
+          risk: p.relativeRisk ?? undefined,
           isInjured: p.isInjured,
         });
       });
@@ -202,7 +202,7 @@ export function Navigation() {
 
             {/* Search Dropdown */}
             {showDropdown && searchResults.length > 0 && (
-              <div className="absolute top-full mt-2 w-72 bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden z-50">
+              <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden z-50">
                 {!searchQuery.trim() && (
                   <div className="px-4 py-2 bg-[#F5F6FA] border-b border-[rgba(0,0,0,0.06)]">
                     <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Recommended</span>
@@ -243,12 +243,12 @@ export function Navigation() {
                           <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
                             INJ
                           </span>
-                        ) : result.risk !== undefined ? (
+                        ) : result.risk != null ? (
                           <span
                             className="text-xs font-bold px-2 py-1 rounded-full text-white"
                             style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}
                           >
-                            {result.risk}%
+                            {result.risk}×
                           </span>
                         ) : null
                       )}
