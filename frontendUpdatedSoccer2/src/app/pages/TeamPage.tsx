@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, useLocation, useNavigate, Link } from 'react-router';
 import type { TeamOverviewItem } from '../api/mappers';
 import { getRiskColor, MATCH_DURATION, type Player, type SeasonStat } from '../data/mockData';
@@ -203,6 +203,7 @@ export function TeamPage() {
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number | null>(null);
   const [statsTab, setStatsTab] = useState<'performance' | 'statistics'>('performance');
   const { toggleFavorite, isFavorite } = useFavorites();
+  const miniCardsRef = useRef<HTMLDivElement | null>(null);
 
   // Use team passed via router state (from TeamsPage / HomePage) to avoid
   // a redundant GET /teams/overview call. Fall back to fetching if navigating directly.
@@ -286,6 +287,28 @@ export function TeamPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerList, sortedPlayers, targetedPlayerId]);
 
+  // Keep the active mini-card centered in its horizontal scroll strip whenever
+  // the selection changes (prev/next buttons, direct click, or deep link).
+  useEffect(() => {
+    if (currentPlayerIndex === null) return;
+    const container = miniCardsRef.current;
+    if (!container) return;
+    const button = container.querySelector<HTMLElement>(
+      `[data-player-index="${currentPlayerIndex}"]`
+    );
+    if (!button) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    const targetScrollLeft =
+      container.scrollLeft +
+      (buttonRect.left - containerRect.left) +
+      buttonRect.width / 2 -
+      container.clientWidth / 2;
+
+    container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+  }, [currentPlayerIndex, sortedPlayers.length]);
+
   // Loading gate
   if (teamsLoading || playersLoading) {
     return (
@@ -368,13 +391,14 @@ export function TeamPage() {
       </div>
 
       {/* Mini Cards */}
-      <div className="overflow-x-auto touch-pan-x overscroll-x-contain py-5 mb-10">
+      <div ref={miniCardsRef} className="overflow-x-auto touch-pan-x overscroll-x-contain py-5 mb-10">
         <div className="flex gap-2 justify-center min-w-max px-4">
           {sortedPlayers.map((player, index) => {
             const isInjured = player.riskLevel === 'Injured';
             return (
               <button
                 key={player.id}
+                data-player-index={index}
                 onClick={() => setCurrentPlayerIndex(index)}
                 className={`w-[95px] h-[120px] rounded-2xl overflow-hidden transition-all flex-shrink-0 ${
                   index === currentPlayerIndex
