@@ -522,22 +522,22 @@ export function TeamPage() {
                       return (
                         <div key={label}>
                           <p className="text-sm font-semibold text-[#1A1A2E] mb-2">{label}</p>
-                          <div className="flex gap-2">
+                            <div className="flex flex-col gap-2">
                             {bars.map(({ season, value, color }) => (
-                              <div key={season} className="flex-1 flex flex-col items-center gap-1">
-                                <div className="w-full h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
+                              <div key={season} className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 w-14 flex-shrink-0">
+                                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                                  <span className="text-[10px] font-medium" style={{ color }}>{season}</span>
+                                </div>
+                                <div className="flex-1 h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
                                   <div
                                     className="h-full rounded-full transition-all duration-500"
                                     style={{ width: `${Math.min((value / dynamicMax) * 100, 100)}%`, backgroundColor: color }}
                                   />
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                                  <span className="text-[10px] font-medium" style={{ color }}>{season}</span>
-                                  <span className="text-[10px] font-bold text-[#1A1A2E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                                    {fmt(value)}
-                                  </span>
-                                </div>
+                                <span className="text-[10px] font-bold text-[#1A1A2E] w-8 text-right flex-shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>
+                                  {fmt(value)}
+                                </span>
                               </div>
                             ))}
                           </div>
