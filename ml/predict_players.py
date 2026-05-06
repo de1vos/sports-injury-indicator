@@ -584,6 +584,8 @@ def main():
                 risk_val = last_risk if last_risk is not None else round(injury_risk, 4)
 
             trend.append({"gw": gw_key, "season": fx_season, "risk": risk_val})
+            if fid in fid_to_score or injured:
+                scored_trend.append({"gw": gw_key, "season": fx_season, "risk": risk_val})
 
         # Sync injury_risk to the current GW trend entry so card and graph always match.
         current_gw_entry = next(
