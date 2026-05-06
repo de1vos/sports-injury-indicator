@@ -572,13 +572,14 @@ def main():
                     injured = True
                     break
 
-            if injured:
-                risk_val = "Injured"
-                scored_trend.append({"gw": gw_key, "season": fx_season, "risk": "Injured"})
-            elif fid in fid_to_score:
+            # Actual participation data (player has feature row for this fixture) takes
+            # priority over the injury flag — a player who played clearly wasn't injured,
+            # which handles injuries with missing end dates in the source data.
+            if fid in fid_to_score:
                 last_risk = fid_to_score[fid]
                 risk_val  = last_risk
-                scored_trend.append({"gw": gw_key, "season": fx_season, "risk": risk_val})
+            elif injured:
+                risk_val = "Injured"
             else:
                 risk_val = last_risk if last_risk is not None else round(injury_risk, 4)
 
