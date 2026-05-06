@@ -145,7 +145,7 @@ function InjuryHistoryTable({ player }: { player: Player }) {
                     <td className="py-3 px-2 text-[#6B7280]">{injury.region}</td>
                     <td className="py-3 px-2 text-[#1A1A2E] whitespace-nowrap font-mono text-xs">{injury.from}</td>
                     <td className="py-3 px-2 whitespace-nowrap font-mono text-xs">
-                      {injury.until && injury.until < new Date().toISOString().split('T')[0] ? (
+                      {injury.until ? (
                         <span className="text-[#1A1A2E]">{injury.until}</span>
                       ) : (
                         <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Ongoing</span>
