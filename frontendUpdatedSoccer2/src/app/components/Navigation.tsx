@@ -180,7 +180,7 @@ export function Navigation() {
           </div>
 
           {/* Search Bar — full bar on desktop, hidden on mobile until icon tapped */}
-          <div className={`${mobileSearchOpen ? 'absolute top-16 left-0 right-0 px-4 py-2 bg-white/95 backdrop-blur-xl border-b border-[rgba(0,0,0,0.08)] z-40' : 'hidden'} lg:static lg:block lg:flex-1 lg:max-w-xs lg:relative lg:mx-4 lg:bg-transparent lg:border-0 lg:py-0 lg:px-0`}>
+          <div className={`${mobileSearchOpen ? 'absolute top-16 left-0 right-0 px-4 py-2 bg-white/95 backdrop-blur-xl border-b border-[rgba(0,0,0,0.08)] z-40' : 'hidden'} lg:static lg:block lg:flex-1 lg:max-w-md lg:relative lg:mx-4 lg:bg-transparent lg:border-0 lg:py-0 lg:px-0`}>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +202,7 @@ export function Navigation() {
 
             {/* Search Dropdown */}
             {showDropdown && searchResults.length > 0 && (
-              <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden z-50">
+              <div className="absolute top-full mt-2 w-72 bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden z-50">
                 {!searchQuery.trim() && (
                   <div className="px-4 py-2 bg-[#F5F6FA] border-b border-[rgba(0,0,0,0.06)]">
                     <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Recommended</span>
