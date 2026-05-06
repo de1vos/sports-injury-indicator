@@ -198,69 +198,69 @@ export function Navigation() {
                 className="w-full pl-11 pr-4 py-2.5 bg-[#F5F6FA] border border-transparent rounded-full text-[#1A1A2E] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:bg-white transition-all"
                 style={{ fontFamily: 'var(--font-sans)' }}
               />
-            </div>
 
-            {/* Search Dropdown */}
-            {showDropdown && searchResults.length > 0 && (
-              <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden z-50">
-                {!searchQuery.trim() && (
-                  <div className="px-4 py-2 bg-[#F5F6FA] border-b border-[rgba(0,0,0,0.06)]">
-                    <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Recommended</span>
-                  </div>
-                )}
-                {searchResults.map((result, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleResultClick(result.path)}
-                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#F5F6FA] transition-colors text-left border-b border-[rgba(0,0,0,0.04)] last:border-b-0"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {result.image ? (
-                        <img
-                          src={result.image}
-                          alt=""
-                          className={`flex-shrink-0 object-contain ${
-                            result.type === 'Player'
-                              ? 'w-8 h-8 rounded-full bg-[#F5F6FA]'
-                              : 'w-6 h-6 rounded'
-                          }`}
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      ) : result.type === 'Player' ? (
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-bold text-[#6B7280]">
-                          {result.name[0]}
+              {/* Search Dropdown — inside the relative wrapper so w-full matches the input width */}
+              {showDropdown && searchResults.length > 0 && (
+                <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden z-50">
+                  {!searchQuery.trim() && (
+                    <div className="px-4 py-2 bg-[#F5F6FA] border-b border-[rgba(0,0,0,0.06)]">
+                      <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Recommended</span>
+                    </div>
+                  )}
+                  {searchResults.map((result, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleResultClick(result.path)}
+                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#F5F6FA] transition-colors text-left border-b border-[rgba(0,0,0,0.04)] last:border-b-0"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {result.image ? (
+                          <img
+                            src={result.image}
+                            alt=""
+                            className={`flex-shrink-0 object-contain ${
+                              result.type === 'Player'
+                                ? 'w-8 h-8 rounded-full bg-[#F5F6FA]'
+                                : 'w-6 h-6 rounded'
+                            }`}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : result.type === 'Player' ? (
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-bold text-[#6B7280]">
+                            {result.name[0]}
+                          </div>
+                        ) : null}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[#1A1A2E] font-medium truncate">{result.name}</div>
+                          {result.subtitle && <div className="text-sm text-[#6B7280] truncate">{result.subtitle}</div>}
                         </div>
-                      ) : null}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[#1A1A2E] font-medium truncate">{result.name}</div>
-                        {result.subtitle && <div className="text-sm text-[#6B7280] truncate">{result.subtitle}</div>}
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-                      {result.type === 'Player' && (
-                        result.isInjured ? (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
-                            INJ
-                          </span>
-                        ) : result.risk != null ? (
-                          <span
-                            className="text-xs font-bold px-2 py-1 rounded-full text-white"
-                            style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}
-                          >
-                            {result.risk}×
-                          </span>
-                        ) : null
-                      )}
+                      <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                        {result.type === 'Player' && (
+                          result.isInjured ? (
+                            <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                              INJ
+                            </span>
+                          ) : result.risk != null ? (
+                            <span
+                              className="text-xs font-bold px-2 py-1 rounded-full text-white"
+                              style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}
+                            >
+                              {result.risk}×
+                            </span>
+                          ) : null
+                        )}
 
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${BADGE_COLORS[result.type]}`}>
-                        {result.type}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${BADGE_COLORS[result.type]}`}>
+                          {result.type}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* User Icon - Desktop */}
