@@ -296,7 +296,7 @@ export function Navigation() {
           {/* Search Icon - Mobile only */}
           <button
             onClick={() => { setMobileSearchOpen(prev => !prev); setMenuOpen(false); }}
-            className="lg:hidden flex items-center justify-center w-10 h-10 text-[#1A1A2E] hover:text-[#1A56DB] transition-colors"
+            className="lg:hidden flex items-center justify-center w-10 h-10 text-[#1A1A2E] hover:text-[#1A56DB] transition-colors ml-auto"
           >
             {mobileSearchOpen ? (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
