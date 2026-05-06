@@ -130,12 +130,7 @@ function getInjurySpans(data: ChartPoint[]): Array<{ x1: string; x2: string }> {
   return spans;
 }
 
-const getRiskZoneColor = (risk: number) => {
-  if (risk > 50) return '#DC2626';
-  if (risk > 35) return '#EA580C';
-  if (risk > 20) return '#0D9488';
-  return '#1A56DB';
-};
+const getRiskZoneColor = (_risk: number) => '#1A56DB';
 
 const ANIM_DURATION = 1400;
 
@@ -349,17 +344,6 @@ export function PlayerInjuryRiskChart({ player, currentGw: currentGwProp }: { pl
       </div>
 
       <div className="mt-6 flex items-center justify-center gap-6 flex-wrap text-xs">
-        {[
-          { color: '#1A56DB', label: 'Low (0-20%)' },
-          { color: '#0D9488', label: 'Moderate (20-35%)' },
-          { color: '#EA580C', label: 'Elevated (35-50%)' },
-          { color: '#DC2626', label: 'High (50%+)' },
-        ].map(({ color: c, label }) => (
-          <div key={label} className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: c }} />
-            <span className="text-[#6B7280]">{label}</span>
-          </div>
-        ))}
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#6B7280]" />
           <span className="text-[#6B7280]">Injured</span>
