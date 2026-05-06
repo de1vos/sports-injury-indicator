@@ -9,6 +9,7 @@ Output: data/raw/players_season_stats.json
         data/progress.json
 """
 
+import argparse
 import json
 import time
 import requests
@@ -55,6 +56,13 @@ def fetch_page(season: int, page: int) -> dict:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--season", type=int, default=None,
+                        help="Only fetch a single season (e.g. --season 2025)")
+    args = parser.parse_args()
+
+    seasons = [args.season] if args.season else ALL_SEASONS
+
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
     progress = load_progress()
@@ -66,7 +74,7 @@ def main():
     total_calls   = 0
     total_players = len(results)
 
-    for season in ALL_SEASONS:
+    for season in seasons:
         print(f"\n── Season {season} ────────────────────────────")
 
         # Fetch page 1 first to discover total pages

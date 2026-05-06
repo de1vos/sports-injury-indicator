@@ -50,6 +50,13 @@ jobs:
           python collect_fixtures_upcoming.py --force
           python collect_match_stats.py
 
+      - name: Refresh current season player stats
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          cd ml
+          python collect_players.py --season 2025
+
       - name: Rebuild match_stats.csv (only if historical cache available)
         if: steps.raw-cache.outputs.cache-hit == 'true'
         run: |
