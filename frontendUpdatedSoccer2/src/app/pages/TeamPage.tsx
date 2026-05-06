@@ -512,11 +512,11 @@ export function TeamPage() {
                     {metrics.map(({ label, get, fallback, max, fmt }) => {
                       const bars: Array<{ season: string; value: number; color: string }> =
                         allSeasons.length > 0
-                          ? allSeasons.map((r, i) => ({
-                              season: `${r.season}/${String(r.season + 1).slice(2)}`,
-                              value: get(r),
-                              color: SEASON_COLORS[i % SEASON_COLORS.length],
-                            }))
+                          ? [...allSeasons].reverse().map((r, i) => ({
+                                season: `${r.season}/${String(r.season + 1).slice(2)}`,
+                                value: get(r),
+                                color: SEASON_COLORS[i % SEASON_COLORS.length],
+                              }))
                           : [{ season: '2025/26', value: fallback, color: SEASON_COLORS[0] }];
                       const dynamicMax = bars.length > 0 ? Math.max(...bars.map(b => b.value), 1) : max;
                       return (
