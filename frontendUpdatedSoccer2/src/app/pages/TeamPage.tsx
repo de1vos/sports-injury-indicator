@@ -834,7 +834,7 @@ export function TeamPage() {
                       {metrics.map(({ label, get, fallback, max, fmt }) => {
                         const bars: Array<{ season: string; value: number; color: string }> =
                           allSeasons.length > 0
-                            ? allSeasons.map((r, i) => ({
+                            ? [...allSeasons].reverse().map((r, i) => ({
                                 season: `${r.season}/${String(r.season + 1).slice(2)}`,
                                 value: get(r),
                                 color: SEASON_COLORS[i % SEASON_COLORS.length],
