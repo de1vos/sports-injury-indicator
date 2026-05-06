@@ -196,13 +196,20 @@ def _create_mv_team_player_list(conn: Connection) -> None:
             p.player_first_name,
             p.player_last_name,
             p.player_injury_risk,
-            p.player_relative_risk
+            p.player_relative_risk,
+            CASE WHEN ai.player_id IS NOT NULL THEN 1 ELSE 0 END AS has_active_injury
         FROM player p
         JOIN mv_teams_overview tov ON tov.team_id = p.team_id
         JOIN (
             SELECT player_id FROM player_season
             WHERE player_season_year = (SELECT current_season_year FROM season_meta)
         ) active ON active.player_id = p.player_id
+        LEFT JOIN (
+            SELECT DISTINCT ps.player_id
+            FROM player_injury pi
+            JOIN player_season ps ON ps.player_season_id = pi.player_season_id
+            WHERE pi.player_injury_end IS NULL
+        ) ai ON ai.player_id = p.player_id
         ORDER BY p.player_last_name
     """))
     conn.execute(text(
@@ -251,12 +258,19 @@ def _create_mv_player_card(conn: Connection) -> None:
             gd.player_injury_trend,
             lss.player_season_minutes,
             lss.player_season_games_missed,
-            COALESCE(si.season_injuries, 0) AS player_season_injuries
+            COALESCE(si.season_injuries, 0) AS player_season_injuries,
+            CASE WHEN ai.player_id IS NOT NULL THEN 1 ELSE 0 END AS has_active_injury
         FROM player p
         JOIN nation n ON n.nation_id = p.nation_id
         LEFT JOIN graph_data gd ON gd.player_id = p.player_id
         LEFT JOIN latest_season_stats lss ON lss.player_id = p.player_id
         LEFT JOIN season_injuries si ON si.player_id = p.player_id
+        LEFT JOIN (
+            SELECT DISTINCT ps.player_id
+            FROM player_injury pi
+            JOIN player_season ps ON ps.player_season_id = pi.player_season_id
+            WHERE pi.player_injury_end IS NULL
+        ) ai ON ai.player_id = p.player_id
     """))
     conn.execute(text("CREATE UNIQUE INDEX uq_mv_pc_player_id ON mv_player_card (player_id)"))
 
