@@ -33,6 +33,7 @@ export function Navigation() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -177,8 +178,8 @@ export function Navigation() {
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md relative mx-4">
-            <div className="relative">
+          <div className="hidden lg:block flex-1 max-w-md relative mx-4">
+          <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -273,6 +274,16 @@ export function Navigation() {
             )}
           </div>
 
+               {/* Search Icon - Mobile */}
+          <button
+            onClick={() => { setMobileSearchOpen(prev => !prev); setMenuOpen(false); }}
+            className="lg:hidden flex items-center justify-center w-10 h-10 text-[#1A1A2E] hover:text-[#1A56DB] transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
           {/* Hamburger - Mobile */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
@@ -289,6 +300,65 @@ export function Navigation() {
             )}
           </button>
         </div>
+
+               {/* Mobile Search Expansion */}
+        {mobileSearchOpen && (
+          <div className="lg:hidden border-t border-[rgba(0,0,0,0.06)] py-3 px-2 relative">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search players, teams, injury regions..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }}
+                onFocus={() => { setShowDropdown(true); loadSearch(); }}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                className="w-full pl-11 pr-4 py-2.5 bg-[#F5F6FA] border border-transparent rounded-full text-[#1A1A2E] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:bg-white transition-all"
+                style={{ fontFamily: 'var(--font-sans)' }}
+              />
+            </div>
+            {showDropdown && searchResults.length > 0 && (
+              <div className="absolute left-2 right-2 top-full mt-1 bg-white rounded-2xl shadow-lg border border-[rgba(0,0,0,0.06)] overflow-hidden z-50">
+                {!searchQuery.trim() && (
+                  <div className="px-4 py-2 bg-[#F5F6FA] border-b border-[rgba(0,0,0,0.06)]">
+                    <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Recommended</span>
+                  </div>
+                )}
+                {searchResults.map((result, index) => (
+                  <button
+                    key={index}
+                    onClick={() => { handleResultClick(result.path); setMobileSearchOpen(false); }}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#F5F6FA] transition-colors text-left border-b border-[rgba(0,0,0,0.04)] last:border-b-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[#1A1A2E] font-medium truncate">{result.name}</div>
+                      {result.subtitle && <div className="text-sm text-[#6B7280] truncate">{result.subtitle}</div>}
+                    </div>
+                    <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                      {result.type === 'Player' && (
+                        result.isInjured ? (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700">INJ</span>
+                        ) : result.risk !== undefined ? (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full text-white" style={{ fontFamily: 'var(--font-mono)', backgroundColor: getRiskColor(result.risk) }}>
+                            {result.risk}%
+                          </span>
+                        ) : null
+                      )}
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${BADGE_COLORS[result.type]}`}>
+                        {result.type}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Mobile Menu */}
         {menuOpen && (
