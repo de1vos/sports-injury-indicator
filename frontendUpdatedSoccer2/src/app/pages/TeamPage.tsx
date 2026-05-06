@@ -490,7 +490,7 @@ export function TeamPage() {
 
               {currentPlayer.riskFactors && currentPlayer.riskFactors.length > 0 && (
                 <div className="bg-white rounded-3xl shadow-sm border border-[rgba(0,0,0,0.06)] p-6">
-                  <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Risk Factors</h3>
+                  <h3 className="text-xl font-bold text-[#1A1A2E] mb-4">Key Risk Drivers</h3>
                   <ul className="space-y-2">
                     {currentPlayer.riskFactors.map((factor, i) => (
                       <li key={i} className="flex items-start gap-3 py-3 px-4 bg-[#FEF2F2] rounded-xl">
