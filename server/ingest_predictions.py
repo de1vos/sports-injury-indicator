@@ -409,13 +409,22 @@ def main():
                 if psid is None:
                     continue
 
+                end_date = parse_end_date(inj.get("end"))
+                days_out = (inj.get("days_out") or 0) if end_date is not None else (date.today() - start).days
+                if end_date is None:
+                    if days_out >= 91:   severity = "Long-term"
+                    elif days_out >= 29: severity = "Severe"
+                    elif days_out >= 8:  severity = "Moderate"
+                    else:                severity = "Minor"
+                else:
+                    severity = safe_str(inj.get("severity"), max_len=50, fallback="Unknown")
                 injury_rows.append({
                     "player_season_id":       psid,
                     "player_injury_type":     safe_str(inj.get("type"),        max_len=200, fallback="Unknown"),
-                    "player_injury_days_out": inj.get("days_out") or 0,
+                    "player_injury_days_out": days_out,
                     "player_injury_start":    start,
-                    "player_injury_end":      parse_end_date(inj.get("end")),
-                    "player_injury_severity": safe_str(inj.get("severity"),    max_len=50, fallback="Unknown"),
+                    "player_injury_end":      end_date,
+                    "player_injury_severity": severity,
                     "player_injury_region":   safe_str(inj.get("body_region"), max_len=50, fallback="Unknown"),
                 })
 
