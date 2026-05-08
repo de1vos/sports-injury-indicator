@@ -1,7 +1,7 @@
 {
   "current_gameweek": 35,
   "current_season": 2025,
-  "generated_at": "2026-05-07T05:37:25.702590+00:00",
+  "generated_at": "2026-05-08T05:13:31.126913+00:00",
   "players": [
     {
       "player_id": 22,
@@ -606,9 +606,9 @@
         {
           "type": "Groin Injury",
           "start": "2026-04-22",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 21,
+          "severity": "Moderate",
           "body_region": "Groin"
         },
         {
@@ -3620,9 +3620,9 @@
         {
           "type": "Thigh Injury",
           "start": "2026-05-03",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 10,
+          "severity": "Moderate",
           "body_region": "Thigh"
         },
         {
@@ -3986,8 +3986,8 @@
         {
           "type": "Back Injury",
           "start": "2025-12-15",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-13",
+          "days_out": 149,
           "severity": "Long-term",
           "body_region": "Back"
         },
@@ -5385,9 +5385,9 @@
         {
           "type": "Knee Injury",
           "start": "2026-03-14",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 60,
+          "severity": "Severe",
           "body_region": "Knee"
         },
         {
@@ -5802,8 +5802,8 @@
         {
           "type": "Knee Injury",
           "start": "2026-01-19",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-13",
+          "days_out": 114,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -8151,8 +8151,8 @@
         {
           "type": "Thigh Injury",
           "start": "2026-01-01",
-          "end": "2026-05-07",
-          "days_out": 126,
+          "end": null,
+          "days_out": null,
           "severity": "Long-term",
           "body_region": "Thigh"
         },
@@ -8531,9 +8531,9 @@
         {
           "type": "Ankle Injury",
           "start": "2026-05-02",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 11,
+          "severity": "Moderate",
           "body_region": "Ankle"
         },
         {
@@ -8887,9 +8887,9 @@
         {
           "type": "Inactive",
           "start": "2026-05-04",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 9,
+          "severity": "Moderate",
           "body_region": "Other"
         },
         {
@@ -12560,8 +12560,8 @@
         {
           "type": "Knee Injury",
           "start": "2025-11-29",
-          "end": "2026-05-06",
-          "days_out": 158,
+          "end": null,
+          "days_out": null,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -14601,8 +14601,8 @@
         {
           "type": "Back Injury",
           "start": "2025-11-08",
-          "end": "2026-05-06",
-          "days_out": 179,
+          "end": null,
+          "days_out": null,
           "severity": "Long-term",
           "body_region": "Back"
         },
@@ -16278,9 +16278,9 @@
         {
           "type": "Hamstring Injury",
           "start": "2026-04-25",
-          "end": "2026-05-08",
-          "days_out": 13,
-          "severity": "Moderate",
+          "end": null,
+          "days_out": null,
+          "severity": "Long-term",
           "body_region": "Thigh"
         },
         {
@@ -18985,9 +18985,9 @@
         {
           "type": "Hamstring Injury",
           "start": "2026-02-28",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 74,
+          "severity": "Severe",
           "body_region": "Thigh"
         },
         {
@@ -20561,9 +20561,9 @@
         {
           "type": "Hamstring Injury",
           "start": "2026-05-02",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 11,
+          "severity": "Moderate",
           "body_region": "Thigh"
         },
         {
@@ -20876,9 +20876,9 @@
         {
           "type": "Wrist Injury",
           "start": "2026-04-12",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-06",
+          "days_out": 24,
+          "severity": "Moderate",
           "body_region": "Arm"
         },
         {
@@ -21564,8 +21564,8 @@
         {
           "type": "Foot Injury",
           "start": "2026-01-26",
-          "end": "2026-05-08",
-          "days_out": 102,
+          "end": null,
+          "days_out": null,
           "severity": "Long-term",
           "body_region": "Foot"
         },
@@ -25275,9 +25275,9 @@
         {
           "type": "Knee Injury",
           "start": "2026-04-25",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 18,
+          "severity": "Moderate",
           "body_region": "Knee"
         },
         {
@@ -27439,9 +27439,9 @@
         {
           "type": "Ankle Injury",
           "start": "2026-04-11",
-          "end": "2026-05-06",
-          "days_out": 25,
-          "severity": "Moderate",
+          "end": null,
+          "days_out": null,
+          "severity": "Long-term",
           "body_region": "Ankle"
         },
         {
@@ -28991,9 +28991,9 @@
         {
           "type": "Neck Injury",
           "start": "2026-04-25",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 18,
+          "severity": "Moderate",
           "body_region": "Neck"
         },
         {
@@ -30373,8 +30373,8 @@
         {
           "type": "Broken Leg",
           "start": "2026-01-17",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-13",
+          "days_out": 116,
           "severity": "Long-term",
           "body_region": "Leg"
         },
@@ -31837,8 +31837,8 @@
         {
           "type": "Knee Injury",
           "start": "2025-11-22",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-13",
+          "days_out": 172,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -32439,9 +32439,9 @@
         {
           "type": "Thigh Injury",
           "start": "2026-04-25",
-          "end": "2026-05-06",
-          "days_out": 11,
-          "severity": "Moderate",
+          "end": null,
+          "days_out": null,
+          "severity": "Long-term",
           "body_region": "Thigh"
         },
         {
@@ -34580,9 +34580,9 @@
         {
           "type": "Calf Injury",
           "start": "2026-05-03",
-          "end": "2026-05-07",
-          "days_out": 4,
-          "severity": "Minor",
+          "end": null,
+          "days_out": null,
+          "severity": "Long-term",
           "body_region": "Calf"
         },
         {
@@ -34919,9 +34919,9 @@
         {
           "type": "Achilles Tendon Injury",
           "start": "2026-04-19",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 24,
+          "severity": "Moderate",
           "body_region": "Achilles"
         },
         {
@@ -35248,8 +35248,8 @@
         {
           "type": "Knee Injury",
           "start": "2026-01-17",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-13",
+          "days_out": 116,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -35539,8 +35539,8 @@
         {
           "type": "Knee Injury",
           "start": "2026-02-01",
-          "end": "2026-05-08",
-          "days_out": 96,
+          "end": null,
+          "days_out": null,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -37386,9 +37386,9 @@
         {
           "type": "Inactive",
           "start": "2026-05-04",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 9,
+          "severity": "Moderate",
           "body_region": "Other"
         },
         {
@@ -39683,8 +39683,8 @@
         {
           "type": "Knee Injury",
           "start": "2025-10-20",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-13",
+          "days_out": 205,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -40800,8 +40800,8 @@
         {
           "type": "Knee Injury",
           "start": "2025-12-07",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-13",
+          "days_out": 157,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -41980,9 +41980,9 @@
         {
           "type": "Knee Injury",
           "start": "2026-03-16",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 58,
+          "severity": "Severe",
           "body_region": "Knee"
         },
         {
@@ -43050,8 +43050,8 @@
         {
           "type": "Knee Injury",
           "start": "2025-09-27",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-13",
+          "days_out": 228,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -43317,9 +43317,9 @@
         {
           "type": "Hamstring Injury",
           "start": "2026-04-21",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 22,
+          "severity": "Moderate",
           "body_region": "Thigh"
         },
         {
@@ -43657,6 +43657,265 @@
         "away_team": "Brentford",
         "away_logo": "https://media.api-sports.io/football/teams/55.png",
         "venue": "Etihad Stadium",
+        "round": "Regular Season - 36"
+      },
+      "relative_risk": null
+    },
+    {
+      "player_id": 464004,
+      "name": "Alysson Edward",
+      "firstname": "Alysson Edward Franco",
+      "lastname": "da Rocha dos Santos",
+      "photo": "https://media.api-sports.io/football/players/464004.png",
+      "team": "Aston Villa",
+      "team_id": 66,
+      "team_short": "AVL",
+      "team_logo": "https://media.api-sports.io/football/teams/66.png",
+      "team_color": "#95BFE5",
+      "position": "Attacker",
+      "age": 19,
+      "height": 182,
+      "weight": 77,
+      "nationality": "Brazil",
+      "kit_number": 47,
+      "injury_risk": 0.99,
+      "risk_level": "Critical",
+      "risk_factor_1": "3 injuries in last 24 months",
+      "risk_factor_2": "Recovery times trending longer",
+      "risk_factor_3": "Recently returned from injury (6 days ago)",
+      "injury_trend": 0.0,
+      "injury_risk_trend": [
+        {
+          "gw": "GW1",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW2",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW3",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW4",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW5",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW6",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW7",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW8",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW9",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW10",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW11",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW12",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW13",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW14",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW15",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW16",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW17",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW18",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW19",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW20",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW21",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW22",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW23",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW24",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW25",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW26",
+          "season": 2025,
+          "risk": 0.0337
+        },
+        {
+          "gw": "GW27",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW28",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW29",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW30",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW31",
+          "season": 2025,
+          "risk": 0.0492
+        },
+        {
+          "gw": "GW32",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW33",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW34",
+          "season": 2025,
+          "risk": "Injured"
+        },
+        {
+          "gw": "GW35",
+          "season": 2025,
+          "risk": "Injured"
+        }
+      ],
+      "season_stats": [
+        {
+          "season": 2025,
+          "appearances": 3,
+          "minutes": 56,
+          "rating": 6.53,
+          "goals": 0,
+          "assists": 0,
+          "tackles": 0,
+          "interceptions": 1,
+          "duels_total": 3,
+          "duels_won": 3,
+          "dribbles_attempts": 2,
+          "dribbles_success": 2,
+          "fouls_committed": 0,
+          "fouls_drawn": 1,
+          "yellow_cards": 0,
+          "red_cards": 0,
+          "games_missed": 10
+        }
+      ],
+      "workload": {
+        "minutes_last_30d": 29,
+        "matches_last_30d": 2,
+        "acute_chronic_ratio": 1.79,
+        "match_density_14d": 1,
+        "fouls_against_per_90": 3.1,
+        "consecutive_90min_starts": 0
+      },
+      "injury_summary": {
+        "career_total_injuries": 3,
+        "injuries_this_season": 3,
+        "days_since_last_injury": 6,
+        "matches_missed_this_season": 3,
+        "minutes_missed_this_season": 270,
+        "matches_missed_career": null
+      },
+      "injury_history": [
+        {
+          "type": "Ankle Injury",
+          "start": "2025-08-30",
+          "end": "2025-09-04",
+          "days_out": 5,
+          "severity": "Minor",
+          "body_region": "Ankle"
+        }
+      ],
+      "next_match": {
+        "fixture_id": 1379320,
+        "date": "2026-05-10T13:00:00+00:00",
+        "home_team": "Burnley",
+        "home_logo": "https://media.api-sports.io/football/teams/44.png",
+        "away_team": "Aston Villa",
+        "away_logo": "https://media.api-sports.io/football/teams/66.png",
+        "venue": "Turf Moor",
         "round": "Regular Season - 36"
       },
       "relative_risk": null
@@ -122033,6 +122292,14 @@
       },
       "injury_history": [
         {
+          "type": "Broken Leg",
+          "start": "2026-05-10",
+          "end": null,
+          "days_out": null,
+          "severity": "Long-term",
+          "body_region": "Leg"
+        },
+        {
           "type": "Knee Injury",
           "start": "2026-02-07",
           "end": "2026-04-11",
@@ -129722,9 +129989,9 @@
         {
           "type": "Concussion",
           "start": "2026-05-09",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-13",
+          "days_out": 4,
+          "severity": "Minor",
           "body_region": "Head"
         },
         {
@@ -134926,265 +135193,6 @@
         "away_team": "Manchester United",
         "away_logo": "https://media.api-sports.io/football/teams/33.png",
         "venue": "Stadium of Light",
-        "round": "Regular Season - 36"
-      },
-      "relative_risk": 0.819
-    },
-    {
-      "player_id": 464004,
-      "name": "Alysson Edward",
-      "firstname": "Alysson Edward Franco",
-      "lastname": "da Rocha dos Santos",
-      "photo": "https://media.api-sports.io/football/players/464004.png",
-      "team": "Aston Villa",
-      "team_id": 66,
-      "team_short": "AVL",
-      "team_logo": "https://media.api-sports.io/football/teams/66.png",
-      "team_color": "#95BFE5",
-      "position": "Attacker",
-      "age": 19,
-      "height": 182,
-      "weight": 77,
-      "nationality": "Brazil",
-      "kit_number": 47,
-      "injury_risk": 0.0492,
-      "risk_level": "Low",
-      "risk_factor_1": "3 injuries in last 24 months",
-      "risk_factor_2": "Recovery times trending longer",
-      "risk_factor_3": "Recently returned from injury (6 days ago)",
-      "injury_trend": 0.0,
-      "injury_risk_trend": [
-        {
-          "gw": "GW1",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW2",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW3",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW4",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW5",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW6",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW7",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW8",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW9",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW10",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW11",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW12",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW13",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW14",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW15",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW16",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW17",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW18",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW19",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW20",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW21",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW22",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW23",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW24",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW25",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW26",
-          "season": 2025,
-          "risk": 0.0337
-        },
-        {
-          "gw": "GW27",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW28",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW29",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW30",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW31",
-          "season": 2025,
-          "risk": 0.0492
-        },
-        {
-          "gw": "GW32",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW33",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW34",
-          "season": 2025,
-          "risk": "Injured"
-        },
-        {
-          "gw": "GW35",
-          "season": 2025,
-          "risk": 0.0492
-        }
-      ],
-      "season_stats": [
-        {
-          "season": 2025,
-          "appearances": 3,
-          "minutes": 56,
-          "rating": 6.53,
-          "goals": 0,
-          "assists": 0,
-          "tackles": 0,
-          "interceptions": 1,
-          "duels_total": 3,
-          "duels_won": 3,
-          "dribbles_attempts": 2,
-          "dribbles_success": 2,
-          "fouls_committed": 0,
-          "fouls_drawn": 1,
-          "yellow_cards": 0,
-          "red_cards": 0,
-          "games_missed": 9
-        }
-      ],
-      "workload": {
-        "minutes_last_30d": 29,
-        "matches_last_30d": 2,
-        "acute_chronic_ratio": 1.79,
-        "match_density_14d": 1,
-        "fouls_against_per_90": 3.1,
-        "consecutive_90min_starts": 0
-      },
-      "injury_summary": {
-        "career_total_injuries": 3,
-        "injuries_this_season": 3,
-        "days_since_last_injury": 6,
-        "matches_missed_this_season": 3,
-        "minutes_missed_this_season": 270,
-        "matches_missed_career": null
-      },
-      "injury_history": [
-        {
-          "type": "Ankle Injury",
-          "start": "2025-08-30",
-          "end": "2025-09-04",
-          "days_out": 5,
-          "severity": "Minor",
-          "body_region": "Ankle"
-        }
-      ],
-      "next_match": {
-        "fixture_id": 1379320,
-        "date": "2026-05-10T13:00:00+00:00",
-        "home_team": "Burnley",
-        "home_logo": "https://media.api-sports.io/football/teams/44.png",
-        "away_team": "Aston Villa",
-        "away_logo": "https://media.api-sports.io/football/teams/66.png",
-        "venue": "Turf Moor",
         "round": "Regular Season - 36"
       },
       "relative_risk": 0.819
