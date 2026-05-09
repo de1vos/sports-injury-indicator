@@ -7159,6 +7159,22 @@
       "venue": "Etihad Stadium"
     },
     {
+      "fixture_id": 1379330,
+      "date": "2026-05-15T19:00:00+00:00",
+      "round": "Regular Season - 37",
+      "home_team_id": 66,
+      "away_team_id": 40,
+      "home_team": {
+        "name": "Aston Villa",
+        "logo": "https://media.api-sports.io/football/teams/66.png"
+      },
+      "away_team": {
+        "name": "Liverpool",
+        "logo": "https://media.api-sports.io/football/teams/40.png"
+      },
+      "venue": "Villa Park"
+    },
+    {
       "fixture_id": 1379336,
       "date": "2026-05-17T11:30:00+00:00",
       "round": "Regular Season - 37",
@@ -7173,22 +7189,6 @@
         "logo": "https://media.api-sports.io/football/teams/65.png"
       },
       "venue": "Old Trafford"
-    },
-    {
-      "fixture_id": 1379330,
-      "date": "2026-05-17T11:30:00+00:00",
-      "round": "Regular Season - 37",
-      "home_team_id": 66,
-      "away_team_id": 40,
-      "home_team": {
-        "name": "Aston Villa",
-        "logo": "https://media.api-sports.io/football/teams/66.png"
-      },
-      "away_team": {
-        "name": "Liverpool",
-        "logo": "https://media.api-sports.io/football/teams/40.png"
-      },
-      "venue": "Villa Park"
     },
     {
       "fixture_id": 1379338,
