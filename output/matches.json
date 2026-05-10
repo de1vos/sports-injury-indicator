@@ -1,6 +1,106 @@
 {
   "completed": [
     {
+      "fixture_id": 1379324,
+      "date": "2026-05-09T16:30:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 50,
+      "away_team_id": 55,
+      "home_team": {
+        "name": "Manchester City",
+        "logo": "https://media.api-sports.io/football/teams/50.png"
+      },
+      "away_team": {
+        "name": "Brentford",
+        "logo": "https://media.api-sports.io/football/teams/55.png"
+      },
+      "venue": "Etihad Stadium",
+      "score": {
+        "home": 3,
+        "away": 0
+      }
+    },
+    {
+      "fixture_id": 1379322,
+      "date": "2026-05-09T14:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 36,
+      "away_team_id": 35,
+      "home_team": {
+        "name": "Fulham",
+        "logo": "https://media.api-sports.io/football/teams/36.png"
+      },
+      "away_team": {
+        "name": "Bournemouth",
+        "logo": "https://media.api-sports.io/football/teams/35.png"
+      },
+      "venue": "Craven Cottage",
+      "score": {
+        "home": 0,
+        "away": 1
+      }
+    },
+    {
+      "fixture_id": 1379319,
+      "date": "2026-05-09T14:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 51,
+      "away_team_id": 39,
+      "home_team": {
+        "name": "Brighton",
+        "logo": "https://media.api-sports.io/football/teams/51.png"
+      },
+      "away_team": {
+        "name": "Wolves",
+        "logo": "https://media.api-sports.io/football/teams/39.png"
+      },
+      "venue": "Amex Stadium",
+      "score": {
+        "home": 3,
+        "away": 0
+      }
+    },
+    {
+      "fixture_id": 1379326,
+      "date": "2026-05-09T14:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 746,
+      "away_team_id": 33,
+      "home_team": {
+        "name": "Sunderland",
+        "logo": "https://media.api-sports.io/football/teams/746.png"
+      },
+      "away_team": {
+        "name": "Manchester United",
+        "logo": "https://media.api-sports.io/football/teams/33.png"
+      },
+      "venue": "Stadium of Light",
+      "score": {
+        "home": 0,
+        "away": 0
+      }
+    },
+    {
+      "fixture_id": 1379323,
+      "date": "2026-05-09T11:30:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 40,
+      "away_team_id": 49,
+      "home_team": {
+        "name": "Liverpool",
+        "logo": "https://media.api-sports.io/football/teams/40.png"
+      },
+      "away_team": {
+        "name": "Chelsea",
+        "logo": "https://media.api-sports.io/football/teams/49.png"
+      },
+      "venue": "Anfield",
+      "score": {
+        "home": 1,
+        "away": 1
+      }
+    },
+    {
       "fixture_id": 1379314,
       "date": "2026-05-04T19:00:00+00:00",
       "round": "Regular Season - 35",
@@ -6982,86 +7082,6 @@
     }
   ],
   "upcoming": [
-    {
-      "fixture_id": 1379323,
-      "date": "2026-05-09T11:30:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 40,
-      "away_team_id": 49,
-      "home_team": {
-        "name": "Liverpool",
-        "logo": "https://media.api-sports.io/football/teams/40.png"
-      },
-      "away_team": {
-        "name": "Chelsea",
-        "logo": "https://media.api-sports.io/football/teams/49.png"
-      },
-      "venue": "Anfield"
-    },
-    {
-      "fixture_id": 1379322,
-      "date": "2026-05-09T14:00:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 36,
-      "away_team_id": 35,
-      "home_team": {
-        "name": "Fulham",
-        "logo": "https://media.api-sports.io/football/teams/36.png"
-      },
-      "away_team": {
-        "name": "Bournemouth",
-        "logo": "https://media.api-sports.io/football/teams/35.png"
-      },
-      "venue": "Craven Cottage"
-    },
-    {
-      "fixture_id": 1379319,
-      "date": "2026-05-09T14:00:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 51,
-      "away_team_id": 39,
-      "home_team": {
-        "name": "Brighton",
-        "logo": "https://media.api-sports.io/football/teams/51.png"
-      },
-      "away_team": {
-        "name": "Wolves",
-        "logo": "https://media.api-sports.io/football/teams/39.png"
-      },
-      "venue": "Amex Stadium"
-    },
-    {
-      "fixture_id": 1379326,
-      "date": "2026-05-09T14:00:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 746,
-      "away_team_id": 33,
-      "home_team": {
-        "name": "Sunderland",
-        "logo": "https://media.api-sports.io/football/teams/746.png"
-      },
-      "away_team": {
-        "name": "Manchester United",
-        "logo": "https://media.api-sports.io/football/teams/33.png"
-      },
-      "venue": "Stadium of Light"
-    },
-    {
-      "fixture_id": 1379324,
-      "date": "2026-05-09T16:30:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 50,
-      "away_team_id": 55,
-      "home_team": {
-        "name": "Manchester City",
-        "logo": "https://media.api-sports.io/football/teams/50.png"
-      },
-      "away_team": {
-        "name": "Brentford",
-        "logo": "https://media.api-sports.io/football/teams/55.png"
-      },
-      "venue": "Etihad Stadium"
-    },
     {
       "fixture_id": 1379320,
       "date": "2026-05-10T13:00:00+00:00",
