@@ -1,6 +1,86 @@
 {
   "completed": [
     {
+      "fixture_id": 1379328,
+      "date": "2026-05-10T15:30:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 48,
+      "away_team_id": 42,
+      "home_team": {
+        "name": "West Ham",
+        "logo": "https://media.api-sports.io/football/teams/48.png"
+      },
+      "away_team": {
+        "name": "Arsenal",
+        "logo": "https://media.api-sports.io/football/teams/42.png"
+      },
+      "venue": "London Stadium",
+      "score": {
+        "home": 0,
+        "away": 1
+      }
+    },
+    {
+      "fixture_id": 1379320,
+      "date": "2026-05-10T13:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 44,
+      "away_team_id": 66,
+      "home_team": {
+        "name": "Burnley",
+        "logo": "https://media.api-sports.io/football/teams/44.png"
+      },
+      "away_team": {
+        "name": "Aston Villa",
+        "logo": "https://media.api-sports.io/football/teams/66.png"
+      },
+      "venue": "Turf Moor",
+      "score": {
+        "home": 2,
+        "away": 2
+      }
+    },
+    {
+      "fixture_id": 1379321,
+      "date": "2026-05-10T13:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 52,
+      "away_team_id": 45,
+      "home_team": {
+        "name": "Crystal Palace",
+        "logo": "https://media.api-sports.io/football/teams/52.png"
+      },
+      "away_team": {
+        "name": "Everton",
+        "logo": "https://media.api-sports.io/football/teams/45.png"
+      },
+      "venue": "Selhurst Park",
+      "score": {
+        "home": 2,
+        "away": 2
+      }
+    },
+    {
+      "fixture_id": 1379325,
+      "date": "2026-05-10T13:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 65,
+      "away_team_id": 34,
+      "home_team": {
+        "name": "Nottingham Forest",
+        "logo": "https://media.api-sports.io/football/teams/65.png"
+      },
+      "away_team": {
+        "name": "Newcastle",
+        "logo": "https://media.api-sports.io/football/teams/34.png"
+      },
+      "venue": "City Ground",
+      "score": {
+        "home": 1,
+        "away": 1
+      }
+    },
+    {
       "fixture_id": 1379324,
       "date": "2026-05-09T16:30:00+00:00",
       "round": "Regular Season - 36",
@@ -7082,70 +7162,6 @@
     }
   ],
   "upcoming": [
-    {
-      "fixture_id": 1379320,
-      "date": "2026-05-10T13:00:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 44,
-      "away_team_id": 66,
-      "home_team": {
-        "name": "Burnley",
-        "logo": "https://media.api-sports.io/football/teams/44.png"
-      },
-      "away_team": {
-        "name": "Aston Villa",
-        "logo": "https://media.api-sports.io/football/teams/66.png"
-      },
-      "venue": "Turf Moor"
-    },
-    {
-      "fixture_id": 1379321,
-      "date": "2026-05-10T13:00:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 52,
-      "away_team_id": 45,
-      "home_team": {
-        "name": "Crystal Palace",
-        "logo": "https://media.api-sports.io/football/teams/52.png"
-      },
-      "away_team": {
-        "name": "Everton",
-        "logo": "https://media.api-sports.io/football/teams/45.png"
-      },
-      "venue": "Selhurst Park"
-    },
-    {
-      "fixture_id": 1379325,
-      "date": "2026-05-10T13:00:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 65,
-      "away_team_id": 34,
-      "home_team": {
-        "name": "Nottingham Forest",
-        "logo": "https://media.api-sports.io/football/teams/65.png"
-      },
-      "away_team": {
-        "name": "Newcastle",
-        "logo": "https://media.api-sports.io/football/teams/34.png"
-      },
-      "venue": "City Ground"
-    },
-    {
-      "fixture_id": 1379328,
-      "date": "2026-05-10T15:30:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 48,
-      "away_team_id": 42,
-      "home_team": {
-        "name": "West Ham",
-        "logo": "https://media.api-sports.io/football/teams/48.png"
-      },
-      "away_team": {
-        "name": "Arsenal",
-        "logo": "https://media.api-sports.io/football/teams/42.png"
-      },
-      "venue": "London Stadium"
-    },
     {
       "fixture_id": 1379327,
       "date": "2026-05-11T19:00:00+00:00",
