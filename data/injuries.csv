@@ -4948,6 +4948,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 18753,Hamstring,2023-09-03,2023-11-11,69.0,Severe,Thigh
 18753,Hamstring,2023-11-24,2024-02-09,77.0,Severe,Thigh
 18753,Ankle Injury,2025-03-03,2025-03-15,12.0,Moderate,Ankle
+18753,Muscle Injury,2026-05-10,2026-05-14,4.0,Minor,Unknown/Minor
 18755,Knock,2023-05-02,2023-06-30,59.0,Severe,Unknown/Minor
 18758,Rib Injury,2011-01-06,2011-01-07,1.0,Minor,Torso
 18758,Ankle Injury,2011-03-25,2011-03-31,6.0,Minor,Ankle
@@ -7215,6 +7216,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 19201,Dead Leg,2024-08-04,2024-08-08,4.0,Minor,Other
 19201,Hamstring,2024-12-08,2024-12-13,5.0,Minor,Thigh
 19201,Hip Injury,2025-08-01,2025-08-17,16.0,Moderate,Hip
+19201,Muscle Injury,2026-05-11,2026-05-15,4.0,Minor,Unknown/Minor
 19220,Ankle/Foot Injury,2019-09-18,2019-09-21,3.0,Minor,Ankle
 19220,Ankle/Foot Injury,2019-11-07,2019-11-08,1.0,Minor,Ankle
 19220,Knock,2021-09-24,2021-10-01,7.0,Minor,Unknown/Minor
@@ -9097,7 +9099,6 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 64003,Hamstring,2025-01-15,2025-01-31,16.0,Moderate,Thigh
 64003,Broken Foot,2025-04-06,2025-07-18,103.0,Long-term,Foot
 64003,Hip Injury,2026-02-10,2026-02-20,10.0,Moderate,Hip
-64003,Hip Injury,2026-05-11,2026-05-15,4.0,Minor,Hip
 64167,Unknown,2024-04-06,2024-04-12,6.0,Minor,Unknown/Minor
 64304,Illness,2023-02-06,2023-02-17,11.0,Moderate,Illness
 64304,Illness,2023-12-01,2023-12-10,9.0,Moderate,Illness
@@ -10853,6 +10854,7 @@ player_id,injury_type,start_date,end_date,days_out,severity,body_region
 359942,Muscle Injury,2025-11-22,2026-02-04,74.0,Severe,Unknown/Minor
 360114,Calf Injury,2025-09-01,2025-09-12,11.0,Moderate,Calf
 360114,Ankle Injury,2025-09-27,2025-10-28,31.0,Severe,Ankle
+360114,Injury,2026-05-13,,,Long-term,Unknown/Minor
 360268,Inactive,2025-03-02,2025-04-16,45.0,Severe,Other
 361388,Leg Injury,2024-12-21,2025-02-07,48.0,Severe,Unknown/Minor
 361388,Leg Injury,2025-03-10,,,Long-term,Unknown/Minor

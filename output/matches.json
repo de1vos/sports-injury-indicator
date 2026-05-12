@@ -1,6 +1,26 @@
 {
   "completed": [
     {
+      "fixture_id": 1379327,
+      "date": "2026-05-11T19:00:00+00:00",
+      "round": "Regular Season - 36",
+      "home_team_id": 47,
+      "away_team_id": 63,
+      "home_team": {
+        "name": "Tottenham",
+        "logo": "https://media.api-sports.io/football/teams/47.png"
+      },
+      "away_team": {
+        "name": "Leeds",
+        "logo": "https://media.api-sports.io/football/teams/63.png"
+      },
+      "venue": "Tottenham Hotspur Stadium",
+      "score": {
+        "home": 1,
+        "away": 1
+      }
+    },
+    {
       "fixture_id": 1379328,
       "date": "2026-05-10T15:30:00+00:00",
       "round": "Regular Season - 36",
@@ -7162,22 +7182,6 @@
     }
   ],
   "upcoming": [
-    {
-      "fixture_id": 1379327,
-      "date": "2026-05-11T19:00:00+00:00",
-      "round": "Regular Season - 36",
-      "home_team_id": 47,
-      "away_team_id": 63,
-      "home_team": {
-        "name": "Tottenham",
-        "logo": "https://media.api-sports.io/football/teams/47.png"
-      },
-      "away_team": {
-        "name": "Leeds",
-        "logo": "https://media.api-sports.io/football/teams/63.png"
-      },
-      "venue": "Tottenham Hotspur Stadium"
-    },
     {
       "fixture_id": 1379275,
       "date": "2026-05-13T19:00:00+00:00",
