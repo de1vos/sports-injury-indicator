@@ -1,7 +1,7 @@
 {
   "current_gameweek": 36,
   "current_season": 2025,
-  "generated_at": "2026-05-12T05:59:23.803669+00:00",
+  "generated_at": "2026-05-13T06:04:37.777183+00:00",
   "players": [
     {
       "player_id": 22,
@@ -616,9 +616,9 @@
         {
           "type": "Groin Injury",
           "start": "2026-04-22",
-          "end": null,
-          "days_out": null,
-          "severity": "Long-term",
+          "end": "2026-05-17",
+          "days_out": 25,
+          "severity": "Moderate",
           "body_region": "Groin"
         },
         {
@@ -2618,9 +2618,9 @@
         {
           "type": "Thigh Injury",
           "start": "2026-05-03",
-          "end": "2026-05-13",
-          "days_out": 10,
-          "severity": "Moderate",
+          "end": null,
+          "days_out": null,
+          "severity": "Long-term",
           "body_region": "Thigh"
         },
         {
@@ -6081,8 +6081,8 @@
         {
           "type": "Thigh Injury",
           "start": "2026-01-01",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-17",
+          "days_out": 136,
           "severity": "Long-term",
           "body_region": "Thigh"
         },
@@ -20400,6 +20400,14 @@
       },
       "injury_history": [
         {
+          "type": "Hamstring Injury",
+          "start": "2026-05-11",
+          "end": "2026-05-15",
+          "days_out": 4,
+          "severity": "Minor",
+          "body_region": "Thigh"
+        },
+        {
           "type": "Hip Injury",
           "start": "2025-08-01",
           "end": "2025-08-17",
@@ -28902,8 +28910,8 @@
         {
           "type": "Broken Leg",
           "start": "2026-01-17",
-          "end": null,
-          "days_out": null,
+          "end": "2026-05-17",
+          "days_out": 120,
           "severity": "Long-term",
           "body_region": "Leg"
         },
@@ -33179,9 +33187,9 @@
         {
           "type": "Calf Injury",
           "start": "2026-05-03",
-          "end": "2026-05-14",
-          "days_out": 11,
-          "severity": "Moderate",
+          "end": null,
+          "days_out": null,
+          "severity": "Long-term",
           "body_region": "Calf"
         },
         {
@@ -33523,9 +33531,9 @@
         {
           "type": "Achilles Tendon Injury",
           "start": "2026-04-19",
-          "end": "2026-05-13",
-          "days_out": 24,
-          "severity": "Moderate",
+          "end": null,
+          "days_out": null,
+          "severity": "Long-term",
           "body_region": "Achilles"
         },
         {
@@ -33857,8 +33865,8 @@
         {
           "type": "Knee Injury",
           "start": "2026-01-17",
-          "end": "2026-05-13",
-          "days_out": 116,
+          "end": null,
+          "days_out": null,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -42259,8 +42267,8 @@
         {
           "type": "Knee Injury",
           "start": "2025-09-27",
-          "end": "2026-05-13",
-          "days_out": 228,
+          "end": null,
+          "days_out": null,
           "severity": "Long-term",
           "body_region": "Knee"
         },
@@ -174125,6 +174133,14 @@
         "matches_missed_career": null
       },
       "injury_history": [
+        {
+          "type": "Hamstring Injury",
+          "start": "2026-05-11",
+          "end": "2026-05-15",
+          "days_out": 4,
+          "severity": "Minor",
+          "body_region": "Thigh"
+        },
         {
           "type": "Head Injury",
           "start": "2025-04-27",
